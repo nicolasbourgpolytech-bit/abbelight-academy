@@ -1,0 +1,22 @@
+
+> abbelight-academy@0.1.0 build
+> next build
+
+   Ôû▓ Next.js 16.0.7 (Turbopack)
+
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 4.8s
+   Running TypeScript ...
+Failed to compile.
+
+./backup_v1_working_lms/src/components/lms/CompletionScreen.tsx:5:22
+Type error: Cannot find module 'react-confetti' or its corresponding type declarations.
+
+  3 | import { Module } from "@/types/lms";
+  4 | import Link from "next/link";
+> 5 | import Confetti from "react-confetti"; // Just kidding, we'll do CSS animation or assume it's there
+    |                      ^
+  6 | // If we really wanted confetti we'd install a package. Let's do a CSS sparkle effect instead to keep deps low.
+  7 |
+  8 | interface CompletionScreenProps {
+Next.js build worker exited with code: 1 and signal: null

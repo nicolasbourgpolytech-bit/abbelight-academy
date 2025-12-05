@@ -1,0 +1,39 @@
+
+> abbelight-academy@0.1.0 build
+> next build
+
+   Ôû▓ Next.js 16.0.7 (Turbopack)
+
+   Creating an optimized production build ...
+Error: Cannot apply unknown utility class `glass`
+    [at onInvalidCandidate (C:\Users\nbour\Desktop\Abbelight academy\node_modules\tailwindcss\dist\lib.js:21:1511)]
+    [at Te (C:\Users\nbour\Desktop\Abbelight academy\node_modules\tailwindcss\dist\lib.js:16:36038)]
+    [at C:\Users\nbour\Desktop\Abbelight academy\node_modules\tailwindcss\dist\lib.js:21:355]
+    [at Tr (C:\Users\nbour\Desktop\Abbelight academy\node_modules\tailwindcss\dist\lib.js:3:1718)]
+    [at _ (C:\Users\nbour\Desktop\Abbelight academy\node_modules\tailwindcss\dist\lib.js:3:1377)]
+    [at Se (C:\Users\nbour\Desktop\Abbelight academy\node_modules\tailwindcss\dist\lib.js:21:172)]
+    [at ln (C:\Users\nbour\Desktop\Abbelight academy\node_modules\tailwindcss\dist\lib.js:38:294)]
+    [at async sn (C:\Users\nbour\Desktop\Abbelight academy\node_modules\tailwindcss\dist\lib.js:38:631)]
+    [at async Qr (C:\Users\nbour\Desktop\Abbelight academy\node_modules\@tailwindcss\node\dist\index.js:10:3385)]
+    [at async I (C:\Users\nbour\Desktop\Abbelight academy\node_modules\@tailwindcss\postcss\dist\index.js:10:3978)]
+
+> Build error occurred
+Error: Turbopack build failed with 1 errors:
+./src/app/globals.css
+Error evaluating Node.js code
+CssSyntaxError: tailwindcss: C:\Users\nbour\Desktop\Abbelight academy\src\app\globals.css:1:1: Cannot apply unknown utility class `glass`
+    at Input.error (node_modules/postcss/lib/input.js:135:16) [C:\Users\nbour\Desktop\Abbelight academy\.next\build\chunks\node_modules_fe693df6._.js:4651:22]
+    at Root.error (node_modules/postcss/lib/node.js:146:32) [C:\Users\nbour\Desktop\Abbelight academy\.next\build\chunks\node_modules_fe693df6._.js:928:38]
+    [at Object.Once (C:\Users\nbour\Desktop\Abbelight academy\node_modules\@tailwindcss\postcss\dist\index.js:10:6912)]
+    at async LazyResult.runAsync (node_modules/postcss/lib/lazy-result.js:293:11) [C:\Users\nbour\Desktop\Abbelight academy\.next\build\chunks\node_modules_fe693df6._.js:6206:21]
+    at async transform (turbopack:///[turbopack-node]/transforms/postcss.ts:70:34) [C:\Users\nbour\Desktop\Abbelight academy\.next\build\chunks\[root-of-the-server]__51225daf._.js:146:36]
+    at async run (turbopack:///[turbopack-node]/ipc/evaluate.ts:92:23) [C:\Users\nbour\Desktop\Abbelight academy\.next\build\chunks\[root-of-the-server]__974941ed._.js:443:31]
+
+Import trace:
+  Client Component Browser:
+    ./src/app/globals.css [Client Component Browser]
+    ./src/app/layout.tsx [Server Component]
+
+
+    at async transform (turbopack:///[turbopack-node]/transforms/postcss.ts:70:34) [C:\Users\nbour\Desktop\Abbelight academy\.next\build\chunks\[root-of-the-server]__51225daf._.js:146:36])
+    at async run (turbopack:///[turbopack-node]/ipc/evaluate.ts:92:23) [C:\Users\nbour\Desktop\Abbelight academy\.next\build\chunks\[root-of-the-server]__974941ed._.js:443:31])
