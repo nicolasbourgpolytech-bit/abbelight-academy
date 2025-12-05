@@ -13,6 +13,7 @@ const ConnectedModuleCard = ({ module, isLocked = false }: { module: any, isLock
 };
 
 export default function AcademyPage() {
+    const { user } = useUser();
     const [modules, setModules] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
