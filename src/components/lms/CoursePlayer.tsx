@@ -119,12 +119,31 @@ export default function CoursePlayer({ module }: CoursePlayerProps) {
                         <div className="w-full h-full flex flex-col">
                             {/* Video Embed */}
                             <div className="w-full aspect-video bg-black relative shadow-lg">
-                                <iframe
-                                    src="https://www.youtube.com/embed/YOSO7gJl4tA?autoplay=0"
-                                    className="absolute inset-0 w-full h-full"
-                                    allowFullScreen
-                                    title="Course Video"
-                                />
+                                {activeChapter.content_url?.includes('youtube') || activeChapter.content_url?.includes('youtu.be') ? (
+                                    <iframe
+                                        src={(() => {
+                                            try {
+                                                const url = activeChapter.content_url;
+                                                let videoId = "";
+                                                if (url.includes('youtube.com/watch')) {
+                                                    videoId = new URL(url).searchParams.get("v") || "";
+                                                } else if (url.includes('youtu.be')) {
+                                                    videoId = url.split('youtu.be/')[1]?.split('?')[0] || "";
+                                                }
+                                                return `https://www.youtube.com/embed/${videoId}?autoplay=0`;
+                                            } catch (e) { return ""; }
+                                        })()}
+                                        className="absolute inset-0 w-full h-full"
+                                        allowFullScreen
+                                        title="Course Video"
+                                    />
+                                ) : (
+                                    <video
+                                        src={activeChapter.content_url}
+                                        controls
+                                        className="absolute inset-0 w-full h-full"
+                                    />
+                                )}
                             </div>
                             <div className="p-8 max-w-4xl mx-auto w-full">
                                 <h1 className="text-2xl font-bold text-white mb-4">{activeChapter.title}</h1>
