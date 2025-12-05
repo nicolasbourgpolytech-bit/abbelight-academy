@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function AdminPage() {
@@ -9,6 +9,20 @@ export default function AdminPage() {
     const [activeTab, setActiveTab] = useState("modules");
     const [isEditing, setIsEditing] = useState(false);
     const [editingModule, setEditingModule] = useState<any>(null);
+
+    const [modules, setModules] = useState<any[]>([]);
+
+    // Fetch modules on load
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetch('/api/modules')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.modules) setModules(data.modules);
+                })
+                .catch(err => console.error(err));
+        }
+    }, [isAuthenticated]);
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
@@ -20,10 +34,27 @@ export default function AdminPage() {
         }
     };
 
-    const handleSaveModule = (e: React.FormEvent) => {
+    const handleSaveModule = async (e: React.FormEvent) => {
         e.preventDefault();
-        alert("In production, this would save to the database.");
-        setIsEditing(false);
+
+        try {
+            const res = await fetch('/api/modules', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editingModule),
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                alert("Module saved successfully!");
+                setModules([data.module, ...modules]);
+                setIsEditing(false);
+            } else {
+                alert("Error: " + data.error);
+            }
+        } catch (error) {
+            alert("Failed to save module");
+        }
     };
 
     if (!isAuthenticated) {
@@ -129,24 +160,24 @@ export default function AdminPage() {
 
                                     {/* Mock List of Modules */}
                                     <div className="space-y-4">
-                                        {[1, 2, 3].map((i) => (
-                                            <div key={i} className="bg-gray-900/40 border border-white/10 rounded-xl p-4 flex items-center justify-between hover:border-primary/30 transition-colors group">
+                                        {modules.map((module: any) => (
+                                            <div key={module.id} className="bg-gray-900/40 border border-white/10 rounded-xl p-4 flex items-center justify-between hover:border-primary/30 transition-colors group">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-16 h-16 bg-gray-800 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-500 font-bold text-xl">
-                                                        M{i}
+                                                        M{module.id}
                                                     </div>
                                                     <div>
-                                                        <h3 className="font-bold text-white group-hover:text-primary transition-colors">Fundamentals of SMLM</h3>
+                                                        <h3 className="font-bold text-white group-hover:text-primary transition-colors">{module.title}</h3>
                                                         <div className="flex items-center gap-3 mt-1">
-                                                            <span className="text-xs bg-white/5 px-2 py-0.5 rounded text-gray-400">3 Chapters</span>
-                                                            <span className="text-xs bg-white/5 px-2 py-0.5 rounded text-gray-400">Beginner</span>
+                                                            <span className="text-xs bg-white/5 px-2 py-0.5 rounded text-gray-400">{module.xp} XP</span>
+                                                            <span className="text-xs bg-white/5 px-2 py-0.5 rounded text-gray-400">{module.level}</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         onClick={() => {
-                                                            setEditingModule({ title: "Fundamentals of SMLM", description: "Existing module description...", level: "Beginner", xp: 500 });
+                                                            setEditingModule(module);
                                                             setIsEditing(true);
                                                         }}
                                                         className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Edit"
@@ -159,6 +190,11 @@ export default function AdminPage() {
                                                 </div>
                                             </div>
                                         ))}
+                                        {modules.length === 0 && (
+                                            <div className="text-center py-10 text-gray-500">
+                                                No modules found. Create one to get started.
+                                            </div>
+                                        )}
                                     </div>
                                 </>
                             ) : (
