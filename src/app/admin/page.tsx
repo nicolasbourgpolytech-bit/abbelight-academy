@@ -12,6 +12,45 @@ export default function AdminPage() {
 
     const [modules, setModules] = useState<any[]>([]);
 
+    const [selectedModuleForChapters, setSelectedModuleForChapters] = useState<any>(null);
+    const [chapters, setChapters] = useState<any[]>([]);
+    const [newChapter, setNewChapter] = useState({ title: "", type: "video", content_url: "", duration: "5 min", data: {} });
+
+    // Fetch chapters when a module is selected
+    useEffect(() => {
+        if (selectedModuleForChapters) {
+            fetch(`/api/chapters?moduleId=${selectedModuleForChapters.id}`)
+                .then(res => res.json())
+                .then(data => setChapters(data.chapters || []))
+                .catch(err => console.error(err));
+        }
+    }, [selectedModuleForChapters]);
+
+    const handleSaveChapter = async () => {
+        if (!newChapter.title || !selectedModuleForChapters) return alert("Title required");
+
+        try {
+            const res = await fetch('/api/chapters', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...newChapter, module_id: selectedModuleForChapters.id }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setChapters([...chapters, data.chapter]);
+                setNewChapter({ title: "", type: "video", content_url: "", duration: "5 min", data: {} });
+            } else {
+                alert(data.error);
+            }
+        } catch (e) { alert("Error saving chapter"); }
+    };
+
+    const handleDeleteChapter = async (id: number) => {
+        if (!confirm("Delete chapter?")) return;
+        await fetch(`/api/chapters?id=${id}`, { method: 'DELETE' });
+        setChapters(chapters.filter(c => c.id !== id));
+    };
+
     // Fetch modules on load
     useEffect(() => {
         if (isAuthenticated) {
@@ -176,6 +215,12 @@ export default function AdminPage() {
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <button
+                                                        onClick={() => setSelectedModuleForChapters(module)}
+                                                        className="px-3 py-1.5 bg-white/5 text-white text-xs font-bold rounded hover:bg-white/10 border border-white/10 mr-2"
+                                                    >
+                                                        Manage Content
+                                                    </button>
+                                                    <button
                                                         onClick={() => {
                                                             setEditingModule(module);
                                                             setIsEditing(true);
@@ -283,6 +328,83 @@ export default function AdminPage() {
                         </div>
                     )}
 
+
+                    {/* CHAPTER MANAGEMENT OVERLAY */}
+                    {activeTab === 'modules' && !isEditing && selectedModuleForChapters && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                            <div className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+                                <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-xl font-bold text-white">Manage Content</h3>
+                                        <p className="text-gray-400 text-sm">Chapters for: <span className="text-primary">{selectedModuleForChapters.title}</span></p>
+                                    </div>
+                                    <button onClick={() => setSelectedModuleForChapters(null)} className="text-gray-400 hover:text-white">
+                                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                                    {/* List Chapters */}
+                                    <div className="space-y-3">
+                                        {chapters.map((chapter: any, idx) => (
+                                            <div key={chapter.id} className="bg-black/40 border border-white/5 p-4 rounded-lg flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <span className="text-gray-500 font-mono text-sm">#{idx + 1}</span>
+                                                    <div>
+                                                        <div className="font-bold text-white flex items-center gap-2">
+                                                            {chapter.title}
+                                                            <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded border ${chapter.type === 'video' ? 'border-blue-500 text-blue-500' :
+                                                                chapter.type === 'quiz' ? 'border-purple-500 text-purple-500' :
+                                                                    'border-yellow-500 text-yellow-500'
+                                                                }`}>{chapter.type}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button onClick={() => handleDeleteChapter(chapter.id)} className="text-gray-500 hover:text-red-500 px-2">Delete</button>
+                                            </div>
+                                        ))}
+                                        {chapters.length === 0 && <p className="text-gray-500 text-center py-4">No chapters yet.</p>}
+                                    </div>
+
+                                    {/* Add Chapter Form */}
+                                    <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                                        <h4 className="text-sm font-bold text-white uppercase mb-4">Add New Chapter</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <input
+                                                type="text"
+                                                placeholder="Chapter Title"
+                                                className="bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm"
+                                                value={newChapter.title}
+                                                onChange={e => setNewChapter({ ...newChapter, title: e.target.value })}
+                                            />
+                                            <select
+                                                className="bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm"
+                                                value={newChapter.type}
+                                                onChange={e => setNewChapter({ ...newChapter, type: e.target.value })}
+                                            >
+                                                <option value="video">Video</option>
+                                                <option value="slides">Slides</option>
+                                                <option value="quiz">Quiz</option>
+                                            </select>
+                                        </div>
+                                        <div className="mb-4">
+                                            <input
+                                                type="text"
+                                                placeholder={newChapter.type === 'video' ? "Video URL (mp4 or youtube)" : "Content URL / JSON Data"}
+                                                className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-mono"
+                                                value={newChapter.content_url}
+                                                onChange={e => setNewChapter({ ...newChapter, content_url: e.target.value })}
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">For MVP, paste a direct MP4 link here for videos.</p>
+                                        </div>
+                                        <button onClick={handleSaveChapter} className="w-full bg-primary text-black font-bold text-sm py-2 rounded-lg hover:bg-white transition-colors">
+                                            Add Chapter
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {activeTab === 'media' && (
                         <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
                             <div className="flex items-center justify-between">
@@ -306,7 +428,7 @@ export default function AdminPage() {
                         </div>
                     )}
                 </main>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
