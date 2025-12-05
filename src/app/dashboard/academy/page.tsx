@@ -1,8 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { ModuleCard } from "@/components/dashboard/ModuleCard";
-import { MOCK_MODULES } from "@/data/mockLms";
 import { useLmsProgress } from "@/hooks/useLmsProgress";
 
 // Helper Component to render card with hook data
@@ -13,13 +13,36 @@ const ConnectedModuleCard = ({ module, isLocked = false }: { module: any, isLock
 };
 
 export default function AcademyPage() {
-    const { user } = useUser();
+    const [modules, setModules] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('/api/modules')
+            .then(res => res.json())
+            .then(data => {
+                if (data.modules) {
+                    // Enrich modules with mock chapters if empty (for UI compatibility)
+                    const enrichedModules = data.modules.map((m: any) => ({
+                        ...m,
+                        chapters: m.chapters || [], // Ensure chapters array exists
+                        roles: [] // Default roles
+                    }));
+                    setModules(enrichedModules);
+                }
+            })
+            .catch(err => console.error(err))
+            .finally(() => setIsLoading(false));
+    }, []);
 
     // Helper to check provisioned access
     const hasAccess = (module: any) => {
-        if (!module.roles) return true;
+        if (!module.roles || module.roles.length === 0) return true;
         return module.roles.some((r: any) => user?.roles.includes(r));
     };
+
+    if (isLoading) {
+        return <div className="p-12 text-center text-gray-500 animate-pulse">Loading Academy...</div>;
+    }
 
     return (
         <div className="space-y-12 animate-fade-in">
@@ -44,7 +67,7 @@ export default function AcademyPage() {
                     </div>
                     <div className="text-center px-4 border-r border-white/10">
                         <div className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Modules</div>
-                        <div className="text-2xl font-bold text-white">2 <span className="text-gray-600 text-sm">/ 12</span></div>
+                        <div className="text-2xl font-bold text-white">{modules.length} <span className="text-gray-600 text-sm">/ {modules.length}</span></div>
                     </div>
                     <div className="text-center px-4">
                         <div className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Certificates</div>
@@ -62,9 +85,8 @@ export default function AcademyPage() {
                     </h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Render specific modules that are "in progress" */}
-                    <ConnectedModuleCard module={MOCK_MODULES[0]} />
-                    {MOCK_MODULES.length > 3 && <ConnectedModuleCard module={MOCK_MODULES[3]} />}
+                    {/* Render specific modules that are "in progress" - Using first module as fallback for now */}
+                    {modules.length > 0 && <ConnectedModuleCard module={modules[0]} />}
                 </div>
             </section>
 
@@ -81,12 +103,17 @@ export default function AcademyPage() {
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {MOCK_MODULES.map(module => {
+                    {modules.map(module => {
                         const isLocked = !hasAccess(module);
                         return (
                             <ConnectedModuleCard key={module.id} module={module} isLocked={isLocked} />
                         );
                     })}
+                    {modules.length === 0 && (
+                        <div className="col-span-full text-center py-12 text-gray-500">
+                            No modules yet. Check back soon!
+                        </div>
+                    )}
                 </div>
             </section>
         </div>
