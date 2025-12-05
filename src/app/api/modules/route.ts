@@ -30,3 +30,39 @@ export async function POST(request: Request) {
         return NextResponse.json({ error }, { status: 500 });
     }
 }
+
+export async function PUT(request: Request) {
+    try {
+        const body = await request.json();
+        const { id, title, description, level, xp } = body;
+
+        if (!id || !title) {
+            return NextResponse.json({ error: 'ID and Title are required' }, { status: 400 });
+        }
+
+        const { rows } = await sql`
+      UPDATE modules 
+      SET title = ${title}, description = ${description}, level = ${level}, xp = ${xp}
+      WHERE id = ${id}
+      RETURNING *;
+    `;
+
+        return NextResponse.json({ module: rows[0] }, { status: 200 });
+    } catch (error) {
+        return NextResponse.json({ error }, { status: 500 });
+    }
+}
+
+export async function DELETE(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    try {
+        if (!id) return NextResponse.json({ error: 'Module ID required' }, { status: 400 });
+
+        await sql`DELETE FROM modules WHERE id = ${id}`;
+        return NextResponse.json({ success: true }, { status: 200 });
+    } catch (error) {
+        return NextResponse.json({ error }, { status: 500 });
+    }
+}

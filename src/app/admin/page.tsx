@@ -77,8 +77,11 @@ export default function AdminPage() {
         e.preventDefault();
 
         try {
+            const isUpdate = !!editingModule.id;
+            const method = isUpdate ? 'PUT' : 'POST';
+
             const res = await fetch('/api/modules', {
-                method: 'POST',
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(editingModule),
             });
@@ -86,13 +89,32 @@ export default function AdminPage() {
 
             if (res.ok) {
                 alert("Module saved successfully!");
-                setModules([data.module, ...modules]);
+                if (isUpdate) {
+                    setModules(modules.map(m => m.id === data.module.id ? data.module : m));
+                } else {
+                    setModules([data.module, ...modules]);
+                }
                 setIsEditing(false);
             } else {
                 alert("Error: " + data.error);
             }
         } catch (error) {
             alert("Failed to save module");
+        }
+    };
+
+    const handleDeleteModule = async (id: number) => {
+        if (!confirm("Are you sure you want to delete this module? This cannot be undone.")) return;
+
+        try {
+            const res = await fetch(`/api/modules?id=${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                setModules(modules.filter(m => m.id !== id));
+            } else {
+                alert("Failed to delete module");
+            }
+        } catch (e) {
+            alert("Error deleting module");
         }
     };
 
@@ -229,7 +251,11 @@ export default function AdminPage() {
                                                     >
                                                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                                     </button>
-                                                    <button className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors" title="Delete">
+                                                    <button
+                                                        onClick={() => handleDeleteModule(module.id)}
+                                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                        title="Delete"
+                                                    >
                                                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                                     </button>
                                                 </div>
