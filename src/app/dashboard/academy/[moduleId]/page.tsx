@@ -43,7 +43,13 @@ export default function ModulePage({ params }: { params: Promise<{ moduleId: str
 
                     setModule({
                         ...foundModule,
-                        chapters: chaptersData.chapters || [],
+                        thumbnailUrl: foundModule.thumbnail_url || foundModule.thumbnailUrl,
+                        chapters: chaptersData.chapters?.map((c: any) => ({
+                            ...c,
+                            contentUrl: c.content_url || c.contentUrl, // Map DB snake_case to Frontend camelCase
+                            quizData: c.type === 'quiz' ? c.data : undefined, // Map generic JSONB 'data' to typed props
+                            slidesData: c.type === 'slides' ? c.data : undefined,
+                        })) || [],
                         roles: [] // Default roles
                     });
                 }

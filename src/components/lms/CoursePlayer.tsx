@@ -119,11 +119,11 @@ export default function CoursePlayer({ module }: CoursePlayerProps) {
                         <div className="w-full h-full flex flex-col">
                             {/* Video Embed */}
                             <div className="w-full aspect-video bg-black relative shadow-lg">
-                                {activeChapter.content_url?.includes('youtube') || activeChapter.content_url?.includes('youtu.be') ? (
+                                {activeChapter.contentUrl?.includes('youtube') || activeChapter.contentUrl?.includes('youtu.be') ? (
                                     <iframe
                                         src={(() => {
                                             try {
-                                                const url = activeChapter.content_url;
+                                                const url = activeChapter.contentUrl || "";
                                                 let videoId = "";
                                                 if (url.includes('youtube.com/watch')) {
                                                     videoId = new URL(url).searchParams.get("v") || "";
@@ -139,7 +139,7 @@ export default function CoursePlayer({ module }: CoursePlayerProps) {
                                     />
                                 ) : (
                                     <video
-                                        src={activeChapter.content_url}
+                                        src={activeChapter.contentUrl}
                                         controls
                                         className="absolute inset-0 w-full h-full"
                                     />

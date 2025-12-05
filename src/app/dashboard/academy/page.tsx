@@ -25,6 +25,7 @@ export default function AcademyPage() {
                     // Enrich modules with mock chapters if empty (for UI compatibility)
                     const enrichedModules = data.modules.map((m: any) => ({
                         ...m,
+                        thumbnailUrl: m.thumbnail_url || m.thumbnailUrl, // Map snake_case from DB
                         chapters: m.chapters || [], // Ensure chapters array exists
                         roles: [] // Default roles
                     }));
