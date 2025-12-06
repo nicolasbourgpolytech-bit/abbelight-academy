@@ -156,7 +156,8 @@ export default function AdminPage() {
                 }
                 setIsEditingWebinar(false);
             } else {
-                alert("Error: " + data.error);
+                console.error("Save Error:", data);
+                alert("Error: " + (data.error?.message || JSON.stringify(data.error)));
             }
         } catch (error) {
             alert("Failed to save webinar");
@@ -170,7 +171,8 @@ export default function AdminPage() {
             if (res.ok) {
                 setWebinars(webinars.filter(w => w.id !== id));
             } else {
-                alert("Failed to delete webinar");
+                const data = await res.json();
+                alert("Failed to delete webinar: " + (data.error?.message || JSON.stringify(data.error)));
             }
         } catch (e) {
             alert("Error deleting webinar");
