@@ -1,71 +1,53 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ContentFilterBar } from "@/components/dashboard/ContentFilterBar";
 import { ResourceCard } from "@/components/dashboard/ResourceCard";
 import { TagFilterSidebar } from "@/components/dashboard/TagFilterSidebar";
 import { ContentItem } from "@/types/content";
 
-const MOCK_ARTICLES: ContentItem[] = [
-    {
-        id: "1",
-        title: "Understanding dSTORM Blink Statistics",
-        description: "A deep dive into the photophysics of fluorophores and how to optimize blinking for dSTORM.",
-        date: "2025-11-20",
-        type: "article",
-        url: "#",
-        author: "Dr. Emily Chen",
-        tags: ["dSTORM", "Physics", "Education"]
-    },
-    {
-        id: "2",
-        title: "Optimizing Buffer Conditions for Long-Term Imaging",
-        description: "Protocol for preparing buffers that reduce photobleaching during extended acquisition sessions.",
-        date: "2025-10-15",
-        type: "article",
-        url: "#",
-        author: "Abbelight R&D",
-        tags: ["Sample Prep", "Reagents", "Protocols"]
-    },
-    {
-        id: "3",
-        title: "Data Processing Pipeline: From Raw to Render",
-        description: "Step-by-step guide on how the NEO software processes raw camera frames into super-resolved images.",
-        date: "2025-09-10",
-        type: "article",
-        url: "#",
-        author: "Support Team",
-        tags: ["Software", "NEO", "Data Analysis"]
-    },
-    {
-        id: "4",
-        title: "Troubleshooting Common Labeling Artifacts",
-        description: "How to identify and fix common issues such as non-specific binding and antibody aggregation.",
-        date: "2025-08-05",
-        type: "article",
-        url: "#",
-        author: "Dr. House",
-        tags: ["Troubleshooting", "Sample Prep"]
-    },
-    {
-        id: "5",
-        title: "Case Study: Synaptic Vesicle Tracking",
-        description: "Tracking dynamics of synaptic vesicles in live neurons using high-speed SMLM.",
-        date: "2025-12-02",
-        type: "article",
-        url: "#",
-        author: "Guest Researcher",
-        tags: ["Applications", "Neurobiology", "Case Study"]
-    },
-];
-
-const ALL_TAGS = Array.from(new Set(MOCK_ARTICLES.flatMap(a => a.tags || []))).sort();
-
-
 export default function ArticlesPage() {
+    const [articles, setArticles] = useState<ContentItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState<'date-desc' | 'date-asc' | 'title'>("date-desc");
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+    useEffect(() => {
+        const fetchArticles = async () => {
+            try {
+                const res = await fetch('/api/articles');
+                const data = await res.json();
+                if (res.ok && data.articles) {
+                    const mappedArticles: ContentItem[] = data.articles.map((a: any) => ({
+                        id: a.id.toString(),
+                        title: a.title,
+                        description: `${a.journal || 'Journal'} - ${a.first_author || 'Author'}`,
+                        date: a.publication_date,
+                        type: 'article',
+                        url: a.doi_link || '#',
+                        author: a.first_author || a.last_author,
+                        tags: [
+                            ...(Array.isArray(a.application_domain) ? a.application_domain : JSON.parse(a.application_domain || '[]')),
+                            ...(Array.isArray(a.imaging_method) ? a.imaging_method : JSON.parse(a.imaging_method || '[]'))
+                        ].filter(Boolean),
+                        isNew: false
+                    }));
+                    setArticles(mappedArticles);
+                }
+            } catch (error) {
+                console.error("Failed to fetch articles", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchArticles();
+    }, []);
+
+    const allTags = useMemo(() => {
+        return Array.from(new Set(articles.flatMap(a => a.tags || []))).sort();
+    }, [articles]);
 
     const toggleTag = (tag: string) => {
         setSelectedTags(prev =>
@@ -74,14 +56,15 @@ export default function ArticlesPage() {
     };
 
     const filteredAndSortedArticles = useMemo(() => {
-        let result = [...MOCK_ARTICLES];
+        let result = [...articles];
 
         // Filter by Search
         if (search.trim()) {
             const q = search.toLowerCase();
             result = result.filter(a =>
                 a.title.toLowerCase().includes(q) ||
-                a.description.toLowerCase().includes(q)
+                a.description.toLowerCase().includes(q) ||
+                a.author?.toLowerCase().includes(q)
             );
         }
 
@@ -104,7 +87,7 @@ export default function ArticlesPage() {
         });
 
         return result;
-    }, [search, sort, selectedTags]);
+    }, [articles, search, sort, selectedTags]);
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -118,23 +101,29 @@ export default function ArticlesPage() {
             <div className="flex flex-col md:flex-row gap-8">
                 {/* Sidebar */}
                 <TagFilterSidebar
-                    availableTags={ALL_TAGS}
+                    availableTags={allTags}
                     selectedTags={selectedTags}
                     onToggleTag={toggleTag}
                 />
 
                 {/* Results Grid */}
                 <div className="flex-1">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {filteredAndSortedArticles.map(item => (
-                            <ResourceCard key={item.id} item={item} />
-                        ))}
-                    </div>
+                    {isLoading ? (
+                        <div className="text-center py-20 text-gray-500">Loading articles...</div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {filteredAndSortedArticles.map(item => (
+                                    <ResourceCard key={item.id} item={item} />
+                                ))}
+                            </div>
 
-                    {filteredAndSortedArticles.length === 0 && (
-                        <div className="text-center py-20 text-gray-500 bg-white/5 rounded-2xl border border-white/10">
-                            No articles found matching your criteria.
-                        </div>
+                            {filteredAndSortedArticles.length === 0 && (
+                                <div className="text-center py-20 text-gray-500 bg-white/5 rounded-2xl border border-white/10">
+                                    No articles found matching your criteria.
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
