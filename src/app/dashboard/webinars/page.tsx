@@ -28,13 +28,19 @@ export default function WebinarsPage() {
                         type: "webinar",
                         url: `/dashboard/webinars/${w.id}`,
                         duration: w.duration,
-                        tags: [], // Tags not yet in DB schema, default empty
+                        tags: typeof w.tags === 'string' ? JSON.parse(w.tags) : w.tags || [],
+                        isNew: w.is_new,
                         thumbnailUrl: w.video_url?.includes('youtube') ? `https://img.youtube.com/vi/${w.video_url.split('v=')[1]?.split('&')[0]}/maxresdefault.jpg` : "https://images.unsplash.com/photo-1550751827-4bd374c3f58b",
                         ...w // spread other props just in case
                     }));
                     setWebinars(mappedWebinars);
-                    // Generate tags dynamically or hardcode some relevant ones
-                    setAllTags(["Education", "SMLM", "Software", "Hardware"]);
+
+                    // Generate tags dynamically from fetched data
+                    const tags = new Set<string>();
+                    mappedWebinars.forEach((w: any) => {
+                        if (Array.isArray(w.tags)) w.tags.forEach((t: string) => tags.add(t));
+                    });
+                    setAllTags(Array.from(tags).sort());
                 }
             })
             .catch(err => console.error(err))

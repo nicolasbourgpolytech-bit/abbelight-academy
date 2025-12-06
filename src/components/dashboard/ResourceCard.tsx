@@ -40,6 +40,13 @@ export function ResourceCard({ item }: ResourceCardProps) {
                     )}
                 </div>
 
+                {/* NEW Ribbon */}
+                {item.isNew && (
+                    <div className="absolute top-4 right-4 bg-primary text-black text-xs font-bold px-3 py-1 rounded shadow-lg animate-pulse z-10">
+                        NEW
+                    </div>
+                )}
+
                 {/* Content */}
                 <div className="p-6 flex-1 flex flex-col">
                     <div className="flex justify-between items-start mb-3">
@@ -64,6 +71,6 @@ export function ResourceCard({ item }: ResourceCardProps) {
                     </div>
                 </div>
             </div>
-        </Link>
+        </Link >
     );
 }

@@ -11,4 +11,5 @@ export interface ContentItem {
     duration?: string; // Only for webinars (e.g. "45 min")
     author?: string; // Only for articles
     tags?: string[];
+    isNew?: boolean;
 }

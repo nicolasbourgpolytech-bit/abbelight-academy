@@ -14,6 +14,14 @@ export default function AdminPage() {
     const [webinars, setWebinars] = useState<any[]>([]);
     const [editingWebinar, setEditingWebinar] = useState<any>(null);
     const [isEditingWebinar, setIsEditingWebinar] = useState(false);
+    const [currentTag, setCurrentTag] = useState("");
+
+    // Derived state for tag suggestions
+    const allUniqueTags = Array.from(new Set(webinars.flatMap(w => {
+        if (Array.isArray(w.tags)) return w.tags;
+        if (typeof w.tags === 'string') return JSON.parse(w.tags);
+        return [];
+    }))).sort();
 
     const [modules, setModules] = useState<any[]>([]);
 
@@ -209,6 +217,20 @@ export default function AdminPage() {
         const currentAuthors = [...(editingWebinar.authors || [])];
         currentAuthors[idx] = { ...currentAuthors[idx], [field]: value };
         setEditingWebinar({ ...editingWebinar, authors: currentAuthors });
+    };
+
+    const addTag = () => {
+        if (!currentTag.trim()) return;
+        const currentTags = editingWebinar.tags || [];
+        if (!currentTags.includes(currentTag.trim())) {
+            setEditingWebinar({ ...editingWebinar, tags: [...currentTags, currentTag.trim()] });
+        }
+        setCurrentTag("");
+    };
+
+    const removeTag = (tagToRemove: string) => {
+        const currentTags = editingWebinar.tags || [];
+        setEditingWebinar({ ...editingWebinar, tags: currentTags.filter((t: string) => t !== tagToRemove) });
     };
 
     if (!isAuthenticated) {
@@ -566,7 +588,7 @@ export default function AdminPage() {
                                             onClick={() => {
                                                 setEditingWebinar({
                                                     title: "", duration: "", description: "", video_url: "",
-                                                    associated_products: [], authors: []
+                                                    associated_products: [], authors: [], tags: [], is_new: false
                                                 });
                                                 setIsEditingWebinar(true);
                                             }}
@@ -678,6 +700,51 @@ export default function AdminPage() {
                                                 className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
                                                 placeholder="https://..."
                                             />
+                                            />
+                                        </div>
+
+                                        {/* Tags & New Flag */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tags</label>
+                                                <div className="flex gap-2 mb-2">
+                                                    <input
+                                                        type="text"
+                                                        value={currentTag}
+                                                        onChange={(e) => setCurrentTag(e.target.value)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                                                        className="flex-1 bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                        placeholder="Add a tag..."
+                                                        list="tag-suggestions"
+                                                    />
+                                                    <datalist id="tag-suggestions">
+                                                        {allUniqueTags.map((tag: any) => <option key={tag} value={tag} />)}
+                                                    </datalist>
+                                                    <button type="button" onClick={addTag} className="bg-white/10 hover:bg-white/20 text-white px-4 rounded-lg font-bold">+</button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {editingWebinar?.tags?.map((tag: string) => (
+                                                        <span key={tag} className="bg-primary/20 text-primary text-xs px-2 py-1 rounded flex items-center gap-1">
+                                                            {tag}
+                                                            <button type="button" onClick={() => removeTag(tag)} className="hover:text-white">&times;</button>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center">
+                                                <label className="flex items-center gap-3 cursor-pointer group">
+                                                    <div className={`w-6 h-6 rounded border flex items-center justify-center transition-colors ${editingWebinar?.is_new ? 'bg-primary border-primary' : 'border-gray-500 bg-transparent'}`}>
+                                                        {editingWebinar?.is_new && <svg className="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="hidden"
+                                                        checked={editingWebinar?.is_new || false}
+                                                        onChange={(e) => setEditingWebinar({ ...editingWebinar, is_new: e.target.checked })}
+                                                    />
+                                                    <span className="font-bold text-gray-300 group-hover:text-white transition-colors">Mark as "New"</span>
+                                                </label>
+                                            </div>
                                         </div>
 
                                         {/* Associated Products */}

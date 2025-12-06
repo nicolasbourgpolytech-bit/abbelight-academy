@@ -24,19 +24,21 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { title, duration, description, video_url, associated_products, authors } = body;
+        const { title, duration, description, video_url, associated_products, authors, tags, is_new } = body;
 
         if (!title) {
             return NextResponse.json({ error: 'Title is required' }, { status: 400 });
         }
 
-        // associated_products and authors should be passed as JSON arrays
+        // JSON fields
         const associatedProductsJson = JSON.stringify(associated_products || []);
         const authorsJson = JSON.stringify(authors || []);
+        const tagsJson = JSON.stringify(tags || []);
+        const isNewBool = !!is_new;
 
         const { rows } = await sql`
-      INSERT INTO webinars (title, duration, description, video_url, associated_products, authors)
-      VALUES (${title}, ${duration}, ${description}, ${video_url}, ${associatedProductsJson}, ${authorsJson})
+      INSERT INTO webinars (title, duration, description, video_url, associated_products, authors, tags, is_new)
+      VALUES (${title}, ${duration}, ${description}, ${video_url}, ${associatedProductsJson}, ${authorsJson}, ${tagsJson}, ${isNewBool})
       RETURNING *;
     `;
 
@@ -49,7 +51,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
     try {
         const body = await request.json();
-        const { id, title, duration, description, video_url, associated_products, authors } = body;
+        const { id, title, duration, description, video_url, associated_products, authors, tags, is_new } = body;
 
         if (!id || !title) {
             return NextResponse.json({ error: 'ID and Title are required' }, { status: 400 });
@@ -57,11 +59,14 @@ export async function PUT(request: Request) {
 
         const associatedProductsJson = JSON.stringify(associated_products || []);
         const authorsJson = JSON.stringify(authors || []);
+        const tagsJson = JSON.stringify(tags || []);
+        const isNewBool = !!is_new;
 
         const { rows } = await sql`
       UPDATE webinars 
       SET title = ${title}, duration = ${duration}, description = ${description}, 
-          video_url = ${video_url}, associated_products = ${associatedProductsJson}, authors = ${authorsJson}
+          video_url = ${video_url}, associated_products = ${associatedProductsJson}, authors = ${authorsJson},
+          tags = ${tagsJson}, is_new = ${isNewBool}
       WHERE id = ${id}
       RETURNING *;
     `;
