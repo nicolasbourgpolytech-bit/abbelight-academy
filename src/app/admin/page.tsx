@@ -700,7 +700,6 @@ export default function AdminPage() {
                                                 className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
                                                 placeholder="https://..."
                                             />
-                                            />
                                         </div>
 
                                         {/* Tags & New Flag */}
