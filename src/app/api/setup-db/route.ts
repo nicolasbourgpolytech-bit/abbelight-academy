@@ -14,10 +14,11 @@ export async function GET() {
         authors JSONB DEFAULT '[]'::jsonb,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
-      
-      ALTER TABLE webinars ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'::jsonb;
-      ALTER TABLE webinars ADD COLUMN IF NOT EXISTS is_new BOOLEAN DEFAULT false;
     `;
+
+    // Execute schema updates sequentially to ensure reliability
+    await sql`ALTER TABLE webinars ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'::jsonb;`;
+    await sql`ALTER TABLE webinars ADD COLUMN IF NOT EXISTS is_new BOOLEAN DEFAULT false;`;
     return NextResponse.json({ message: "Table 'webinars' created successfully!" }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error }, { status: 500 });
