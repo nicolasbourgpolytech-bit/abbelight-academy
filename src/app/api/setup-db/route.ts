@@ -22,17 +22,21 @@ export async function GET(request: Request) {
     await sql`ALTER TABLE webinars ADD COLUMN IF NOT EXISTS date TIMESTAMP WITH TIME ZONE`;
     await sql`ALTER TABLE webinars ADD COLUMN IF NOT EXISTS date TIMESTAMP WITH TIME ZONE`;
 
+    // Drops table if exists to enforce new schema (Dev only behavior ideally, but requested for this change)
+    await sql`DROP TABLE IF EXISTS articles`;
+
     await sql`CREATE TABLE IF NOT EXISTS articles (
         id SERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
-        description TEXT,
-        content TEXT,
-        cover_image TEXT,
-        associated_products JSONB DEFAULT '[]'::jsonb,
-        authors JSONB DEFAULT '[]'::jsonb,
-        tags JSONB DEFAULT '[]'::jsonb,
-        is_new BOOLEAN DEFAULT false,
-        date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        application_domain JSONB DEFAULT '[]'::jsonb,
+        imaging_method JSONB DEFAULT '[]'::jsonb,
+        abbelight_imaging_modality JSONB DEFAULT '[]'::jsonb,
+        abbelight_product JSONB DEFAULT '[]'::jsonb,
+        journal VARCHAR(255),
+        last_author VARCHAR(255),
+        abbelight_customer VARCHAR(255),
+        publication_date DATE,
+        doi_link TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )`;
 

@@ -313,7 +313,7 @@ export default function AdminPage() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (!confirm("Importing will add articles to the database. Ensure CSV format is: Title, Description, Content, CoverImageURL, Tags(semicolon sep), Date(YYYY-MM-DD). Continue?")) {
+        if (!confirm("Importing will add articles to the database.\nEnsure CSV format is:\nTitle, Application Domain (sep ;), Imaging Method (sep ;), Modality (sep ;), Product (sep ;), Journal, Last Author, Customer, Date (YYYY-MM-DD), DOI.\nContinue?")) {
             e.target.value = ''; // Reset
             return;
         }
@@ -326,30 +326,33 @@ export default function AdminPage() {
 
             for (let i = 1; i < lines.length; i++) { // Skip header
                 const line = lines[i].trim();
-                // Regex to split by comma outside quotes
                 const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
 
-                if (cols.length >= 2) {
+                if (cols.length >= 10) {
                     const clean = (s: string) => s ? s.replace(/^"|"$/g, '').replace(/""/g, '"').trim() : '';
+                    const splitArray = (s: string) => s ? s.split(';').map(v => v.trim()).filter(Boolean) : [];
 
                     const title = clean(cols[0]);
-                    const description = clean(cols[1]);
-                    const content = clean(cols[2]);
-                    const cover_image = clean(cols[3]);
-                    const tagsStr = clean(cols[4]);
-                    const date = clean(cols[5]);
+                    const application_domain = splitArray(clean(cols[1]));
+                    const imaging_method = splitArray(clean(cols[2]));
+                    const abbelight_imaging_modality = splitArray(clean(cols[3]));
+                    const abbelight_product = splitArray(clean(cols[4]));
+                    const journal = clean(cols[5]);
+                    const last_author = clean(cols[6]);
+                    const abbelight_customer = clean(cols[7]);
+                    const publication_date = clean(cols[8]);
+                    const doi_link = clean(cols[9]);
 
                     if (!title) continue;
-
-                    const tags = tagsStr ? tagsStr.split(';').map(t => t.trim()) : [];
 
                     await fetch('/api/articles', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            title, description, content, cover_image, tags, date,
-                            is_new: true,
-                            authors: [], associated_products: []
+                            title, application_domain, imaging_method,
+                            abbelight_imaging_modality, abbelight_product,
+                            journal, last_author, abbelight_customer,
+                            publication_date, doi_link
                         })
                     });
                     success++;
@@ -369,35 +372,28 @@ export default function AdminPage() {
         }
     };
 
-    // Article Helpers
-    const addArticleTag = () => {
-        if (!currentTag.trim()) return;
-        const currentTags = editingArticle.tags || [];
-        if (!currentTags.includes(currentTag.trim())) {
-            setEditingArticle({ ...editingArticle, tags: [...currentTags, currentTag.trim()] });
+    // Generic Helper for Array Fields (Application Domain, Imaging Method, etc.)
+    const toggleArrayItem = (field: string, item: string) => {
+        if (!item.trim()) return;
+        const currentItems = editingArticle[field] || [];
+        if (currentItems.includes(item)) {
+            setEditingArticle({ ...editingArticle, [field]: currentItems.filter((i: string) => i !== item) });
+        } else {
+            setEditingArticle({ ...editingArticle, [field]: [...currentItems, item] });
         }
-        setCurrentTag("");
     };
 
-    const removeArticleTag = (tagToRemove: string) => {
-        const currentTags = editingArticle.tags || [];
-        setEditingArticle({ ...editingArticle, tags: currentTags.filter((t: string) => t !== tagToRemove) });
+    const addArrayItem = (field: string, item: string) => {
+        if (!item.trim()) return;
+        const currentItems = editingArticle[field] || [];
+        if (!currentItems.includes(item)) {
+            setEditingArticle({ ...editingArticle, [field]: [...currentItems, item] });
+        }
     };
 
-    const addArticleAuthor = () => {
-        const currentAuthors = editingArticle.authors || [];
-        setEditingArticle({ ...editingArticle, authors: [...currentAuthors, { name: "", firstName: "", title: "", institute: "", photo: "" }] });
-    };
-
-    const removeArticleAuthor = (idx: number) => {
-        const apps = editingArticle.authors || [];
-        setEditingArticle({ ...editingArticle, authors: apps.filter((_: any, i: number) => i !== idx) });
-    };
-
-    const updateArticleAuthor = (idx: number, field: string, value: string) => {
-        const apps = [...(editingArticle.authors || [])];
-        apps[idx] = { ...apps[idx], [field]: value };
-        setEditingArticle({ ...editingArticle, authors: apps });
+    const removeArrayItem = (field: string, item: string) => {
+        const currentItems = editingArticle[field] || [];
+        setEditingArticle({ ...editingArticle, [field]: currentItems.filter((i: string) => i !== item) });
     };
 
     if (!isAuthenticated) {
@@ -1162,136 +1158,107 @@ export default function AdminPage() {
                                     </div>
 
                                     <div className="bg-gray-900/40 border border-white/10 rounded-xl p-6 space-y-6">
+                                        {/* Title & Date */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div>
-                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Article Title</label>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Paper Title</label>
                                                 <input
                                                     type="text"
                                                     value={editingArticle?.title || ""}
                                                     onChange={(e) => setEditingArticle({ ...editingArticle, title: e.target.value })}
                                                     className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
-                                                    placeholder="Article Title"
+                                                    placeholder="Title"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Date</label>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Publication Date</label>
                                                 <input
                                                     type="date"
-                                                    value={editingArticle?.date ? new Date(editingArticle.date).toISOString().split('T')[0] : ""}
-                                                    onChange={(e) => setEditingArticle({ ...editingArticle, date: e.target.value })}
+                                                    value={editingArticle?.publication_date ? new Date(editingArticle.publication_date).toISOString().split('T')[0] : ""}
+                                                    onChange={(e) => setEditingArticle({ ...editingArticle, publication_date: e.target.value })}
                                                     className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
                                                 />
                                             </div>
                                         </div>
 
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Description (Summary)</label>
-                                            <textarea
-                                                value={editingArticle?.description || ""}
-                                                onChange={(e) => setEditingArticle({ ...editingArticle, description: e.target.value })}
-                                                rows={3}
-                                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
-                                                placeholder="Short summary..."
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Content (Markdown/HTML)</label>
-                                            <textarea
-                                                value={editingArticle?.content || ""}
-                                                onChange={(e) => setEditingArticle({ ...editingArticle, content: e.target.value })}
-                                                rows={10}
-                                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors font-mono text-sm"
-                                                placeholder="# Title\n\nContent..."
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Cover Image URL</label>
-                                            <input
-                                                type="text"
-                                                value={editingArticle?.cover_image || ""}
-                                                onChange={(e) => setEditingArticle({ ...editingArticle, cover_image: e.target.value })}
-                                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
-                                                placeholder="https://..."
-                                            />
-                                        </div>
-
-                                        {/* Tags & New Flag */}
+                                        {/* Single Text Fields */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div>
-                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tags</label>
-                                                <div className="flex gap-2 mb-2">
-                                                    <input
-                                                        type="text"
-                                                        value={currentTag}
-                                                        onChange={(e) => setCurrentTag(e.target.value)}
-                                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addArticleTag())}
-                                                        className="flex-1 bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
-                                                        placeholder="Add a tag..."
-                                                        list="tag-suggestions"
-                                                    />
-                                                    <datalist id="tag-suggestions">
-                                                        {allUniqueTags.map((tag: any) => <option key={tag} value={tag} />)}
-                                                    </datalist>
-                                                    <button type="button" onClick={addArticleTag} className="bg-white/10 hover:bg-white/20 text-white px-4 rounded-lg font-bold">+</button>
-                                                </div>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {editingArticle?.tags?.map((tag: string) => (
-                                                        <span key={tag} className="bg-primary/20 text-primary text-xs px-2 py-1 rounded flex items-center gap-1">
-                                                            {tag}
-                                                            <button type="button" onClick={() => removeArticleTag(tag)} className="hover:text-white">&times;</button>
-                                                        </span>
-                                                    ))}
-                                                </div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Journal</label>
+                                                <input
+                                                    type="text"
+                                                    value={editingArticle?.journal || ""}
+                                                    onChange={(e) => setEditingArticle({ ...editingArticle, journal: e.target.value })}
+                                                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                    placeholder="Nature"
+                                                />
                                             </div>
-                                            <div className="flex items-center">
-                                                <label className="flex items-center gap-3 cursor-pointer group">
-                                                    <div className={`w-6 h-6 rounded border flex items-center justify-center transition-colors ${editingArticle?.is_new ? 'bg-primary border-primary' : 'border-gray-500 bg-transparent'}`}>
-                                                        {editingArticle?.is_new && <svg className="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                                                    </div>
-                                                    <input
-                                                        type="checkbox"
-                                                        className="hidden"
-                                                        checked={editingArticle?.is_new || false}
-                                                        onChange={(e) => setEditingArticle({ ...editingArticle, is_new: e.target.checked })}
-                                                    />
-                                                    <span className="font-bold text-gray-300 group-hover:text-white transition-colors">Mark as "New"</span>
-                                                </label>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Last Author</label>
+                                                <input
+                                                    type="text"
+                                                    value={editingArticle?.last_author || ""}
+                                                    onChange={(e) => setEditingArticle({ ...editingArticle, last_author: e.target.value })}
+                                                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                    placeholder="Doe J."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Abbelight Customer</label>
+                                                <input
+                                                    type="text"
+                                                    value={editingArticle?.abbelight_customer || ""}
+                                                    onChange={(e) => setEditingArticle({ ...editingArticle, abbelight_customer: e.target.value })}
+                                                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                    placeholder="Institute / Lab Name"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">DOI Link</label>
+                                                <input
+                                                    type="text"
+                                                    value={editingArticle?.doi_link || ""}
+                                                    onChange={(e) => setEditingArticle({ ...editingArticle, doi_link: e.target.value })}
+                                                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                    placeholder="https://doi.org/..."
+                                                />
                                             </div>
                                         </div>
 
-                                        {/* Authors */}
-                                        <div>
-                                            <div className="flex items-center justify-between mb-2">
-                                                <label className="block text-xs font-bold text-gray-500 uppercase">Authors</label>
-                                                <button type="button" onClick={addArticleAuthor} className="text-xs text-primary hover:text-white font-bold">+ Add Author</button>
-                                            </div>
-                                            <div className="space-y-4">
-                                                {editingArticle?.authors?.map((author: any, idx: number) => (
-                                                    <div key={idx} className="bg-black/30 border border-white/5 rounded-lg p-3 relative">
-                                                        <button type="button" onClick={() => removeArticleAuthor(idx)} className="absolute top-2 right-2 text-red-500 hover:text-red-400">
-                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                                        </button>
-                                                        <div className="grid grid-cols-2 gap-2 mb-2">
-                                                            <input
-                                                                type="text"
-                                                                placeholder="First Name"
-                                                                value={author.firstName}
-                                                                onChange={(e) => updateArticleAuthor(idx, 'firstName', e.target.value)}
-                                                                className="bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white"
-                                                            />
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Last Name"
-                                                                value={author.name}
-                                                                onChange={(e) => updateArticleAuthor(idx, 'name', e.target.value)}
-                                                                className="bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white"
-                                                            />
-                                                        </div>
+                                        {/* Array Fields */}
+                                        <div className="space-y-6">
+                                            {[
+                                                { label: "Application Domain", field: "application_domain" },
+                                                { label: "Imaging Method", field: "imaging_method" },
+                                                { label: "Abbelight Modality", field: "abbelight_imaging_modality" },
+                                                { label: "Abbelight Product", field: "abbelight_product" },
+                                            ].map((item) => (
+                                                <div key={item.field}>
+                                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">{item.label}</label>
+                                                    <div className="flex gap-2 mb-2">
+                                                        <input
+                                                            type="text"
+                                                            className="flex-1 bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white text-sm"
+                                                            placeholder={`Add ${item.label}...`}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.preventDefault();
+                                                                    addArrayItem(item.field, (e.target as HTMLInputElement).value);
+                                                                    (e.target as HTMLInputElement).value = '';
+                                                                }
+                                                            }}
+                                                        />
                                                     </div>
-                                                ))}
-                                            </div>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {editingArticle?.[item.field]?.map((val: string) => (
+                                                            <span key={val} className="bg-primary/20 text-primary text-xs px-2 py-1 rounded flex items-center gap-1">
+                                                                {val}
+                                                                <button type="button" onClick={() => removeArrayItem(item.field, val)} className="hover:text-white">&times;</button>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
 

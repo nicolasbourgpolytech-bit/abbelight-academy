@@ -24,24 +24,34 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { title, description, content, cover_image, associated_products, authors, tags, is_new, date } = body;
+        const {
+            title, application_domain, imaging_method, abbelight_imaging_modality,
+            abbelight_product, journal, last_author, abbelight_customer,
+            publication_date, doi_link
+        } = body;
 
         if (!title) {
             return NextResponse.json({ error: 'Title is required' }, { status: 400 });
         }
 
-        // JSON fields
-        const associatedProductsJson = JSON.stringify(associated_products || []);
-        const authorsJson = JSON.stringify(authors || []);
-        const tagsJson = JSON.stringify(tags || []);
-        const isNewBool = !!is_new;
-        const dateValue = date || new Date().toISOString();
+        const appDomainJson = JSON.stringify(application_domain || []);
+        const imgMethodJson = JSON.stringify(imaging_method || []);
+        const abbImgModJson = JSON.stringify(abbelight_imaging_modality || []);
+        const abbProdJson = JSON.stringify(abbelight_product || []);
 
         const { rows } = await sql`
-      INSERT INTO articles (title, description, content, cover_image, associated_products, authors, tags, is_new, date)
-      VALUES (${title}, ${description}, ${content}, ${cover_image}, ${associatedProductsJson}, ${authorsJson}, ${tagsJson}, ${isNewBool}, ${dateValue})
-      RETURNING *;
-    `;
+            INSERT INTO articles (
+                title, application_domain, imaging_method, abbelight_imaging_modality, 
+                abbelight_product, journal, last_author, abbelight_customer, 
+                publication_date, doi_link
+            )
+            VALUES (
+                ${title}, ${appDomainJson}, ${imgMethodJson}, ${abbImgModJson}, 
+                ${abbProdJson}, ${journal}, ${last_author}, ${abbelight_customer}, 
+                ${publication_date}, ${doi_link}
+            )
+            RETURNING *;
+        `;
 
         return NextResponse.json({ article: rows[0] }, { status: 201 });
     } catch (error) {
@@ -52,26 +62,31 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
     try {
         const body = await request.json();
-        const { id, title, description, content, cover_image, associated_products, authors, tags, is_new, date } = body;
+        const {
+            id, title, application_domain, imaging_method, abbelight_imaging_modality,
+            abbelight_product, journal, last_author, abbelight_customer,
+            publication_date, doi_link
+        } = body;
 
         if (!id || !title) {
             return NextResponse.json({ error: 'ID and Title are required' }, { status: 400 });
         }
 
-        const associatedProductsJson = JSON.stringify(associated_products || []);
-        const authorsJson = JSON.stringify(authors || []);
-        const tagsJson = JSON.stringify(tags || []);
-        const isNewBool = !!is_new;
-        const dateValue = date || new Date().toISOString();
+        const appDomainJson = JSON.stringify(application_domain || []);
+        const imgMethodJson = JSON.stringify(imaging_method || []);
+        const abbImgModJson = JSON.stringify(abbelight_imaging_modality || []);
+        const abbProdJson = JSON.stringify(abbelight_product || []);
 
         const { rows } = await sql`
-      UPDATE articles 
-      SET title = ${title}, description = ${description}, content = ${content}, 
-          cover_image = ${cover_image}, associated_products = ${associatedProductsJson}, authors = ${authorsJson},
-          tags = ${tagsJson}, is_new = ${isNewBool}, date = ${dateValue}
-      WHERE id = ${id}
-      RETURNING *;
-    `;
+            UPDATE articles 
+            SET title = ${title}, application_domain = ${appDomainJson}, 
+                imaging_method = ${imgMethodJson}, abbelight_imaging_modality = ${abbImgModJson},
+                abbelight_product = ${abbProdJson}, journal = ${journal}, 
+                last_author = ${last_author}, abbelight_customer = ${abbelight_customer},
+                publication_date = ${publication_date}, doi_link = ${doi_link}
+            WHERE id = ${id}
+            RETURNING *;
+        `;
 
         return NextResponse.json({ article: rows[0] }, { status: 200 });
     } catch (error) {
