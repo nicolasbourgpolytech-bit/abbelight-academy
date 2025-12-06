@@ -16,12 +16,25 @@ export default function AdminPage() {
     const [isEditingWebinar, setIsEditingWebinar] = useState(false);
     const [currentTag, setCurrentTag] = useState("");
 
-    // Derived state for tag suggestions
-    const allUniqueTags = Array.from(new Set(webinars.flatMap(w => {
-        if (Array.isArray(w.tags)) return w.tags;
-        if (typeof w.tags === 'string') return JSON.parse(w.tags);
-        return [];
-    }))).sort();
+    // Article State
+    const [articles, setArticles] = useState<any[]>([]);
+    const [editingArticle, setEditingArticle] = useState<any>(null);
+    const [isEditingArticle, setIsEditingArticle] = useState(false);
+    const [importing, setImporting] = useState(false);
+
+    // Derived state for tag suggestions (Webinars + Articles)
+    const allUniqueTags = Array.from(new Set([
+        ...webinars.flatMap(w => {
+            if (Array.isArray(w.tags)) return w.tags;
+            if (typeof w.tags === 'string') return JSON.parse(w.tags);
+            return [];
+        }),
+        ...articles.flatMap(a => {
+            if (Array.isArray(a.tags)) return a.tags;
+            if (typeof a.tags === 'string') return JSON.parse(a.tags);
+            return [];
+        })
+    ])).sort();
 
     const [modules, setModules] = useState<any[]>([]);
 
@@ -80,6 +93,14 @@ export default function AdminPage() {
                 .then(res => res.json())
                 .then(data => {
                     if (data.webinars) setWebinars(data.webinars);
+                })
+                .catch(err => console.error(err));
+
+            // Fetch articles
+            fetch('/api/articles')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.articles) setArticles(data.articles);
                 })
                 .catch(err => console.error(err));
         }
@@ -233,6 +254,148 @@ export default function AdminPage() {
         setEditingWebinar({ ...editingWebinar, tags: currentTags.filter((t: string) => t !== tagToRemove) });
     };
 
+    // --- ARTICLE HANDLERS ---
+
+    const handleSaveArticle = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const isUpdate = !!editingArticle.id;
+            const method = isUpdate ? 'PUT' : 'POST';
+
+            const res = await fetch('/api/articles', {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editingArticle),
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                alert("Article saved successfully!");
+                if (isUpdate) {
+                    setArticles(articles.map(a => a.id === data.article.id ? data.article : a));
+                } else {
+                    setArticles([data.article, ...articles]);
+                }
+                setIsEditingArticle(false);
+            } else {
+                alert("Error: " + (data.error?.message || JSON.stringify(data.error)));
+            }
+        } catch (error) {
+            alert("Failed to save article");
+        }
+    };
+
+    const handleDeleteArticle = async (id: number) => {
+        if (!confirm("Are you sure you want to delete this article?")) return;
+        try {
+            const res = await fetch(`/api/articles?id=${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                setArticles(articles.filter(a => a.id !== id));
+            } else {
+                alert("Failed to delete article");
+            }
+        } catch (e) {
+            alert("Error deleting article");
+        }
+    };
+
+    const handleImportArticles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!confirm("Importing will add articles to the database. Ensure CSV format is: Title, Description, Content, CoverImageURL, Tags(semicolon sep), Date(YYYY-MM-DD). Continue?")) {
+            e.target.value = ''; // Reset
+            return;
+        }
+
+        setImporting(true);
+        try {
+            const text = await file.text();
+            const lines = text.split('\n');
+            let success = 0;
+
+            for (let i = 1; i < lines.length; i++) { // Skip header
+                const line = lines[i].trim();
+                // Naive CSV parse handling quotes
+                const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+                if (!matches || matches.length < 2) continue;
+
+                const clean = (s: string) => s ? s.replace(/^"|"$/g, '').replace(/""/g, '"').trim() : '';
+
+                // Assuming Mapping: 0:Title, 1:Desc, 2:Content, 3:Image, 4:Tags, 5:Date
+                const title = clean(lines[i].split(',')[0]); // Fallback to simple split if regex fails, but let's try to be consistent
+
+                // Using a slightly more robust splitter or just simple one for MVP
+                // Let's stick to simple split for now but warn user.
+                const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Regex to split by comma outside quotes
+
+                if (cols.length >= 2) {
+                    const title = clean(cols[0]);
+                    const description = clean(cols[1]);
+                    const content = clean(cols[2]);
+                    const cover_image = clean(cols[3]);
+                    const tagsStr = clean(cols[4]);
+                    const date = clean(cols[5]);
+
+                    const tags = tagsStr ? tagsStr.split(';').map(t => t.trim()) : [];
+
+                    await fetch('/api/articles', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            title, description, content, cover_image, tags, date,
+                            is_new: true,
+                            authors: [], associated_products: []
+                        })
+                    });
+                    success++;
+                }
+            }
+            alert(`Imported ${success} articles successfully.`);
+            // Refresh
+            const res = await fetch('/api/articles');
+            const data = await res.json();
+            if (data.articles) setArticles(data.articles);
+
+        } catch (err) {
+            alert("Error importing: " + err);
+        } finally {
+            setImporting(false);
+            e.target.value = '';
+        }
+    };
+
+    // Article Helpers
+    const addArticleTag = () => {
+        if (!currentTag.trim()) return;
+        const currentTags = editingArticle.tags || [];
+        if (!currentTags.includes(currentTag.trim())) {
+            setEditingArticle({ ...editingArticle, tags: [...currentTags, currentTag.trim()] });
+        }
+        setCurrentTag("");
+    };
+
+    const removeArticleTag = (tagToRemove: string) => {
+        const currentTags = editingArticle.tags || [];
+        setEditingArticle({ ...editingArticle, tags: currentTags.filter((t: string) => t !== tagToRemove) });
+    };
+
+    const addArticleAuthor = () => {
+        const currentAuthors = editingArticle.authors || [];
+        setEditingArticle({ ...editingArticle, authors: [...currentAuthors, { name: "", firstName: "", title: "", institute: "", photo: "" }] });
+    };
+
+    const removeArticleAuthor = (idx: number) => {
+        const apps = editingArticle.authors || [];
+        setEditingArticle({ ...editingArticle, authors: apps.filter((_: any, i: number) => i !== idx) });
+    };
+
+    const updateArticleAuthor = (idx: number, field: string, value: string) => {
+        const apps = [...(editingArticle.authors || [])];
+        apps[idx] = { ...apps[idx], [field]: value };
+        setEditingArticle({ ...editingArticle, authors: apps });
+    };
+
     if (!isAuthenticated) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
@@ -313,6 +476,12 @@ export default function AdminPage() {
                             className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'users' ? 'bg-primary/10 text-primary border border-primary/20' : 'text-gray-400 hover:bg-white/5 hooker:text-white'}`}
                         >
                             Users
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("articles")}
+                            className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'articles' ? 'bg-primary/10 text-primary border border-primary/20' : 'text-gray-400 hover:bg-white/5 hooker:text-white'}`}
+                        >
+                            Articles
                         </button>
                     </nav>
                 </aside>
@@ -865,6 +1034,251 @@ export default function AdminPage() {
                                             className="px-8 py-3 bg-primary text-black rounded-lg font-bold uppercase text-sm hover:bg-white transition-colors shadow-lg shadow-primary/20"
                                         >
                                             Save Webinar
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+                    )}
+
+                    {activeTab === 'articles' && (
+                        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+                            {!isEditingArticle ? (
+                                <>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h2 className="text-2xl font-bold text-white">Articles</h2>
+                                            <p className="text-gray-400 text-sm">Manage blog posts and technical articles.</p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <label className={`bg-white/10 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-white/20 transition-colors flex items-center gap-2 border border-white/10 cursor-pointer ${importing ? 'opacity-50 pointer-events-none' : ''}`}>
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                                {importing ? 'Importing...' : 'Import CSV'}
+                                                <input type="file" accept=".csv" onChange={handleImportArticles} className="hidden" disabled={importing} />
+                                            </label>
+                                            <button
+                                                onClick={() => {
+                                                    setEditingArticle({
+                                                        title: "", description: "", content: "", cover_image: "",
+                                                        authors: [], tags: [], is_new: false,
+                                                        date: new Date().toISOString().split('T')[0]
+                                                    });
+                                                    setIsEditingArticle(true);
+                                                }}
+                                                className="bg-primary text-black px-4 py-2 rounded-lg font-bold text-sm hover:bg-white transition-colors flex items-center gap-2"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                                                New Article
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {articles.map((article: any) => (
+                                            <div key={article.id} className="bg-gray-900/40 border border-white/10 rounded-xl p-4 flex items-center justify-between hover:border-primary/30 transition-colors group">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-16 h-16 bg-gray-800 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-500 font-bold text-xl overflow-hidden">
+                                                        {article.cover_image ? <img src={article.cover_image} alt="" className="w-full h-full object-cover" /> : 'A' + article.id}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-white group-hover:text-primary transition-colors">{article.title}</h3>
+                                                        <div className="flex items-center gap-3 mt-1">
+                                                            <span className="text-xs bg-white/5 px-2 py-0.5 rounded text-gray-400">{new Date(article.date).toLocaleDateString()}</span>
+                                                            <div className="flex gap-1">
+                                                                {article.tags?.slice(0, 3).map((t: string) => <span key={t} className="text-[10px] bg-primary/10 text-primary px-1 rounded">{t}</span>)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingArticle(article);
+                                                            setIsEditingArticle(true);
+                                                        }}
+                                                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Edit"
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteArticle(article.id)}
+                                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {articles.length === 0 && (
+                                            <div className="text-center py-10 text-gray-500">
+                                                No articles found. Create one or Import CSV.
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <form onSubmit={handleSaveArticle} className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h2 className="text-2xl font-bold text-white">
+                                            {editingArticle?.title ? 'Edit Article' : 'New Article'}
+                                        </h2>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsEditingArticle(false)}
+                                            className="text-sm text-gray-400 hover:text-white"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+
+                                    <div className="bg-gray-900/40 border border-white/10 rounded-xl p-6 space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Article Title</label>
+                                                <input
+                                                    type="text"
+                                                    value={editingArticle?.title || ""}
+                                                    onChange={(e) => setEditingArticle({ ...editingArticle, title: e.target.value })}
+                                                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                    placeholder="Article Title"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Date</label>
+                                                <input
+                                                    type="date"
+                                                    value={editingArticle?.date ? new Date(editingArticle.date).toISOString().split('T')[0] : ""}
+                                                    onChange={(e) => setEditingArticle({ ...editingArticle, date: e.target.value })}
+                                                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Description (Summary)</label>
+                                            <textarea
+                                                value={editingArticle?.description || ""}
+                                                onChange={(e) => setEditingArticle({ ...editingArticle, description: e.target.value })}
+                                                rows={3}
+                                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                placeholder="Short summary..."
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Content (Markdown/HTML)</label>
+                                            <textarea
+                                                value={editingArticle?.content || ""}
+                                                onChange={(e) => setEditingArticle({ ...editingArticle, content: e.target.value })}
+                                                rows={10}
+                                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors font-mono text-sm"
+                                                placeholder="# Title\n\nContent..."
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Cover Image URL</label>
+                                            <input
+                                                type="text"
+                                                value={editingArticle?.cover_image || ""}
+                                                onChange={(e) => setEditingArticle({ ...editingArticle, cover_image: e.target.value })}
+                                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                placeholder="https://..."
+                                            />
+                                        </div>
+
+                                        {/* Tags & New Flag */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tags</label>
+                                                <div className="flex gap-2 mb-2">
+                                                    <input
+                                                        type="text"
+                                                        value={currentTag}
+                                                        onChange={(e) => setCurrentTag(e.target.value)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addArticleTag())}
+                                                        className="flex-1 bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                        placeholder="Add a tag..."
+                                                        list="tag-suggestions"
+                                                    />
+                                                    <datalist id="tag-suggestions">
+                                                        {allUniqueTags.map((tag: any) => <option key={tag} value={tag} />)}
+                                                    </datalist>
+                                                    <button type="button" onClick={addArticleTag} className="bg-white/10 hover:bg-white/20 text-white px-4 rounded-lg font-bold">+</button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {editingArticle?.tags?.map((tag: string) => (
+                                                        <span key={tag} className="bg-primary/20 text-primary text-xs px-2 py-1 rounded flex items-center gap-1">
+                                                            {tag}
+                                                            <button type="button" onClick={() => removeArticleTag(tag)} className="hover:text-white">&times;</button>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center">
+                                                <label className="flex items-center gap-3 cursor-pointer group">
+                                                    <div className={`w-6 h-6 rounded border flex items-center justify-center transition-colors ${editingArticle?.is_new ? 'bg-primary border-primary' : 'border-gray-500 bg-transparent'}`}>
+                                                        {editingArticle?.is_new && <svg className="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="hidden"
+                                                        checked={editingArticle?.is_new || false}
+                                                        onChange={(e) => setEditingArticle({ ...editingArticle, is_new: e.target.checked })}
+                                                    />
+                                                    <span className="font-bold text-gray-300 group-hover:text-white transition-colors">Mark as "New"</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        {/* Authors */}
+                                        <div>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <label className="block text-xs font-bold text-gray-500 uppercase">Authors</label>
+                                                <button type="button" onClick={addArticleAuthor} className="text-xs text-primary hover:text-white font-bold">+ Add Author</button>
+                                            </div>
+                                            <div className="space-y-4">
+                                                {editingArticle?.authors?.map((author: any, idx: number) => (
+                                                    <div key={idx} className="bg-black/30 border border-white/5 rounded-lg p-3 relative">
+                                                        <button type="button" onClick={() => removeArticleAuthor(idx)} className="absolute top-2 right-2 text-red-500 hover:text-red-400">
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                        </button>
+                                                        <div className="grid grid-cols-2 gap-2 mb-2">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="First Name"
+                                                                value={author.firstName}
+                                                                onChange={(e) => updateArticleAuthor(idx, 'firstName', e.target.value)}
+                                                                className="bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Last Name"
+                                                                value={author.name}
+                                                                onChange={(e) => updateArticleAuthor(idx, 'name', e.target.value)}
+                                                                className="bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsEditingArticle(false)}
+                                            className="px-6 py-3 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="px-8 py-3 bg-primary text-black rounded-lg font-bold uppercase text-sm hover:bg-white transition-colors shadow-lg shadow-primary/20"
+                                        >
+                                            Save Article
                                         </button>
                                     </div>
                                 </form>

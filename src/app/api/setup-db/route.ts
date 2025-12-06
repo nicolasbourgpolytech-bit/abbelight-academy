@@ -20,7 +20,23 @@ export async function GET(request: Request) {
     await sql`ALTER TABLE webinars ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'::jsonb`;
     await sql`ALTER TABLE webinars ADD COLUMN IF NOT EXISTS is_new BOOLEAN DEFAULT false`;
     await sql`ALTER TABLE webinars ADD COLUMN IF NOT EXISTS date TIMESTAMP WITH TIME ZONE`;
-    return NextResponse.json({ message: "Table 'webinars' created successfully!" }, { status: 200 });
+    await sql`ALTER TABLE webinars ADD COLUMN IF NOT EXISTS date TIMESTAMP WITH TIME ZONE`;
+
+    await sql`CREATE TABLE IF NOT EXISTS articles (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        content TEXT,
+        cover_image TEXT,
+        associated_products JSONB DEFAULT '[]'::jsonb,
+        authors JSONB DEFAULT '[]'::jsonb,
+        tags JSONB DEFAULT '[]'::jsonb,
+        is_new BOOLEAN DEFAULT false,
+        date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )`;
+
+    return NextResponse.json({ message: "Database updated successfully!" }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error }, { status: 500 });
   }
