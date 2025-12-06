@@ -588,7 +588,8 @@ export default function AdminPage() {
                                             onClick={() => {
                                                 setEditingWebinar({
                                                     title: "", duration: "", description: "", video_url: "",
-                                                    associated_products: [], authors: [], tags: [], is_new: false
+                                                    associated_products: [], authors: [], tags: [], is_new: false,
+                                                    date: new Date().toISOString().split('T')[0] // Default to today
                                                 });
                                                 setIsEditingWebinar(true);
                                             }}
@@ -666,6 +667,15 @@ export default function AdminPage() {
                                                     onChange={(e) => setEditingWebinar({ ...editingWebinar, title: e.target.value })}
                                                     className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
                                                     placeholder="Webinar Title"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Date</label>
+                                                <input
+                                                    type="date"
+                                                    value={editingWebinar?.date ? new Date(editingWebinar.date).toISOString().split('T')[0] : ""}
+                                                    onChange={(e) => setEditingWebinar({ ...editingWebinar, date: e.target.value })}
+                                                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
                                                 />
                                             </div>
                                             <div>

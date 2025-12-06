@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { title, duration, description, video_url, associated_products, authors, tags, is_new } = body;
+        const { title, duration, description, video_url, associated_products, authors, tags, is_new, date } = body;
 
         if (!title) {
             return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -35,10 +35,12 @@ export async function POST(request: Request) {
         const authorsJson = JSON.stringify(authors || []);
         const tagsJson = JSON.stringify(tags || []);
         const isNewBool = !!is_new;
+        // Use provided date or current timestamp if empty (though created_at handles true creation time)
+        const dateValue = date || new Date().toISOString();
 
         const { rows } = await sql`
-      INSERT INTO webinars (title, duration, description, video_url, associated_products, authors, tags, is_new)
-      VALUES (${title}, ${duration}, ${description}, ${video_url}, ${associatedProductsJson}, ${authorsJson}, ${tagsJson}, ${isNewBool})
+      INSERT INTO webinars (title, duration, description, video_url, associated_products, authors, tags, is_new, date)
+      VALUES (${title}, ${duration}, ${description}, ${video_url}, ${associatedProductsJson}, ${authorsJson}, ${tagsJson}, ${isNewBool}, ${dateValue})
       RETURNING *;
     `;
 
@@ -51,7 +53,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
     try {
         const body = await request.json();
-        const { id, title, duration, description, video_url, associated_products, authors, tags, is_new } = body;
+        const { id, title, duration, description, video_url, associated_products, authors, tags, is_new, date } = body;
 
         if (!id || !title) {
             return NextResponse.json({ error: 'ID and Title are required' }, { status: 400 });
@@ -61,12 +63,13 @@ export async function PUT(request: Request) {
         const authorsJson = JSON.stringify(authors || []);
         const tagsJson = JSON.stringify(tags || []);
         const isNewBool = !!is_new;
+        const dateValue = date || new Date().toISOString();
 
         const { rows } = await sql`
       UPDATE webinars 
       SET title = ${title}, duration = ${duration}, description = ${description}, 
           video_url = ${video_url}, associated_products = ${associatedProductsJson}, authors = ${authorsJson},
-          tags = ${tagsJson}, is_new = ${isNewBool}
+          tags = ${tagsJson}, is_new = ${isNewBool}, date = ${dateValue}
       WHERE id = ${id}
       RETURNING *;
     `;

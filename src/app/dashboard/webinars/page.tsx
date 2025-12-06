@@ -24,7 +24,7 @@ export default function WebinarsPage() {
                         id: w.id.toString(),
                         title: w.title,
                         description: w.description || "",
-                        date: w.created_at || new Date().toISOString(),
+                        date: w.date || w.created_at || new Date().toISOString(),
                         type: "webinar",
                         url: `/dashboard/webinars/${w.id}`,
                         duration: w.duration,

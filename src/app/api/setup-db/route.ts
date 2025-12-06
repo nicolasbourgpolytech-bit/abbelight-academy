@@ -17,6 +17,7 @@ export async function GET() {
     // Execute schema updates sequentially to ensure reliability
     await sql`ALTER TABLE webinars ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'::jsonb`;
     await sql`ALTER TABLE webinars ADD COLUMN IF NOT EXISTS is_new BOOLEAN DEFAULT false`;
+    await sql`ALTER TABLE webinars ADD COLUMN IF NOT EXISTS date TIMESTAMP WITH TIME ZONE`;
     return NextResponse.json({ message: "Table 'webinars' created successfully!" }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error }, { status: 500 });
