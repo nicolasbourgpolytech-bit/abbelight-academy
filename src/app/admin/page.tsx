@@ -386,7 +386,7 @@ export default function AdminPage() {
                     success++;
                 } else {
                     const d = await res.json();
-                    errors.push(`Line ${i + 1}: API Error - ${d.error || 'Unknown'}`);
+                    errors.push(`Line ${i + 1}: API Error - ${typeof d.error === 'object' ? JSON.stringify(d.error) : d.error}`);
                 }
             }
 
