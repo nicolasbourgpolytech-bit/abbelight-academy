@@ -1,64 +1,45 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ContentFilterBar } from "@/components/dashboard/ContentFilterBar";
 import { ResourceCard } from "@/components/dashboard/ResourceCard";
 import { TagFilterSidebar } from "@/components/dashboard/TagFilterSidebar";
 import { ContentItem } from "@/types/content";
 
-const MOCK_WEBINARS: ContentItem[] = [
-    {
-        id: "1",
-        title: "Mastering SMLM: From Sample to Image",
-        description: "A comprehensive walkthrough of the Single Molecule Localization Microscopy workflow, focusing on sample preparation best practices.",
-        date: "2025-11-15",
-        type: "webinar",
-        url: "/dashboard/webinars/1",
-        duration: "45 min",
-        tags: ["SMLM", "Sample Prep", "Education"],
-        thumbnailUrl: "https://img.youtube.com/vi/YOSO7gJl4tA/maxresdefault.jpg"
-    },
-    {
-        id: "2",
-        title: "Live Q&A: Advanced Data Analysis with NEO",
-        description: "Our experts answer your questions about spectral demixing and 3D reconstruction using the NEO software suite.",
-        date: "2025-10-22",
-        type: "webinar",
-        url: "/dashboard/webinars/2",
-        duration: "60 min",
-        tags: ["Software", "NEO", "Analysis"],
-        thumbnailUrl: "https://img.youtube.com/vi/_t3tI9w86t4/maxresdefault.jpg"
-    },
-    {
-        id: "3",
-        title: "Breakthroughs in Neurobiology using SAFe 360",
-        description: "Case studies demonstrating how the SAFe 360 system enables deep tissue imaging at the nanoscale.",
-        date: "2025-09-05",
-        type: "webinar",
-        url: "/dashboard/webinars/3",
-        duration: "50 min",
-        tags: ["Applications", "Neurobiology", "Hardware"],
-        thumbnailUrl: "https://img.youtube.com/vi/Zf0Z8x8y_g0/maxresdefault.jpg"
-    },
-    {
-        id: "4",
-        title: "Introduction to Super-Resolution for New Users",
-        description: "Getting started with super-resolution microscopy? This session covers the basics and safety protocols.",
-        date: "2025-12-01",
-        type: "webinar",
-        url: "/dashboard/webinars/4",
-        duration: "30 min",
-        tags: ["Education", "Basics"],
-        thumbnailUrl: "https://img.youtube.com/vi/fX8b4t3b5zI/maxresdefault.jpg"
-    },
-];
-
-const ALL_TAGS = Array.from(new Set(MOCK_WEBINARS.flatMap(w => w.tags || []))).sort();
-
 export default function WebinarsPage() {
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState<'date-desc' | 'date-asc' | 'title'>("date-desc");
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+    const [webinars, setWebinars] = useState<ContentItem[]>([]);
+    const [allTags, setAllTags] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('/api/webinars')
+            .then(res => res.json())
+            .then(data => {
+                if (data.webinars) {
+                    const mappedWebinars = data.webinars.map((w: any) => ({
+                        id: w.id.toString(),
+                        title: w.title,
+                        description: w.description || "",
+                        date: w.created_at || new Date().toISOString(),
+                        type: "webinar",
+                        url: `/dashboard/webinars/${w.id}`,
+                        duration: w.duration,
+                        tags: [], // Tags not yet in DB schema, default empty
+                        thumbnailUrl: w.video_url?.includes('youtube') ? `https://img.youtube.com/vi/${w.video_url.split('v=')[1]?.split('&')[0]}/maxresdefault.jpg` : "https://images.unsplash.com/photo-1550751827-4bd374c3f58b",
+                        ...w // spread other props just in case
+                    }));
+                    setWebinars(mappedWebinars);
+                    // Generate tags dynamically or hardcode some relevant ones
+                    setAllTags(["Education", "SMLM", "Software", "Hardware"]);
+                }
+            })
+            .catch(err => console.error(err))
+            .finally(() => setIsLoading(false));
+    }, []);
 
     const toggleTag = (tag: string) => {
         setSelectedTags(prev =>
@@ -67,14 +48,14 @@ export default function WebinarsPage() {
     };
 
     const filteredAndSortedWebinars = useMemo(() => {
-        let result = [...MOCK_WEBINARS];
+        let result = [...webinars];
 
         // Filter by Search
         if (search.trim()) {
             const q = search.toLowerCase();
             result = result.filter(w =>
                 w.title.toLowerCase().includes(q) ||
-                w.description.toLowerCase().includes(q)
+                w.description?.toLowerCase().includes(q)
             );
         }
 
@@ -87,17 +68,24 @@ export default function WebinarsPage() {
 
         // Sort
         result.sort((a, b) => {
+            const dateA = a.date ? new Date(a.date).getTime() : 0;
+            const dateB = b.date ? new Date(b.date).getTime() : 0;
+
             if (sort === 'title') {
                 return a.title.localeCompare(b.title);
             } else if (sort === 'date-asc') {
-                return new Date(a.date).getTime() - new Date(b.date).getTime();
+                return dateA - dateB;
             } else {
-                return new Date(b.date).getTime() - new Date(a.date).getTime();
+                return dateB - dateA;
             }
         });
 
         return result;
-    }, [search, sort, selectedTags]);
+    }, [search, sort, selectedTags, webinars]);
+
+    if (isLoading) {
+        return <div className="p-12 text-center text-gray-500 animate-pulse">Loading Webinars...</div>;
+    }
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -111,7 +99,7 @@ export default function WebinarsPage() {
             <div className="flex flex-col md:flex-row gap-8">
                 {/* Sidebar */}
                 <TagFilterSidebar
-                    availableTags={ALL_TAGS}
+                    availableTags={allTags}
                     selectedTags={selectedTags}
                     onToggleTag={toggleTag}
                 />
