@@ -26,7 +26,7 @@ export async function POST(request: Request) {
         const body = await request.json();
         const {
             title, application_domain, imaging_method, abbelight_imaging_modality,
-            abbelight_product, journal, last_author, abbelight_customer,
+            abbelight_product, journal, first_author, last_author, abbelight_customer,
             publication_date, doi_link
         } = body;
 
@@ -42,12 +42,12 @@ export async function POST(request: Request) {
         const { rows } = await sql`
             INSERT INTO articles (
                 title, application_domain, imaging_method, abbelight_imaging_modality, 
-                abbelight_product, journal, last_author, abbelight_customer, 
+                abbelight_product, journal, first_author, last_author, abbelight_customer, 
                 publication_date, doi_link
             )
             VALUES (
                 ${title}, ${appDomainJson}, ${imgMethodJson}, ${abbImgModJson}, 
-                ${abbProdJson}, ${journal}, ${last_author}, ${abbelight_customer}, 
+                ${abbProdJson}, ${journal}, ${first_author}, ${last_author}, ${abbelight_customer}, 
                 ${publication_date}, ${doi_link}
             )
             RETURNING *;
@@ -64,7 +64,7 @@ export async function PUT(request: Request) {
         const body = await request.json();
         const {
             id, title, application_domain, imaging_method, abbelight_imaging_modality,
-            abbelight_product, journal, last_author, abbelight_customer,
+            abbelight_product, journal, first_author, last_author, abbelight_customer,
             publication_date, doi_link
         } = body;
 
@@ -82,7 +82,7 @@ export async function PUT(request: Request) {
             SET title = ${title}, application_domain = ${appDomainJson}, 
                 imaging_method = ${imgMethodJson}, abbelight_imaging_modality = ${abbImgModJson},
                 abbelight_product = ${abbProdJson}, journal = ${journal}, 
-                last_author = ${last_author}, abbelight_customer = ${abbelight_customer},
+                first_author = ${first_author}, last_author = ${last_author}, abbelight_customer = ${abbelight_customer},
                 publication_date = ${publication_date}, doi_link = ${doi_link}
             WHERE id = ${id}
             RETURNING *;

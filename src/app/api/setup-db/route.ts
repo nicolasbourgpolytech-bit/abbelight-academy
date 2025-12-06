@@ -33,6 +33,7 @@ export async function GET(request: Request) {
         abbelight_imaging_modality JSONB DEFAULT '[]'::jsonb,
         abbelight_product JSONB DEFAULT '[]'::jsonb,
         journal VARCHAR(255),
+        first_author VARCHAR(255),
         last_author VARCHAR(255),
         abbelight_customer VARCHAR(255),
         publication_date DATE,

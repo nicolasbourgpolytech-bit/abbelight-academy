@@ -313,7 +313,7 @@ export default function AdminPage() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (!confirm("Importing will add articles to the database.\nEnsure CSV format is:\nTitle, Application Domain (sep ;), Imaging Method (sep ;), Modality (sep ;), Product (sep ;), Journal, Last Author, Customer, Date (YYYY-MM-DD), DOI.\nContinue?")) {
+        if (!confirm("Importing will add articles to the database.\nEnsure CSV format is:\nTitle, Application Domain (sep ;), Imaging Method (sep ;), Modality (sep ;), Product (sep ;), Journal, First Author, Last Author, Customer, Date (YYYY-MM-DD), DOI.\nContinue?")) {
             e.target.value = ''; // Reset
             return;
         }
@@ -1231,6 +1231,16 @@ export default function AdminPage() {
                                                     onChange={(e) => setEditingArticle({ ...editingArticle, journal: e.target.value })}
                                                     className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
                                                     placeholder="Nature"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">First Author</label>
+                                                <input
+                                                    type="text"
+                                                    value={editingArticle?.first_author || ""}
+                                                    onChange={(e) => setEditingArticle({ ...editingArticle, first_author: e.target.value })}
+                                                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                    placeholder="Smith A."
                                                 />
                                             </div>
                                             <div>
