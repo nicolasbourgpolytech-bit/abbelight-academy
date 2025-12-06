@@ -363,7 +363,10 @@ export default function AdminPage() {
                 const journal = clean(cols[5]);
                 const last_author = clean(cols[6]);
                 const abbelight_customer = clean(cols[7]);
-                const publication_date = clean(cols[8]);
+                let publication_date: string | null = clean(cols[8]);
+                // Handle empty date or invalid format loosely (empty -> null)
+                if (!publication_date) publication_date = null;
+
                 const doi_link = clean(cols[9]);
 
                 if (!title) {
