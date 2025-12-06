@@ -309,6 +309,48 @@ export default function AdminPage() {
         }
     };
 
+    const handleAnalyzeCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const text = await file.text();
+        const lines = text.split('\n').filter(l => l.trim().length > 0);
+        if (lines.length < 2) return alert("Empty CSV");
+
+        // Separator detection
+        const header = lines[0];
+        const semicolonCount = (header.match(/;/g) || []).length;
+        const commaCount = (header.match(/,/g) || []).length;
+        const separator = semicolonCount > commaCount ? ';' : ',';
+
+        const splitRegex = new RegExp(`${separator}(?=(?:(?:[^"]*"){2})*[^"]*$)`);
+
+        // Analyze first data row
+        const firstRow = lines[1];
+        const cols = firstRow.split(splitRegex);
+        const clean = (s: string) => s ? s.replace(/^"|"$/g, '').replace(/""/g, '"').trim() : '';
+
+        const msg = `
+        Analysis Report:
+        ----------------
+        Separator Detected: "${separator}"
+        Total Lines: ${lines.length}
+        Columns in Row 1: ${cols.length} (Expected 11)
+        
+        Row 1 Data Preview:
+        [0] Title: ${clean(cols[0])?.substring(0, 20)}...
+        [5] Journal: ${clean(cols[5])}
+        [6] First Author: ${clean(cols[6])}
+        [7] Last Author: ${clean(cols[7])}
+        [8] Customer: ${clean(cols[8])}
+        [9] Date (Raw): "${clean(cols[9])}"
+        [10] DOI: ${clean(cols[10])}
+        `;
+
+        alert(msg);
+        e.target.value = ''; // Reset
+    };
+
     const handleImportArticles = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -365,14 +407,14 @@ export default function AdminPage() {
                 const last_author = clean(cols[7]);
                 const abbelight_customer = clean(cols[8]);
                 let publication_date: string | null = clean(cols[9]);
-                
+
                 // Handle empty date or invalid format strictly, convert DD/MM/YYYY
                 if (!publication_date) {
                     publication_date = null;
                 } else if (publication_date.includes('/')) {
                     const parts = publication_date.split('/');
                     if (parts.length === 3) {
-                        publication_date = ${parts[2]}--;
+                        publication_date = `${parts[2]}-${parts[1]}-${parts[0]}`;
                     }
                 }
 
@@ -1130,6 +1172,11 @@ export default function AdminPage() {
                                                 {importing ? 'Importing...' : 'Import CSV'}
                                                 <input type="file" accept=".csv" onChange={handleImportArticles} className="hidden" disabled={importing} />
                                             </label>
+                                            <label className="bg-white/10 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-white/20 transition-colors flex items-center gap-2 border border-white/10 cursor-pointer">
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                                                Analyze CSV
+                                                <input type="file" accept=".csv" onChange={handleAnalyzeCSV} className="hidden" />
+                                            </label>
                                             <button
                                                 onClick={() => {
                                                     setEditingArticle({
@@ -1146,7 +1193,6 @@ export default function AdminPage() {
                                             </button>
                                         </div>
                                     </div>
-
                                     <div className="space-y-4">
                                         {articles.map((article: any) => (
                                             <div key={article.id} className="bg-gray-900/40 border border-white/10 rounded-xl p-4 flex items-center justify-between hover:border-primary/30 transition-colors group">
