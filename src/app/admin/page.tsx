@@ -321,44 +321,81 @@ export default function AdminPage() {
         setImporting(true);
         try {
             const text = await file.text();
-            const lines = text.split('\n');
+            const lines = text.split('\n').filter(l => l.trim().length > 0);
+            if (lines.length < 2) return alert("Empty CSV");
+
+            // Detect separator from header
+            const header = lines[0];
+            const semicolonCount = (header.match(/;/g) || []).length;
+            const commaCount = (header.match(/,/g) || []).length;
+            const separator = semicolonCount > commaCount ? ';' : ',';
+
+            console.log(`Detected CSV separator: '${separator}'`);
+
+            // Regex: match separator only if not inside quotes
+            const splitRegex = new RegExp(`${separator}(?=(?:(?:[^"]*"){2})*[^"]*$)`);
+
             let success = 0;
+            let errors: string[] = [];
 
-            for (let i = 1; i < lines.length; i++) { // Skip header
+            for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
-                const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                const cols = line.split(splitRegex);
 
-                if (cols.length >= 10) {
-                    const clean = (s: string) => s ? s.replace(/^"|"$/g, '').replace(/""/g, '"').trim() : '';
-                    const splitArray = (s: string) => s ? s.split(';').map(v => v.trim()).filter(Boolean) : [];
+                if (cols.length < 10) {
+                    if (errors.length < 3) errors.push(`Line ${i + 1}: Found ${cols.length} columns, expected 10.`);
+                    continue;
+                }
 
-                    const title = clean(cols[0]);
-                    const application_domain = splitArray(clean(cols[1]));
-                    const imaging_method = splitArray(clean(cols[2]));
-                    const abbelight_imaging_modality = splitArray(clean(cols[3]));
-                    const abbelight_product = splitArray(clean(cols[4]));
-                    const journal = clean(cols[5]);
-                    const last_author = clean(cols[6]);
-                    const abbelight_customer = clean(cols[7]);
-                    const publication_date = clean(cols[8]);
-                    const doi_link = clean(cols[9]);
+                const clean = (s: string) => s ? s.replace(/^"|"$/g, '').replace(/""/g, '"').trim() : '';
+                // For inner arrays, we assume they are separated by the OTHER separator or typical list chars like | or just ; if main is ,
+                // But the requirement said "sep ;". If main separator is also ;, we have a problem unless quoted.
+                // We will assume standard CSV: if cell contains separator, it MUST be quoted.
+                // Our regex handles that. So inner content can have semicolons if quoted.
 
-                    if (!title) continue;
+                const splitArray = (s: string) => s ? s.split(/[;|]/).map(v => v.trim()).filter(Boolean) : [];
 
-                    const res = await fetch('/api/articles', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            title, application_domain, imaging_method,
-                            abbelight_imaging_modality, abbelight_product,
-                            journal, last_author, abbelight_customer,
-                            publication_date, doi_link
-                        })
-                    });
-                    if (res.ok) success++;
+                const title = clean(cols[0]);
+                const application_domain = splitArray(clean(cols[1]));
+                const imaging_method = splitArray(clean(cols[2]));
+                const abbelight_imaging_modality = splitArray(clean(cols[3]));
+                const abbelight_product = splitArray(clean(cols[4]));
+                const journal = clean(cols[5]);
+                const last_author = clean(cols[6]);
+                const abbelight_customer = clean(cols[7]);
+                const publication_date = clean(cols[8]);
+                const doi_link = clean(cols[9]);
+
+                if (!title) {
+                    errors.push(`Line ${i + 1}: Missing title`);
+                    continue;
+                }
+
+                const res = await fetch('/api/articles', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title, application_domain, imaging_method,
+                        abbelight_imaging_modality, abbelight_product,
+                        journal, last_author, abbelight_customer,
+                        publication_date, doi_link
+                    })
+                });
+
+                if (res.ok) {
+                    success++;
+                } else {
+                    const d = await res.json();
+                    errors.push(`Line ${i + 1}: API Error - ${d.error || 'Unknown'}`);
                 }
             }
-            alert(`Imported ${success} articles successfully.`);
+
+            if (success === 0 && errors.length > 0) {
+                alert(`Import Failed. 0/${lines.length - 1} imported. \nSeparator detected: "${separator}"\nErrors:\n${errors.join('\n')}`);
+            } else {
+                alert(`Imported ${success} articles successfully. ${errors.length > 0 ? `\nWith some errors:\n${errors.slice(0, 5).join('\n')}` : ''}`);
+            }
+
             // Refresh
             const res = await fetch('/api/articles');
             const data = await res.json();
