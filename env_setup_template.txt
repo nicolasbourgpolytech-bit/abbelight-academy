@@ -1,0 +1,14 @@
+# INSTRUCTIONS:
+# 1. Create a new file named ".env.local" in this directory (c:\Users\nbour\Desktop\Abbelight academy\)
+# 2. Go to your Vercel Project Dashboard (https://vercel.com/dashboard)
+# 3. Navigate to Storage -> [Your Postgres Database] -> .env.local button
+# 4. Copy the values and paste them into your new .env.local file.
+#    They should look like this:
+
+POSTGRES_URL="postgres://default:PASSWORD@ep-example-123.region.postgres.vercel-storage.com:5432/verceldb"
+POSTGRES_PRISMA_URL="postgres://default:PASSWORD@ep-example-123.region.postgres.vercel-storage.com:5432/verceldb?pgbouncer=true&connect_timeout=15"
+POSTGRES_URL_NON_POOLING="postgres://default:PASSWORD@ep-example-123.region.postgres.vercel-storage.com:5432/verceldb"
+POSTGRES_USER="default"
+POSTGRES_HOST="ep-example-123.region.postgres.vercel-storage.com"
+POSTGRES_PASSWORD="PASSWORD"
+POSTGRES_DATABASE="verceldb"

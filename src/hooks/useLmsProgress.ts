@@ -2,52 +2,100 @@
 
 import { useState, useEffect } from 'react';
 import { UserLMSProgress } from '@/types/lms';
-
-const STORAGE_KEY = 'abbelight_lms_progress';
+import { useUser } from '@/context/UserContext';
 
 export const useLmsProgress = () => {
+    const { user } = useUser();
     const [progress, setProgress] = useState<UserLMSProgress>({
         completedModuleIds: [],
         completedChapterIds: [],
         currentModuleId: undefined
     });
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Load from local storage on mount
+    // Load from API on mount or user change
     useEffect(() => {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-            try {
-                setProgress(JSON.parse(stored));
-            } catch (e) {
-                console.error("Failed to parse LMS progress", e);
-            }
+        if (!user?.email) {
+            setIsLoading(false);
+            return;
         }
-    }, []);
 
-    const saveProgress = (newProgress: UserLMSProgress) => {
-        setProgress(newProgress);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newProgress));
-    };
+        const fetchProgress = async () => {
+            try {
+                const res = await fetch(`/api/progress?email=${encodeURIComponent(user.email)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setProgress({
+                        completedChapterIds: data.completedChapterIds || [],
+                        completedModuleIds: data.completedModuleIds || [],
+                        currentModuleId: undefined
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to fetch progress", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-    const markChapterComplete = (moduleId: string, chapterId: string) => {
+        fetchProgress();
+    }, [user?.email]);
+
+    const markChapterComplete = async (moduleId: string, chapterId: string) => {
+        if (!user?.email) return;
+
+        // Optimistic update
         const chapterKey = `${moduleId}-${chapterId}`;
         if (!progress.completedChapterIds.includes(chapterKey)) {
             const newChapterIds = [...progress.completedChapterIds, chapterKey];
-            saveProgress({
-                ...progress,
+            setProgress(prev => ({
+                ...prev,
                 completedChapterIds: newChapterIds,
                 currentModuleId: moduleId
-            });
+            }));
+
+            // API Call
+            try {
+                await fetch('/api/progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: user.email,
+                        moduleId: moduleId,
+                        chapterId: chapterId,
+                        type: 'chapter'
+                    })
+                });
+            } catch (err) {
+                console.error("Failed to save chapter progress", err);
+                // Could revert state here
+            }
         }
     };
 
-    const markModuleComplete = (moduleId: string) => {
+    const markModuleComplete = async (moduleId: string) => {
+        if (!user?.email) return;
+
         if (!progress.completedModuleIds.includes(moduleId)) {
             const newModuleIds = [...progress.completedModuleIds, moduleId];
-            saveProgress({
-                ...progress,
+            setProgress(prev => ({
+                ...prev,
                 completedModuleIds: newModuleIds
-            });
+            }));
+
+            try {
+                await fetch('/api/progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: user.email,
+                        moduleId: moduleId,
+                        type: 'module'
+                    })
+                });
+            } catch (err) {
+                console.error("Failed to save module progress", err);
+            }
         }
     };
 
@@ -64,8 +112,10 @@ export const useLmsProgress = () => {
 
     return {
         progress,
+        isLoading,
         markChapterComplete,
         markModuleComplete,
         getModuleProgress
     };
 };
+

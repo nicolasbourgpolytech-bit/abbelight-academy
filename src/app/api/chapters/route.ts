@@ -41,6 +41,33 @@ export async function POST(request: Request) {
     }
 }
 
+export async function PUT(request: Request) {
+    try {
+        const body = await request.json();
+        const { id, title, type, content_url, data, duration, position } = body;
+
+        if (!id || !title) {
+            return NextResponse.json({ error: 'ID and Title are required' }, { status: 400 });
+        }
+
+        const { rows } = await sql`
+            UPDATE chapters 
+            SET title = ${title}, type = ${type}, content_url = ${content_url}, 
+                data = ${data}, duration = ${duration}, position = ${position}
+            WHERE id = ${id}
+            RETURNING *;
+        `;
+
+        if (rows.length === 0) {
+            return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({ chapter: rows[0] }, { status: 200 });
+    } catch (error) {
+        return NextResponse.json({ error }, { status: 500 });
+    }
+}
+
 export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

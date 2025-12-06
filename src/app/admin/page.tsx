@@ -56,14 +56,24 @@ export default function AdminPage() {
         if (!newChapter.title || !selectedModuleForChapters) return alert("Title required");
 
         try {
+            const isUpdate = !!(newChapter as any).id;
+            const method = isUpdate ? 'PUT' : 'POST';
+
             const res = await fetch('/api/chapters', {
-                method: 'POST',
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...newChapter, module_id: selectedModuleForChapters.id }),
+                body: JSON.stringify({
+                    ...newChapter,
+                    module_id: selectedModuleForChapters.id
+                }),
             });
             const data = await res.json();
             if (res.ok) {
-                setChapters([...chapters, data.chapter]);
+                if (isUpdate) {
+                    setChapters(chapters.map(c => c.id === data.chapter.id ? data.chapter : c));
+                } else {
+                    setChapters([...chapters, data.chapter]);
+                }
                 setNewChapter({ title: "", type: "video", content_url: "", duration: "5 min", data: {} });
             } else {
                 alert(data.error);
@@ -316,26 +326,20 @@ export default function AdminPage() {
 
             for (let i = 1; i < lines.length; i++) { // Skip header
                 const line = lines[i].trim();
-                // Naive CSV parse handling quotes
-                const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-                if (!matches || matches.length < 2) continue;
-
-                const clean = (s: string) => s ? s.replace(/^"|"$/g, '').replace(/""/g, '"').trim() : '';
-
-                // Assuming Mapping: 0:Title, 1:Desc, 2:Content, 3:Image, 4:Tags, 5:Date
-                const title = clean(lines[i].split(',')[0]); // Fallback to simple split if regex fails, but let's try to be consistent
-
-                // Using a slightly more robust splitter or just simple one for MVP
-                // Let's stick to simple split for now but warn user.
-                const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Regex to split by comma outside quotes
+                // Regex to split by comma outside quotes
+                const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
 
                 if (cols.length >= 2) {
+                    const clean = (s: string) => s ? s.replace(/^"|"$/g, '').replace(/""/g, '"').trim() : '';
+
                     const title = clean(cols[0]);
                     const description = clean(cols[1]);
                     const content = clean(cols[2]);
                     const cover_image = clean(cols[3]);
                     const tagsStr = clean(cols[4]);
                     const date = clean(cols[5]);
+
+                    if (!title) continue;
 
                     const tags = tagsStr ? tagsStr.split(';').map(t => t.trim()) : [];
 
@@ -675,15 +679,30 @@ export default function AdminPage() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <button onClick={() => handleDeleteChapter(chapter.id)} className="text-gray-500 hover:text-red-500 px-2">Delete</button>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => setNewChapter(chapter)}
+                                                        className="text-gray-400 hover:text-white px-2 transition-colors"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteChapter(chapter.id)}
+                                                        className="text-gray-400 hover:text-red-500 px-2 transition-colors"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
                                             </div>
                                         ))}
                                         {chapters.length === 0 && <p className="text-gray-500 text-center py-4">No chapters yet.</p>}
                                     </div>
 
-                                    {/* Add Chapter Form */}
+                                    {/* Add/Edit Chapter Form */}
                                     <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                                        <h4 className="text-sm font-bold text-white uppercase mb-4">Add New Chapter</h4>
+                                        <h4 className="text-sm font-bold text-white uppercase mb-4">
+                                            {(newChapter as any).id ? 'Edit Chapter' : 'Add New Chapter'}
+                                        </h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                             <input
                                                 type="text"
@@ -707,14 +726,24 @@ export default function AdminPage() {
                                                 type="text"
                                                 placeholder={newChapter.type === 'video' ? "Video URL (mp4 or youtube)" : "Content URL / JSON Data"}
                                                 className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-mono"
-                                                value={newChapter.content_url}
+                                                value={newChapter.content_url || ""}
                                                 onChange={e => setNewChapter({ ...newChapter, content_url: e.target.value })}
                                             />
                                             <p className="text-xs text-gray-500 mt-1">For MVP, paste a direct MP4 link here for videos.</p>
                                         </div>
-                                        <button onClick={handleSaveChapter} className="w-full bg-primary text-black font-bold text-sm py-2 rounded-lg hover:bg-white transition-colors">
-                                            Add Chapter
-                                        </button>
+                                        <div className="flex gap-4">
+                                            <button onClick={handleSaveChapter} className="flex-1 bg-primary text-black font-bold text-sm py-2 rounded-lg hover:bg-white transition-colors">
+                                                {(newChapter as any).id ? 'Save Changes' : 'Add Chapter'}
+                                            </button>
+                                            {(newChapter as any).id && (
+                                                <button
+                                                    onClick={() => setNewChapter({ title: "", type: "video", content_url: "", duration: "5 min", data: {} })}
+                                                    className="px-4 py-2 border border-white/10 rounded-lg text-sm text-gray-400 hover:text-white transition-colors"
+                                                >
+                                                    Cancel Edit
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

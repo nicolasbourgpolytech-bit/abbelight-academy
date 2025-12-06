@@ -1,8 +1,19 @@
 import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
     try {
+        if (id) {
+            const { rows } = await sql`SELECT * FROM modules WHERE id = ${id};`;
+            if (rows.length === 0) {
+                return NextResponse.json({ error: 'Module not found' }, { status: 404 });
+            }
+            return NextResponse.json({ module: rows[0] }, { status: 200 });
+        }
+
         const { rows } = await sql`SELECT * FROM modules ORDER BY id DESC;`;
         return NextResponse.json({ modules: rows }, { status: 200 });
     } catch (error) {

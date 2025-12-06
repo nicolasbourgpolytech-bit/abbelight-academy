@@ -31,10 +31,14 @@ export default function ModulePage({ params }: { params: Promise<{ moduleId: str
 
             // 2. Fetch from DB
             try {
-                // Fetch all modules to find the right one (optimized: could create a specific ID endpoint)
-                const modulesRes = await fetch('/api/modules');
-                const modulesData = await modulesRes.json();
-                const foundModule = modulesData.modules.find((m: any) => m.id.toString() === moduleId);
+                // Fetch specific module from DB
+                const moduleRes = await fetch(`/api/modules?id=${moduleId}`);
+                if (!moduleRes.ok) {
+                    console.error("Module fetch error", await moduleRes.text());
+                    return;
+                }
+                const moduleData = await moduleRes.json();
+                const foundModule = moduleData.module;
 
                 if (foundModule) {
                     // Fetch chapters for this module
