@@ -87,6 +87,15 @@ export default function AdminPage() {
         setChapters(chapters.filter(c => c.id !== id));
     };
 
+    const fetchArticles = () => {
+        fetch('/api/articles')
+            .then(res => res.json())
+            .then(data => {
+                if (data.articles) setArticles(data.articles);
+            })
+            .catch(err => console.error(err));
+    };
+
     // Fetch data on load
     useEffect(() => {
         if (isAuthenticated) {
@@ -107,12 +116,7 @@ export default function AdminPage() {
                 .catch(err => console.error(err));
 
             // Fetch articles
-            fetch('/api/articles')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.articles) setArticles(data.articles);
-                })
-                .catch(err => console.error(err));
+            fetchArticles();
         }
     }, [isAuthenticated]);
 
@@ -1203,7 +1207,7 @@ export default function AdminPage() {
                                                     <div>
                                                         <h3 className="font-bold text-white group-hover:text-primary transition-colors">{article.title}</h3>
                                                         <div className="flex items-center gap-3 mt-1">
-                                                            <span className="text-xs bg-white/5 px-2 py-0.5 rounded text-gray-400">{new Date(article.date).toLocaleDateString()}</span>
+                                                            <span className="text-xs bg-white/5 px-2 py-0.5 rounded text-gray-400">{new Date(article.publication_date).toLocaleDateString()}</span>
                                                             <div className="flex gap-1">
                                                                 {article.tags?.slice(0, 3).map((t: string) => <span key={t} className="text-[10px] bg-primary/10 text-primary px-1 rounded">{t}</span>)}
                                                             </div>

@@ -14,7 +14,7 @@ export async function GET(request: Request) {
             return NextResponse.json({ article: rows[0] }, { status: 200 });
         }
 
-        const { rows } = await sql`SELECT * FROM articles ORDER BY date DESC;`;
+        const { rows } = await sql`SELECT * FROM articles ORDER BY publication_date DESC;`;
         return NextResponse.json({ articles: rows }, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error }, { status: 500 });
