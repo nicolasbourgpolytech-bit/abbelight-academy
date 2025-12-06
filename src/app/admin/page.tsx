@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -342,8 +342,8 @@ export default function AdminPage() {
                 const line = lines[i].trim();
                 const cols = line.split(splitRegex);
 
-                if (cols.length < 10) {
-                    if (errors.length < 3) errors.push(`Line ${i + 1}: Found ${cols.length} columns, expected 10.`);
+                if (cols.length < 11) {
+                    if (errors.length < 3) errors.push(`Line ${i + 1}: Found ${cols.length} columns, expected 11.`);
                     continue;
                 }
 
@@ -361,13 +361,22 @@ export default function AdminPage() {
                 const abbelight_imaging_modality = splitArray(clean(cols[3]));
                 const abbelight_product = splitArray(clean(cols[4]));
                 const journal = clean(cols[5]);
-                const last_author = clean(cols[6]);
-                const abbelight_customer = clean(cols[7]);
-                let publication_date: string | null = clean(cols[8]);
-                // Handle empty date or invalid format loosely (empty -> null)
-                if (!publication_date) publication_date = null;
+                const first_author = clean(cols[6]);
+                const last_author = clean(cols[7]);
+                const abbelight_customer = clean(cols[8]);
+                let publication_date: string | null = clean(cols[9]);
+                
+                // Handle empty date or invalid format strictly, convert DD/MM/YYYY
+                if (!publication_date) {
+                    publication_date = null;
+                } else if (publication_date.includes('/')) {
+                    const parts = publication_date.split('/');
+                    if (parts.length === 3) {
+                        publication_date = ${parts[2]}--;
+                    }
+                }
 
-                const doi_link = clean(cols[9]);
+                const doi_link = clean(cols[10]);
 
                 if (!title) {
                     errors.push(`Line ${i + 1}: Missing title`);
@@ -380,7 +389,7 @@ export default function AdminPage() {
                     body: JSON.stringify({
                         title, application_domain, imaging_method,
                         abbelight_imaging_modality, abbelight_product,
-                        journal, last_author, abbelight_customer,
+                        journal, first_author, last_author, abbelight_customer,
                         publication_date, doi_link
                     })
                 });
@@ -457,7 +466,7 @@ export default function AdminPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
-                                placeholder="••••••••"
+                                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                             />
                         </div>
                         <button
