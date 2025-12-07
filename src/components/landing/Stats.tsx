@@ -1,11 +1,18 @@
-const stats = [
-    { label: "Scientific Articles", value: "120+", color: "text-primary" },
-    { label: "Exclusive Webinars", value: "45+", color: "text-secondary" },
-    { label: "Active Researchers", value: "850+", color: "text-accent" },
-    { label: "Learning Paths", value: "12", color: "text-warning" },
-];
+interface StatsProps {
+    articlesCount: number;
+    webinarsCount: number;
+    usersCount: number;
+    modulesCount: number;
+}
 
-export function Stats() {
+export function Stats({ articlesCount, webinarsCount, usersCount, modulesCount }: StatsProps) {
+    const stats = [
+        { label: "Scientific Articles", value: `${articlesCount}+`, color: "text-primary" },
+        { label: "Exclusive Webinars", value: `${webinarsCount}+`, color: "text-secondary" },
+        { label: "Active Researchers", value: `${usersCount}+`, color: "text-accent" },
+        { label: "Learning Paths", value: `${modulesCount}`, color: "text-warning" },
+    ];
+
     return (
         <section className="relative z-10 py-32 bg-zinc-950 border-t border-white/10 pattern-grid">
             <div className="max-w-7xl mx-auto px-6">
