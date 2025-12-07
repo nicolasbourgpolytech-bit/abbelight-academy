@@ -252,7 +252,7 @@ export default function AdminPage() {
                 fetchProducts();
                 setIsEditingProduct(false);
             } else {
-                alert("Error: " + data.error);
+                alert("Error: " + (typeof data.error === 'object' ? JSON.stringify(data.error) : data.error));
             }
         } catch (error) {
             alert("Failed to save product");
