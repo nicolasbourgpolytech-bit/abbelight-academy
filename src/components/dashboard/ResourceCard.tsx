@@ -10,20 +10,22 @@ interface ResourceCardProps {
 export function ResourceCard({ item }: ResourceCardProps) {
     const isWebinar = item.type === 'webinar';
 
-    // Helper to render tag group
+    // Helper to render tag group with strict alignment
     const renderTagGroup = (label: string, tags: string[] | undefined, colorClass: string, labelColor: string) => {
         if (!tags || tags.length === 0) return null;
         return (
-            <div className="flex flex-wrap items-baseline gap-2 mb-1">
-                <span className={`text-[10px] font-bold uppercase tracking-wider ${labelColor} opacity-70`}>{label}:</span>
-                {tags.map(tag => (
-                    <span
-                        key={tag}
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${colorClass}`}
-                    >
-                        {tag}
-                    </span>
-                ))}
+            <div className="flex flex-col sm:flex-row sm:items-baseline gap-2">
+                <span className={`w-28 shrink-0 text-[10px] font-bold uppercase tracking-wider ${labelColor} opacity-80`}>{label}</span>
+                <div className="flex flex-wrap gap-1.5">
+                    {tags.map(tag => (
+                        <span
+                            key={tag}
+                            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${colorClass}`}
+                        >
+                            {tag}
+                        </span>
+                    ))}
+                </div>
             </div>
         );
     };
@@ -51,7 +53,7 @@ export function ResourceCard({ item }: ResourceCardProps) {
 
                 {/* Content */}
                 <div className="p-6 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-2">
+                    <div className="flex justify-between items-start mb-4">
                         <div className="flex flex-wrap gap-2">
                             {item.isNew && (
                                 <span className="bg-primary text-black text-[10px] font-bold px-2 py-0.5 rounded shadow animate-pulse">
@@ -68,34 +70,33 @@ export function ResourceCard({ item }: ResourceCardProps) {
                         {item.title}
                     </h3>
 
-                    <p className="text-sm text-gray-400 mb-4">
+                    <p className="text-sm text-gray-400 mb-6 border-b border-white/5 pb-4">
                         {item.description}
                     </p>
 
-                    {/* Categorized Tags - Grid Layout 2x2 */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 mb-4">
+                    {/* Highly Structured Tag Grid */}
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-3 mb-6">
                         {renderTagGroup("Imaging Method", item.imagingMethod, "bg-brand-green/10 text-brand-green border-brand-green/20", "text-brand-green")}
                         {renderTagGroup("App Domain", item.applicationDomain, "bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20", "text-brand-cyan")}
                         {renderTagGroup("Modality", item.modality, "bg-brand-magenta/10 text-brand-magenta border-brand-magenta/20", "text-brand-magenta")}
                         {renderTagGroup("Product", item.product, "bg-brand-orange/10 text-brand-orange border-brand-orange/20", "text-brand-orange")}
                     </div>
 
-                    <div className="border-t border-white/5 pt-4 flex items-center justify-between text-xs text-gray-500 font-medium mt-auto">
+                    <div className="flex items-center justify-between text-xs text-gray-500 font-medium mt-auto">
                         <div className="flex flex-col gap-1">
                             {/* Explicit Authors */}
                             {item.firstAuthor && (
-                                <span className="flex items-center gap-1">
-                                    <span className="text-gray-600 uppercase text-[10px]">First Author:</span>
+                                <span className="flex items-center gap-2">
+                                    <span className="w-20 text-gray-600 uppercase text-[10px] font-bold tracking-wider">First Author</span>
                                     <span className="text-gray-300">{item.firstAuthor}</span>
                                 </span>
                             )}
                             {item.lastAuthor && (
-                                <span className="flex items-center gap-1">
-                                    <span className="text-gray-600 uppercase text-[10px]">Last Author:</span>
+                                <span className="flex items-center gap-2">
+                                    <span className="w-20 text-gray-600 uppercase text-[10px] font-bold tracking-wider">Last Author</span>
                                     <span className="text-gray-300">{item.lastAuthor}</span>
                                 </span>
                             )}
-                            {/* Fallback if no structured authors */}
                             {!item.firstAuthor && !item.lastAuthor && item.author && (
                                 <span>{item.author}</span>
                             )}
