@@ -60,7 +60,7 @@ export function StatsHistograms({ articles }: StatsHistogramsProps) {
             {/* Articles by Year */}
             <div className="w-56 h-28">
                 <p className="text-[10px] uppercase tracking-widest mb-1 text-right text-cyan-500">By Year</p>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" className="[&_.recharts-surface]:outline-none">
                     <BarChart data={data.years} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
                         <XAxis type="number" hide />
                         <YAxis
@@ -85,7 +85,7 @@ export function StatsHistograms({ articles }: StatsHistogramsProps) {
             {/* Articles by Domain */}
             <div className="w-72 h-28">
                 <p className="text-[10px] uppercase tracking-widest mb-1 text-right text-fuchsia-500">By Domain</p>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" className="[&_.recharts-surface]:outline-none">
                     <BarChart data={data.domains} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
                         <XAxis type="number" hide />
                         <YAxis
