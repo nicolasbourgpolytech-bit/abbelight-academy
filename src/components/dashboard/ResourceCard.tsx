@@ -40,8 +40,8 @@ export function ResourceCard({ item }: ResourceCardProps) {
         >
             <div className="glass-card p-0 h-full flex flex-col overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1">
                 {/* Content - Compact Layout */}
-                <div className="p-5 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-2">
+                <div className="p-3 flex-1 flex flex-col">
+                    <div className="flex justify-between items-start mb-1">
                         <div className="flex flex-wrap gap-2 items-center">
                             {item.isNew && (
                                 <span className="bg-primary text-black text-[9px] font-bold px-1.5 py-0.5 rounded shadow animate-pulse">
@@ -54,12 +54,12 @@ export function ResourceCard({ item }: ResourceCardProps) {
                         </div>
                     </div>
 
-                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-primary transition-colors leading-tight">
+                    <h3 className="text-base font-bold text-white mb-1 group-hover:text-primary transition-colors leading-tight">
                         {item.title}
                     </h3>
 
                     {/* Journal and Authors Line */}
-                    <div className="mb-4 text-xs text-gray-400 flex flex-wrap items-center gap-2 border-b border-white/5 pb-3">
+                    <div className="mb-2 text-xs text-gray-400 flex flex-wrap items-center gap-2 border-b border-white/5 pb-2">
                         {item.journal && (
                             <span className="font-semibold text-gray-300">{item.journal}</span>
                         )}
@@ -93,7 +93,7 @@ export function ResourceCard({ item }: ResourceCardProps) {
                     </div>
 
                     {/* Highly Structured Tag Stack - Compact Single Column */}
-                    <div className="flex flex-col gap-2 mt-auto">
+                    <div className="flex flex-col gap-1 mt-auto">
                         {renderTagGroup("Imaging Method", item.imagingMethod, "bg-brand-green/10 text-brand-green border-brand-green/20", "text-brand-green")}
                         {renderTagGroup("App Domain", item.applicationDomain, "bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20", "text-brand-cyan")}
                         {renderTagGroup("Modality", item.modality, "bg-brand-magenta/10 text-brand-magenta border-brand-magenta/20", "text-brand-magenta")}
