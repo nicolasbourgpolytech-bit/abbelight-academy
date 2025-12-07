@@ -21,6 +21,11 @@
   --warning: #FF9B35;
   /* Abbelight Orange */
   --warning-foreground: #000000;
+  
+  --brand-cyan: #00CAF8;
+  --brand-green: #00D296;
+  --brand-magenta: #FF73FF;
+  --brand-orange: #FF9B35;
 
   --card: rgba(20, 20, 20, 0.6);
   --card-foreground: #ffffff;
@@ -43,6 +48,11 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  
+  --color-brand-cyan: var(--brand-cyan);
+  --color-brand-green: var(--brand-green);
+  --color-brand-magenta: var(--brand-magenta);
+  --color-brand-orange: var(--brand-orange);
 
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);

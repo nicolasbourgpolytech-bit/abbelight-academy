@@ -118,7 +118,7 @@ export default function ArticlesPage() {
 
     const handleClearAll = () => setSelectedFilters({});
 
-    // Filter Logic Helper (matches an article against filters)
+    // Refined Filter Logic
     const matchesFilters = (article: ContentItem, filters: Record<string, string[]>) => {
         return Object.keys(filters).every(categoryId => {
             const selectedOptions = filters[categoryId];
@@ -128,8 +128,11 @@ export default function ArticlesPage() {
             if (!val) return false;
 
             if (Array.isArray(val)) {
-                return val.some(v => selectedOptions.includes(v));
+                // For Arrays (Tags), use AND logic: Article must have ALL selected tags
+                // User requirement: "les filtres fonctionnent en AND surtout ceux dans la même catégorie"
+                return selectedOptions.every(opt => val.includes(opt));
             } else {
+                // For Strings (Journal, Author), use OR logic: Article must match ANY selected value
                 return selectedOptions.includes(val as string);
             }
         });
@@ -169,7 +172,6 @@ export default function ArticlesPage() {
     const filterCounts = useMemo(() => {
         const counts: Record<string, Record<string, number>> = {};
 
-        // Categories map to their keys in ContentItem
         const categoryKeys: Record<string, { key: keyof ContentItem, isArray: boolean }> = {
             'applicationDomain': { key: 'applicationDomain', isArray: true },
             'imagingMethod': { key: 'imagingMethod', isArray: true },
@@ -181,35 +183,54 @@ export default function ArticlesPage() {
             'customer': { key: 'customer', isArray: false }
         };
 
-        // For each category, we want count of options based on "What if I select this option given OTHER categories are filtered?"
-        // This is standard Faceted Search:
-        // Context for Category C = Articles filtered by (All Active Filters EXCEPT C).
-
         Object.keys(categoryKeys).forEach(catId => {
-            // Build context filters (exclude current catId)
-            const contextFilters = { ...selectedFilters };
-            delete contextFilters[catId]; // Remove restriction on current category to see full potential
+            // Context counts: 
+            // Standard behavior: Count items available if I ADD this filter to current selection.
+            // But since current selection within catId is AND (for arrays) or OR (for scalars), it varies.
 
-            // Get articles matching this context
+            // Simplified approach for context:
+            // Filter by ALL OTHER categories.
+            // Then count distribution.
+            // This is "Global OR" context within the category, which is correct for showing "Potential results".
+
+            const contextFilters = { ...selectedFilters };
+            delete contextFilters[catId]; // Remove restriction on current category
+
             const contextArticles = articles.filter(a =>
-                // First apply search
                 (search.trim() ? (
                     a.title.toLowerCase().includes(search.toLowerCase()) ||
                     a.description.toLowerCase().includes(search.toLowerCase()) ||
                     a.author?.toLowerCase().includes(search.toLowerCase()) ||
                     (a.journal && a.journal.toLowerCase().includes(search.toLowerCase()))
                 ) : true) &&
-                // Then apply context filters
                 matchesFilters(a, contextFilters)
             );
 
-            // Compute counts for options in this category within contextArticles
             const catCounts: Record<string, number> = {};
             const { key, isArray } = categoryKeys[catId];
+
+            // Optimization for AND logic: 
+            // If I have selected ["A"] in this category, and I look at "B":
+            // Standard UI implies hitting "B" will result in "A AND B".
+            // So count for "B" should be: How many articles have BOTH A and B?
+            // Meaning we SHOULD NOT exclude current category selection, but rather combine it?
+
+            // Let's refine based on user request "AND logic".
+            // If isArray (AND logic):
+            // Count for option "O" = Count of articles matching (ContextFilters + CurrentSelection + O).
+            // If isScalar (OR logic):
+            // Count for option "O" = Count of articles matching (ContextFilters + O). (Since clicking O adds to OR set).
 
             contextArticles.forEach(a => {
                 const val = a[key];
                 if (!val) return;
+
+                // Check if this article matches CURRENT selection in this category (for AND logic Refinement)
+                // For isArray: Does it have all ALREADY selected tags?
+                if (isArray && selectedFilters[catId]?.length > 0) {
+                    const hasAllSelected = selectedFilters[catId].every(sel => (val as string[]).includes(sel));
+                    if (!hasAllSelected) return; // If it doesn't match current AND criteria, it can't contribute to future AND criteria
+                }
 
                 if (isArray && Array.isArray(val)) {
                     val.forEach(v => {

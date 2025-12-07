@@ -17,7 +17,6 @@ interface MultiCategoryFilterSidebarProps {
 }
 
 export function MultiCategoryFilterSidebar({ categories, selectedFilters, counts, onToggleFilter, onClearAll }: MultiCategoryFilterSidebarProps) {
-    // Determine if any filters are active
     const hasActiveFilters = Object.values(selectedFilters).some(list => list.length > 0);
     const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
         categories.reduce((acc, cat) => ({ ...acc, [cat.id]: true }), {})
@@ -31,12 +30,12 @@ export function MultiCategoryFilterSidebar({ categories, selectedFilters, counts
         <div className="w-full md:w-72 flex-shrink-0 space-y-6">
             {/* Active Filters Summary */}
             {hasActiveFilters && (
-                <div className="bg-white/5 rounded-xl p-4 border border-white/10 animate-fade-in">
+                <div className="bg-white/5 rounded-xl p-4 border border-white/10 animate-fade-in shadow-sm">
                     <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-xs font-bold text-primary uppercase tracking-wider">Active Filters</h4>
+                        <h4 className="text-xs font-bold text-brand-cyan uppercase tracking-wider">Active Filters</h4>
                         <button
                             onClick={onClearAll}
-                            className="text-[10px] text-gray-400 hover:text-white transition-colors underline"
+                            className="text-[10px] text-gray-400 hover:text-white transition-colors underline hover:no-underline"
                         >
                             Clear All
                         </button>
@@ -47,7 +46,8 @@ export function MultiCategoryFilterSidebar({ categories, selectedFilters, counts
                                 <button
                                     key={`${catId}-${option}`}
                                     onClick={() => onToggleFilter(catId, option)}
-                                    className="flex items-center gap-1.5 bg-primary/20 text-primary border border-primary/20 px-2 py-1 rounded text-xs font-medium hover:bg-primary/30 transition-colors group"
+                                    // Use Brand Green for chips to contrast with the Cyan headers
+                                    className="flex items-center gap-1.5 bg-brand-green/20 text-brand-green border border-brand-green/30 px-2 py-1 rounded-full text-xs font-medium hover:bg-brand-green/30 transition-colors group"
                                 >
                                     <span>{option}</span>
                                     <svg className="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -83,7 +83,8 @@ export function MultiCategoryFilterSidebar({ categories, selectedFilters, counts
                                 </span>
                                 <div className="flex items-center gap-2">
                                     {activeCount > 0 && (
-                                        <span className="bg-primary text-black text-[10px] font-bold px-1.5 rounded-full min-w-[1.25rem] h-5 flex items-center justify-center">
+                                        // Use Brand Cyan for the count badge
+                                        <span className="bg-brand-cyan text-black text-[10px] font-bold px-1.5 rounded-full min-w-[1.25rem] h-5 flex items-center justify-center">
                                             {activeCount}
                                         </span>
                                     )}
@@ -107,7 +108,7 @@ export function MultiCategoryFilterSidebar({ categories, selectedFilters, counts
                                             <label
                                                 key={option}
                                                 className={`flex items-start gap-2.5 cursor-pointer group py-1 select-none transition-colors 
-                                                    ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}
+                                                    ${isDisabled ? 'opacity-30 cursor-not-allowed' : ''}
                                                     ${isSelected ? 'text-white' : 'text-gray-400 hover:text-gray-300'}`}
                                             >
                                                 <div className="relative flex items-center mt-0.5">
@@ -118,9 +119,10 @@ export function MultiCategoryFilterSidebar({ categories, selectedFilters, counts
                                                         disabled={isDisabled}
                                                         onChange={() => !isDisabled && onToggleFilter(category.id, option)}
                                                     />
-                                                    <div className={`w-4 h-4 rounded border transition-colors flex items-center justify-center
+                                                    <div className={`w-4 h-4 rounded border transition-all duration-200 flex items-center justify-center
                                                         ${isSelected
-                                                            ? 'bg-primary border-primary text-black'
+                                                            // Use Brand Cyan for the checkbox itself
+                                                            ? 'bg-brand-cyan border-brand-cyan text-black'
                                                             : 'bg-white/5 border-white/20 group-hover:border-white/40'
                                                         }`}
                                                     >
@@ -133,7 +135,7 @@ export function MultiCategoryFilterSidebar({ categories, selectedFilters, counts
                                                 </div>
                                                 <div className="flex-1 flex justify-between gap-2">
                                                     <span className="text-sm break-words leading-tight">{option}</span>
-                                                    <span className="text-xs text-gray-600 font-mono">({count})</span>
+                                                    <span className="text-xs text-gray-600 font-mono group-hover:text-gray-500 transition-colors">({count})</span>
                                                 </div>
                                             </label>
                                         );
