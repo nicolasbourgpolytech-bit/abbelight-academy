@@ -49,7 +49,6 @@ export default function ArticlesPage() {
                             type: 'article',
                             url: a.doi_link || '#',
                             author: a.first_author || a.last_author,
-                            // Legacy tags for card display (combine first 2 categories)
                             tags: [...appDomains, ...imgMethods].slice(0, 3),
                             isNew: false,
 
@@ -76,7 +75,6 @@ export default function ArticlesPage() {
         fetchArticles();
     }, []);
 
-    // Dynamically generate filter options
     const filterCategories = useMemo(() => {
         if (articles.length === 0) return [];
 
@@ -111,7 +109,7 @@ export default function ArticlesPage() {
             const current = prev[categoryId] || [];
             if (current.includes(option)) {
                 const next = current.filter(o => o !== option);
-                return next.length > 0 ? { ...prev, [categoryId]: next } : { ...prev, [categoryId]: [] }; // Keep cleanup clean?
+                return next.length > 0 ? { ...prev, [categoryId]: next } : { ...prev, [categoryId]: [] };
             } else {
                 return { ...prev, [categoryId]: [...current, option] };
             }
@@ -120,10 +118,27 @@ export default function ArticlesPage() {
 
     const handleClearAll = () => setSelectedFilters({});
 
+    // Filter Logic Helper (matches an article against filters)
+    const matchesFilters = (article: ContentItem, filters: Record<string, string[]>) => {
+        return Object.keys(filters).every(categoryId => {
+            const selectedOptions = filters[categoryId];
+            if (!selectedOptions || selectedOptions.length === 0) return true;
+
+            const val = article[categoryId as keyof ContentItem];
+            if (!val) return false;
+
+            if (Array.isArray(val)) {
+                return val.some(v => selectedOptions.includes(v));
+            } else {
+                return selectedOptions.includes(val as string);
+            }
+        });
+    };
+
+    // Filter by Search & Global Filters for list display
     const filteredAndSortedArticles = useMemo(() => {
         let result = [...articles];
 
-        // Filter by Search
         if (search.trim()) {
             const q = search.toLowerCase();
             result = result.filter(a =>
@@ -134,27 +149,8 @@ export default function ArticlesPage() {
             );
         }
 
-        // Advanced Filtering Logic
-        // Strategy: OR within category, AND across categories
-        // E.g. (AppDomain=Bio OR AppDomain=Chem) AND (Product=SAFE360)
-        Object.keys(selectedFilters).forEach(categoryId => {
-            const selectedOptions = selectedFilters[categoryId];
-            if (selectedOptions.length === 0) return;
+        result = result.filter(a => matchesFilters(a, selectedFilters));
 
-            result = result.filter(a => {
-                const val = a[categoryId as keyof ContentItem];
-                if (!val) return false;
-
-                if (Array.isArray(val)) {
-                    // Start with intersection check (does array contain ANY of selected options?)
-                    return val.some(v => selectedOptions.includes(v));
-                } else {
-                    return selectedOptions.includes(val as string);
-                }
-            });
-        });
-
-        // Sort
         result.sort((a, b) => {
             if (sort === 'title') {
                 return a.title.localeCompare(b.title);
@@ -167,6 +163,68 @@ export default function ArticlesPage() {
 
         return result;
     }, [articles, search, sort, selectedFilters]);
+
+
+    // Dynamic Counts Calculation
+    const filterCounts = useMemo(() => {
+        const counts: Record<string, Record<string, number>> = {};
+
+        // Categories map to their keys in ContentItem
+        const categoryKeys: Record<string, { key: keyof ContentItem, isArray: boolean }> = {
+            'applicationDomain': { key: 'applicationDomain', isArray: true },
+            'imagingMethod': { key: 'imagingMethod', isArray: true },
+            'modality': { key: 'modality', isArray: true },
+            'product': { key: 'product', isArray: true },
+            'journal': { key: 'journal', isArray: false },
+            'firstAuthor': { key: 'firstAuthor', isArray: false },
+            'lastAuthor': { key: 'lastAuthor', isArray: false },
+            'customer': { key: 'customer', isArray: false }
+        };
+
+        // For each category, we want count of options based on "What if I select this option given OTHER categories are filtered?"
+        // This is standard Faceted Search:
+        // Context for Category C = Articles filtered by (All Active Filters EXCEPT C).
+
+        Object.keys(categoryKeys).forEach(catId => {
+            // Build context filters (exclude current catId)
+            const contextFilters = { ...selectedFilters };
+            delete contextFilters[catId]; // Remove restriction on current category to see full potential
+
+            // Get articles matching this context
+            const contextArticles = articles.filter(a =>
+                // First apply search
+                (search.trim() ? (
+                    a.title.toLowerCase().includes(search.toLowerCase()) ||
+                    a.description.toLowerCase().includes(search.toLowerCase()) ||
+                    a.author?.toLowerCase().includes(search.toLowerCase()) ||
+                    (a.journal && a.journal.toLowerCase().includes(search.toLowerCase()))
+                ) : true) &&
+                // Then apply context filters
+                matchesFilters(a, contextFilters)
+            );
+
+            // Compute counts for options in this category within contextArticles
+            const catCounts: Record<string, number> = {};
+            const { key, isArray } = categoryKeys[catId];
+
+            contextArticles.forEach(a => {
+                const val = a[key];
+                if (!val) return;
+
+                if (isArray && Array.isArray(val)) {
+                    val.forEach(v => {
+                        catCounts[v as string] = (catCounts[v as string] || 0) + 1;
+                    });
+                } else if (!isArray && typeof val === 'string') {
+                    catCounts[val] = (catCounts[val] || 0) + 1;
+                }
+            });
+
+            counts[catId] = catCounts;
+        });
+
+        return counts;
+    }, [articles, selectedFilters, search]);
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -182,6 +240,7 @@ export default function ArticlesPage() {
                 <MultiCategoryFilterSidebar
                     categories={filterCategories}
                     selectedFilters={selectedFilters}
+                    counts={filterCounts}
                     onToggleFilter={handleToggleFilter}
                     onClearAll={handleClearAll}
                 />
