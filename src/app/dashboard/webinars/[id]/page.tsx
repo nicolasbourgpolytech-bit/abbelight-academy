@@ -108,21 +108,21 @@ export default function WebinarDetailPage({ params }: { params: Promise<{ id: st
                             <h3 className="text-lg font-bold text-white mb-4">Speakers</h3>
                             <div className="flex flex-col gap-3">
                                 {authors.map((author: any, idx: number) => (
-                                    <div key={idx} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
-                                        <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
-                                            {author.photo ? <img src={author.photo} alt={author.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-white">{author.firstName?.[0]}</div>}
+                                    <div key={idx} className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
+                                        <div className="w-16 h-16 rounded-full bg-gray-700 overflow-hidden flex-shrink-0 border border-white/10 shadow-lg">
+                                            {author.photo ? <img src={author.photo} alt={author.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-white text-xl">{author.firstName?.[0]}</div>}
                                         </div>
                                         <div>
-                                            <div className="font-bold text-sm text-white flex items-center gap-2">
+                                            <div className="font-bold text-lg text-white flex items-center gap-2">
                                                 {author.firstName} {author.name}
                                                 {author.linkedin && (
                                                     <a href={author.linkedin} target="_blank" rel="noopener noreferrer" className="text-[#0077b5] hover:text-[#0077b5]/80 transition-colors" title="LinkedIn Profile">
-                                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
+                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
                                                     </a>
                                                 )}
                                             </div>
-                                            <div className="text-[10px] text-primary">{author.title}</div>
-                                            <div className="text-[10px] text-gray-400">{author.institute}</div>
+                                            <div className="text-sm text-primary mb-0.5">{author.title}</div>
+                                            <div className="text-xs text-gray-400">{author.institute}</div>
                                         </div>
                                     </div>
                                 ))}
