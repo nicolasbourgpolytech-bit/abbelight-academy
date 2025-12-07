@@ -74,8 +74,8 @@ export function ResourceCard({ item }: ResourceCardProps) {
                         {item.description}
                     </p>
 
-                    {/* Highly Structured Tag Grid */}
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-3 mb-6">
+                    {/* Highly Structured Tag Stack - Single Column */}
+                    <div className="flex flex-col gap-2 mb-6">
                         {renderTagGroup("Imaging Method", item.imagingMethod, "bg-brand-green/10 text-brand-green border-brand-green/20", "text-brand-green")}
                         {renderTagGroup("App Domain", item.applicationDomain, "bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20", "text-brand-cyan")}
                         {renderTagGroup("Modality", item.modality, "bg-brand-magenta/10 text-brand-magenta border-brand-magenta/20", "text-brand-magenta")}
