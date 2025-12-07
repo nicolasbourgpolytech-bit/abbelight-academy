@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -644,7 +644,7 @@ export default function AdminPage() {
             <header className="h-16 border-b border-white/10 bg-gray-900/50 backdrop-blur flex items-center justify-between px-6 sticky top-0 z-50">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center font-bold text-black">A</div>
-                    <span className="font-bold tracking-tight">Abbelight Academy <span className="text-gray-500 font-normal">| Admin</span></span>
+                    <span className="font-bold tracking-tight">Abbelight Academy <span className="text-gray-500 font-normal">| Admin</span> <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded ml-2 border border-primary/30">v2.1</span></span>
                 </div>
                 <div className="flex items-center gap-4">
                     <Link href="/dashboard/academy" className="text-sm text-gray-400 hover:text-white transition-colors">View Site</Link>

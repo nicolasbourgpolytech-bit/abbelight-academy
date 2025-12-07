@@ -27,6 +27,6 @@ export async function GET(request: Request) {
 
         return NextResponse.json({ message: `Password updated for ${email}` }, { status: 200 });
     } catch (error) {
-        return NextResponse.json({ error: error.toString() }, { status: 500 });
+        return NextResponse.json({ error: (error as any).toString() }, { status: 500 });
     }
 }
