@@ -134,11 +134,23 @@ export default function WebinarDetailPage({ params }: { params: Promise<{ id: st
                     {products.length > 0 && (
                         <div>
                             <h3 className="text-lg font-bold text-white mb-4">Featured Products</h3>
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-3">
                                 {products.map((prod: any, idx: number) => (
-                                    <a key={idx} href={prod.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 px-3 py-2 rounded-lg transition-colors group">
-                                        <span className="font-bold text-sm text-primary group-hover:text-white transition-colors">{prod.name}</span>
-                                        <svg className="w-3 h-3 text-primary ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                    <a key={idx} href={prod.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 p-3 rounded-xl transition-colors group">
+                                        <div className="w-12 h-12 bg-white/10 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center text-gray-500 font-bold border border-white/5">
+                                            {prod.image_url ? (
+                                                <img src={prod.image_url} alt={prod.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                prod.name?.[0]
+                                            )}
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="font-bold text-sm text-white group-hover:text-primary transition-colors leading-tight">{prod.name}</div>
+                                            <div className="text-xs text-primary mt-1 flex items-center gap-1">
+                                                View Product
+                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                            </div>
+                                        </div>
                                     </a>
                                 ))}
                             </div>

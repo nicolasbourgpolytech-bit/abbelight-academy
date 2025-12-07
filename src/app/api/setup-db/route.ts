@@ -41,6 +41,15 @@ export async function GET(request: Request) {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )`;
 
+    await sql`CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        link TEXT,
+        image_url TEXT,
+        description TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )`;
+
     return NextResponse.json({ message: "Database updated successfully!" }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error }, { status: 500 });

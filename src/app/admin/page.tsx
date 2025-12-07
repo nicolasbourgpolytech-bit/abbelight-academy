@@ -27,6 +27,12 @@ export default function AdminPage() {
     const [users, setUsers] = useState<any[]>([]);
     const [userFilterStatus, setUserFilterStatus] = useState<string>('all');
 
+    // Product State
+    const [products, setProducts] = useState<any[]>([]);
+    const [editingProduct, setEditingProduct] = useState<any>(null);
+    const [isEditingProduct, setIsEditingProduct] = useState(false);
+    const [uploading, setUploading] = useState(false);
+
     // Derived state for tag suggestions (Webinars + Articles)
     const allUniqueTags = Array.from(new Set([
         ...webinars.flatMap(w => {
@@ -127,6 +133,13 @@ export default function AdminPage() {
             .catch(err => console.error(err));
     };
 
+    const fetchProducts = () => {
+        fetch('/api/products')
+            .then(res => res.json())
+            .then(data => setProducts(data || []))
+            .catch(err => console.error(err));
+    };
+
     // Fetch data on load
     useEffect(() => {
         if (isAuthenticated) {
@@ -151,6 +164,9 @@ export default function AdminPage() {
 
             // Fetch users
             fetchUsers();
+
+            // Fetch products
+            fetchProducts();
         }
     }, [isAuthenticated]);
 
@@ -216,6 +232,66 @@ export default function AdminPage() {
         }
     };
 
+    // --- PRODUCT HANDLERS ---
+
+    const handleSaveProduct = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const isUpdate = !!editingProduct.id;
+            const method = isUpdate ? 'PUT' : 'POST';
+
+            const res = await fetch('/api/products', {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editingProduct),
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                alert("Product saved!");
+                fetchProducts();
+                setIsEditingProduct(false);
+            } else {
+                alert("Error: " + data.error);
+            }
+        } catch (error) {
+            alert("Failed to save product");
+        }
+    };
+
+    const handleDeleteProduct = async (id: number) => {
+        if (!confirm("Delete this product?")) return;
+        try {
+            await fetch(`/api/products?id=${id}`, { method: 'DELETE' });
+            fetchProducts();
+        } catch (e) { alert("Error deleting product"); }
+    };
+
+    const handleUploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        const file = e.target.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        setUploading(true);
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setEditingProduct({ ...editingProduct, image_url: data.url });
+            } else {
+                alert("Upload failed");
+            }
+        } catch (error) {
+            alert("Upload error");
+        } finally {
+            setUploading(false);
+        }
+    };
+
     // --- WEBINAR HANDLERS ---
 
     const handleSaveWebinar = async (e: React.FormEvent) => {
@@ -265,7 +341,7 @@ export default function AdminPage() {
 
     const addProduct = () => {
         const currentProducts = editingWebinar.associated_products || [];
-        setEditingWebinar({ ...editingWebinar, associated_products: [...currentProducts, { name: "", link: "" }] });
+        setEditingWebinar({ ...editingWebinar, associated_products: [...currentProducts, { name: "", link: "", image_url: "" }] });
     };
 
     const removeProduct = (idx: number) => {
@@ -685,6 +761,12 @@ export default function AdminPage() {
                             className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'articles' ? 'bg-primary/10 text-primary border border-primary/20' : 'text-gray-400 hover:bg-white/5 hooker:text-white'}`}
                         >
                             Articles
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("products")}
+                            className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'products' ? 'bg-primary/10 text-primary border border-primary/20' : 'text-gray-400 hover:bg-white/5 hooker:text-white'}`}
+                        >
+                            Products
                         </button>
                     </nav>
                 </aside>
@@ -1159,26 +1241,59 @@ export default function AdminPage() {
                                                 <label className="block text-xs font-bold text-gray-500 uppercase">Associated Products</label>
                                                 <button type="button" onClick={addProduct} className="text-xs text-primary hover:text-white font-bold">+ Add Product</button>
                                             </div>
-                                            <div className="space-y-2">
+                                            <div className="space-y-4">
                                                 {editingWebinar?.associated_products?.map((prod: any, idx: number) => (
-                                                    <div key={idx} className="flex gap-2">
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Product Name"
-                                                            value={prod.name}
-                                                            onChange={(e) => updateProduct(idx, 'name', e.target.value)}
-                                                            className="flex-1 bg-black/30 border border-white/10 rounded px-3 py-2 text-sm text-white"
-                                                        />
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Link"
-                                                            value={prod.link}
-                                                            onChange={(e) => updateProduct(idx, 'link', e.target.value)}
-                                                            className="flex-1 bg-black/30 border border-white/10 rounded px-3 py-2 text-sm text-white"
-                                                        />
-                                                        <button type="button" onClick={() => removeProduct(idx)} className="text-red-500 hover:text-red-400 p-2">
+                                                    <div key={idx} className="bg-black/30 border border-white/5 rounded-lg p-3 relative">
+                                                        <button type="button" onClick={() => removeProduct(idx)} className="absolute top-2 right-2 text-red-500 hover:text-red-400">
                                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                                         </button>
+                                                        <div className="mb-2">
+                                                            <label className="block text-[10px] text-gray-500 mb-1">Select from Database (Auto-fill)</label>
+                                                            <select
+                                                                className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-white"
+                                                                onChange={(e) => {
+                                                                    const selected = products.find(p => p.id.toString() === e.target.value);
+                                                                    if (selected) {
+                                                                        const updatedProducts = [...editingWebinar.associated_products];
+                                                                        updatedProducts[idx] = {
+                                                                            name: selected.name,
+                                                                            link: selected.link,
+                                                                            image_url: selected.image_url
+                                                                        };
+                                                                        setEditingWebinar({ ...editingWebinar, associated_products: updatedProducts });
+                                                                    }
+                                                                }}
+                                                                value=""
+                                                            >
+                                                                <option value="">-- Helper: Select Product --</option>
+                                                                {products.map(p => (
+                                                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Product Name"
+                                                                value={prod.name}
+                                                                onChange={(e) => updateProduct(idx, 'name', e.target.value)}
+                                                                className="bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Link"
+                                                                value={prod.link}
+                                                                onChange={(e) => updateProduct(idx, 'link', e.target.value)}
+                                                                className="bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white"
+                                                            />
+                                                        </div>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Image URL"
+                                                            value={prod.image_url || ""}
+                                                            onChange={(e) => updateProduct(idx, 'image_url', e.target.value)}
+                                                            className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white text-xs font-mono mt-2"
+                                                        />
                                                     </div>
                                                 ))}
                                                 {(!editingWebinar?.associated_products || editingWebinar.associated_products.length === 0) && (
@@ -1577,6 +1692,135 @@ export default function AdminPage() {
                                         </div>
                                     ))}
                                 </div>
+                            )}
+                        </div>
+                    )}
+
+                    {activeTab === 'products' && (
+                        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+                            {!isEditingProduct ? (
+                                <>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h2 className="text-2xl font-bold text-white">Products</h2>
+                                            <p className="text-gray-400 text-sm">Manage associated products library.</p>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                setEditingProduct({ name: "", link: "", image_url: "", description: "" });
+                                                setIsEditingProduct(true);
+                                            }}
+                                            className="bg-primary text-black px-4 py-2 rounded-lg font-bold text-sm hover:bg-white transition-colors flex items-center gap-2"
+                                        >
+                                            + New Product
+                                        </button>
+                                    </div>
+                                    <div className="grid gap-4">
+                                        {products.map((prod: any) => (
+                                            <div key={prod.id} className="bg-gray-900/40 border border-white/10 rounded-xl p-4 flex items-center justify-between hover:border-primary/30 transition-colors group">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-16 h-16 bg-gray-800 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-500 font-bold text-xl overflow-hidden border border-white/5">
+                                                        {prod.image_url ? <img src={prod.image_url} alt="" className="w-full h-full object-cover" /> : prod.name?.[0]}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-white group-hover:text-primary transition-colors">{prod.name}</h3>
+                                                        <div className="text-xs text-gray-400 truncate max-w-md">{prod.description || prod.link}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingProduct(prod);
+                                                            setIsEditingProduct(true);
+                                                        }}
+                                                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteProduct(prod.id)}
+                                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {products.length === 0 && <p className="text-center text-gray-500 py-10">No products found.</p>}
+                                    </div>
+                                </>
+                            ) : (
+                                <form onSubmit={handleSaveProduct} className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h2 className="text-2xl font-bold text-white">{editingProduct.id ? 'Edit Product' : 'New Product'}</h2>
+                                        <button type="button" onClick={() => setIsEditingProduct(false)} className="text-sm text-gray-400 hover:text-white">Cancel</button>
+                                    </div>
+                                    <div className="bg-gray-900/40 border border-white/10 rounded-xl p-6 space-y-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Product Name</label>
+                                            <input
+                                                type="text"
+                                                value={editingProduct.name}
+                                                onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Link</label>
+                                            <input
+                                                type="text"
+                                                value={editingProduct.link || ""}
+                                                onChange={e => setEditingProduct({ ...editingProduct, link: e.target.value })}
+                                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                placeholder="https://..."
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Product Image</label>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-20 h-20 bg-black/50 border border-white/10 rounded-lg flex items-center justify-center overflow-hidden">
+                                                    {editingProduct.image_url ? (
+                                                        <img src={editingProduct.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span className="text-gray-600 text-xs">No Image</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={handleUploadImage}
+                                                        className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors"
+                                                        disabled={uploading}
+                                                    />
+                                                    {uploading && <p className="text-xs text-primary mt-1">Uploading...</p>}
+                                                    <input
+                                                        type="text"
+                                                        value={editingProduct.image_url || ""}
+                                                        onChange={e => setEditingProduct({ ...editingProduct, image_url: e.target.value })}
+                                                        className="w-full bg-black/50 border border-white/10 rounded mt-2 px-2 py-1 text-xs text-gray-400 font-mono"
+                                                        placeholder="Or paste URL..."
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Description</label>
+                                            <textarea
+                                                value={editingProduct.description || ""}
+                                                onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                                                rows={3}
+                                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end gap-4">
+                                        <button type="submit" className="px-8 py-3 bg-primary text-black rounded-lg font-bold uppercase text-sm hover:bg-white transition-colors">
+                                            Save Product
+                                        </button>
+                                    </div>
+                                </form>
                             )}
                         </div>
                     )}
