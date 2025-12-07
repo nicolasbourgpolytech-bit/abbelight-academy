@@ -281,7 +281,7 @@ export default function AdminPage() {
 
     const addAuthor = () => {
         const currentAuthors = editingWebinar.authors || [];
-        setEditingWebinar({ ...editingWebinar, authors: [...currentAuthors, { name: "", firstName: "", title: "", institute: "", photo: "" }] });
+        setEditingWebinar({ ...editingWebinar, authors: [...currentAuthors, { name: "", firstName: "", title: "", institute: "", photo: "", linkedin: "" }] });
     };
 
     const removeAuthor = (idx: number) => {
@@ -1237,6 +1237,13 @@ export default function AdminPage() {
                                                             value={author.photo}
                                                             onChange={(e) => updateAuthor(idx, 'photo', e.target.value)}
                                                             className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white text-xs font-mono"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="LinkedIn URL"
+                                                            value={author.linkedin || ""}
+                                                            onChange={(e) => updateAuthor(idx, 'linkedin', e.target.value)}
+                                                            className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white text-xs font-mono mt-2"
                                                         />
                                                     </div>
                                                 ))}
