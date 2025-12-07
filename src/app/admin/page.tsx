@@ -1780,31 +1780,53 @@ export default function AdminPage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Product Image</label>
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-20 h-20 bg-black/50 border border-white/10 rounded-lg flex items-center justify-center overflow-hidden">
-                                                    {editingProduct.image_url ? (
-                                                        <img src={editingProduct.image_url} alt="Preview" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <span className="text-gray-600 text-xs">No Image</span>
-                                                    )}
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Product Image (Select from Library)</label>
+                                            <div className="space-y-4">
+                                                {/* Selected Preview */}
+                                                <div className="flex items-center gap-4 bg-black/30 p-4 rounded-xl border border-white/5">
+                                                    <div className="w-24 h-24 bg-black/50 border border-white/10 rounded-lg flex items-center justify-center overflow-hidden">
+                                                        {editingProduct.image_url ? (
+                                                            <img src={editingProduct.image_url} alt="Preview" className="w-full h-full object-contain" />
+                                                        ) : (
+                                                            <span className="text-gray-600 text-xs">No Image</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <input
+                                                            type="text"
+                                                            value={editingProduct.image_url || ""}
+                                                            onChange={e => setEditingProduct({ ...editingProduct, image_url: e.target.value })}
+                                                            className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-gray-300 font-mono mb-2"
+                                                            placeholder="Or paste custom URL..."
+                                                        />
+                                                        <p className="text-xs text-gray-500">Selected Path</p>
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1">
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={handleUploadImage}
-                                                        className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors"
-                                                        disabled={uploading}
-                                                    />
-                                                    {uploading && <p className="text-xs text-primary mt-1">Uploading...</p>}
-                                                    <input
-                                                        type="text"
-                                                        value={editingProduct.image_url || ""}
-                                                        onChange={e => setEditingProduct({ ...editingProduct, image_url: e.target.value })}
-                                                        className="w-full bg-black/50 border border-white/10 rounded mt-2 px-2 py-1 text-xs text-gray-400 font-mono"
-                                                        placeholder="Or paste URL..."
-                                                    />
+
+                                                {/* Image Library Grid */}
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">Available Assets</label>
+                                                    <div className="grid grid-cols-4 gap-2">
+                                                        {[
+                                                            '/product-images/safe-mn360-dark.png',
+                                                            '/product-images/safe-mn360-neutral.png',
+                                                            '/product-images/safe-mn360-lab.png',
+                                                        ].map((path) => (
+                                                            <button
+                                                                key={path}
+                                                                type="button"
+                                                                onClick={() => setEditingProduct({ ...editingProduct, image_url: path })}
+                                                                className={`relative aspect-square rounded-lg overflow-hidden border transition-all ${editingProduct.image_url === path ? 'border-primary ring-2 ring-primary/20' : 'border-white/10 hover:border-white/30'}`}
+                                                            >
+                                                                <img src={path} alt="" className="w-full h-full object-cover" />
+                                                                {editingProduct.image_url === path && (
+                                                                    <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                                                        <svg className="w-6 h-6 text-white drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                                                                    </div>
+                                                                )}
+                                                            </button>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

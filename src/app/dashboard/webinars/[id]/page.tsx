@@ -137,9 +137,9 @@ export default function WebinarDetailPage({ params }: { params: Promise<{ id: st
                             <div className="flex flex-col gap-3">
                                 {products.map((prod: any, idx: number) => (
                                     <a key={idx} href={prod.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 p-3 rounded-xl transition-colors group">
-                                        <div className="w-12 h-12 bg-white/10 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center text-gray-500 font-bold border border-white/5">
+                                        <div className="w-24 h-24 bg-white/10 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center text-gray-500 font-bold border border-white/5 shadow-2xl">
                                             {prod.image_url ? (
-                                                <img src={prod.image_url} alt={prod.name} className="w-full h-full object-cover" />
+                                                <img src={prod.image_url} alt={prod.name} className="w-full h-full object-contain p-1" />
                                             ) : (
                                                 prod.name?.[0]
                                             )}
