@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
 
 const navItems = [
@@ -37,15 +38,7 @@ const navItems = [
     {
         name: "Apps & Tools", href: "/dashboard/apps", icon: (
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-        )
-    },
-    {
-        name: "Settings", href: "/dashboard/settings", icon: (
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4 4m4 4V4" />
             </svg>
         )
     },
@@ -53,7 +46,9 @@ const navItems = [
 
 export function Sidebar() {
     const pathname = usePathname();
-    const { user } = useUser();
+    const router = useRouter();
+    const { user, logout } = useUser();
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
 
     // Get initials or fallback
     const initials = user?.name
@@ -64,6 +59,11 @@ export function Sidebar() {
 
     const displayName = user?.name || (user?.firstName ? `${user.firstName} ${user.lastName}` : "User");
     const displayCompany = user?.company || "Abbelight";
+
+    const handleLogout = () => {
+        logout();
+        router.push('/login');
+    };
 
     return (
         <aside className="w-64 h-full bg-black/90 backdrop-blur-xl border-r border-white/10 flex flex-col">
@@ -102,16 +102,50 @@ export function Sidebar() {
                 })}
             </nav>
 
-            <div className="p-4 border-t border-white/5 bg-black/40">
-                <Link href="/dashboard/settings" className="flex items-center gap-3 hover:bg-white/5 p-2 rounded-lg transition-colors -m-2">
-                    <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold border border-white/10">
+            <div className="p-4 border-t border-white/5 bg-black/40 relative">
+                {/* Popover Menu */}
+                {showProfileMenu && (
+                    <>
+                        <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => setShowProfileMenu(false)}
+                        />
+                        <div className="absolute bottom-full left-4 right-4 mb-2 bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden shadow-2xl z-20 animate-fade-in-up">
+                            <Link
+                                href="/dashboard/settings"
+                                className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
+                                onClick={() => setShowProfileMenu(false)}
+                            >
+                                <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                                Change Password
+                            </Link>
+                            <div className="h-px bg-white/5" />
+                            <button
+                                onClick={handleLogout}
+                                className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                Log Out
+                            </button>
+                        </div>
+                    </>
+                )}
+
+                <button
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className={`w-full flex items-center gap-3 hover:bg-white/5 p-2 rounded-lg transition-colors -m-2 text-left group ${showProfileMenu ? 'bg-white/5' : ''}`}
+                >
+                    <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold border border-white/10 group-hover:border-primary/50 transition-colors">
                         {initials}
                     </div>
                     <div className="flex flex-col overflow-hidden">
                         <span className="text-sm font-bold text-white truncate" title={displayName}>{displayName}</span>
-                        <span className="text-xs text-gray-500 truncate" title={displayCompany}>{displayCompany}</span>
+                        <span className="text-xs text-gray-500 truncate group-hover:text-gray-400 transition-colors" title={displayCompany}>{displayCompany}</span>
                     </div>
-                </Link>
+                    <div className="ml-auto text-gray-500 group-hover:text-white transition-colors">
+                        <svg className={`w-4 h-4 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                    </div>
+                </button>
             </div>
         </aside>
     );
