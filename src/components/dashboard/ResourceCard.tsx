@@ -15,7 +15,7 @@ export function ResourceCard({ item }: ResourceCardProps) {
         if (!tags || tags.length === 0) return null;
         return (
             <div className="flex flex-col sm:flex-row sm:items-baseline gap-1.5">
-                <span className={`w-24 shrink-0 text-[10px] font-bold uppercase tracking-wider ${labelColor} opacity-80 pt-0.5`}>{label}</span>
+                <span className={`w-28 shrink-0 text-[10px] font-bold uppercase tracking-wider ${labelColor} opacity-80 pt-0.5 whitespace-nowrap`}>{label}</span>
                 <div className="flex flex-wrap gap-1">
                     {tags.map(tag => (
                         <span
