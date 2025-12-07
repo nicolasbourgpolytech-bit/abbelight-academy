@@ -193,7 +193,9 @@ export default function ArticlesPage() {
                     a.title.toLowerCase().includes(search.toLowerCase()) ||
                     a.description.toLowerCase().includes(search.toLowerCase()) ||
                     a.author?.toLowerCase().includes(search.toLowerCase()) ||
-                    (a.journal && a.journal.toLowerCase().includes(search.toLowerCase()))
+                    (a.journal && a.journal.toLowerCase().includes(search.toLowerCase())) ||
+                    (a.firstAuthor && a.firstAuthor.toLowerCase().includes(search.toLowerCase())) ||
+                    (a.lastAuthor && a.lastAuthor.toLowerCase().includes(search.toLowerCase()))
                 ) : true) &&
                 matchesFilters(a, contextFilters)
             );
