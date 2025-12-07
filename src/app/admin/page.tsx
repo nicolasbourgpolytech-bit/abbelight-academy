@@ -1808,6 +1808,8 @@ export default function AdminPage() {
                                                     <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">Available Assets</label>
                                                     <div className="grid grid-cols-4 gap-2">
                                                         {[
+                                                            '/product-images/safe-mn360-dark-clean.png',
+                                                            '/product-images/safe-mn180-dark-clean.png',
                                                             '/product-images/safe-mn360-dark.png',
                                                             '/product-images/safe-mn360-neutral.png',
                                                             '/product-images/safe-mn360-lab.png',
