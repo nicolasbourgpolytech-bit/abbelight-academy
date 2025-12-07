@@ -32,7 +32,12 @@ export function ResourceCard({ item }: ResourceCardProps) {
     };
 
     return (
-        <Link href={item.url} className="block group w-full">
+        <Link
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block group w-full"
+        >
             <div className="glass-card p-0 h-full flex flex-col md:flex-row overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1">
                 {/* Thumbnail Area - Compact height on desktop */}
                 <div className={`h-32 md:h-auto md:w-56 relative flex-shrink-0 bg-gradient-to-br ${isWebinar ? 'from-purple-900 to-black' : 'from-blue-900 to-black'} flex items-center justify-center`}>
@@ -105,21 +110,12 @@ export function ResourceCard({ item }: ResourceCardProps) {
                         )}
                     </div>
 
-                    {/* Replaced Description with above line as requested since description was just duplicate info */}
-
                     {/* Highly Structured Tag Stack - Compact Single Column */}
                     <div className="flex flex-col gap-1.5 mb-2">
                         {renderTagGroup("Imaging Method", item.imagingMethod, "bg-brand-green/10 text-brand-green border-brand-green/20", "text-brand-green")}
                         {renderTagGroup("App Domain", item.applicationDomain, "bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20", "text-brand-cyan")}
                         {renderTagGroup("Modality", item.modality, "bg-brand-magenta/10 text-brand-magenta border-brand-magenta/20", "text-brand-magenta")}
                         {renderTagGroup("Product", item.product, "bg-brand-orange/10 text-brand-orange border-brand-orange/20", "text-brand-orange")}
-                    </div>
-
-                    <div className="flex items-center justify-end text-[10px] text-gray-500 font-medium mt-auto pt-1">
-                        <span className="text-white group-hover:translate-x-1 transition-transform flex items-center gap-1 opacity-60 group-hover:opacity-100">
-                            Read more
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                        </span>
                     </div>
                 </div>
             </div>
