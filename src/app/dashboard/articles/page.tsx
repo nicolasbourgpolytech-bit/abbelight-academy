@@ -5,6 +5,7 @@ import { ContentFilterBar } from "@/components/dashboard/ContentFilterBar";
 import { ResourceCard } from "@/components/dashboard/ResourceCard";
 import { MultiCategoryFilterSidebar } from "@/components/dashboard/MultiCategoryFilterSidebar";
 import { ContentItem } from "@/types/content";
+import { StatsHistograms } from "@/components/dashboard/StatsHistograms";
 
 export default function ArticlesPage() {
     const [articles, setArticles] = useState<ContentItem[]>([]);
@@ -249,9 +250,14 @@ export default function ArticlesPage() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <div className="border-b border-white/10 pb-6">
-                <h1 className="text-3xl font-bold text-white mb-2">Scientific Articles</h1>
-                <p className="text-gray-400">Access our knowledge base of protocols, technical notes, and research papers.</p>
+            <div className="border-b border-white/10 pb-6 flex flex-col md:flex-row justify-between items-end gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-white mb-2">Scientific Articles</h1>
+                    <p className="text-gray-400">Access our knowledge base of protocols, technical notes, and research papers.</p>
+                </div>
+                <div className="hidden md:block">
+                    <StatsHistograms articles={articles} />
+                </div>
             </div>
 
             <ContentFilterBar onSearch={setSearch} onSortChange={setSort} />
