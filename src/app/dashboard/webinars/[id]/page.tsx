@@ -100,7 +100,8 @@ export default function WebinarDetailPage({ params }: { params: Promise<{ id: st
 
                 {/* Right Sidebar (Suggested) */}
                 {/* Right Sidebar (Speakers & Products) */}
-                <div className="w-full lg:w-[350px] flex-shrink-0 flex flex-col gap-8">
+                {/* Right Sidebar (Speakers & Products) */}
+                <div className="w-full lg:w-[450px] flex-shrink-0 flex flex-col gap-8">
 
                     {/* Speakers Section */}
                     {authors.length > 0 && (
@@ -136,8 +137,8 @@ export default function WebinarDetailPage({ params }: { params: Promise<{ id: st
                             <h3 className="text-lg font-bold text-white mb-4">Featured Products</h3>
                             <div className="flex flex-col gap-3">
                                 {products.map((prod: any, idx: number) => (
-                                    <a key={idx} href={prod.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 p-3 rounded-xl transition-colors group">
-                                        <div className="w-24 h-24 bg-white/10 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center text-gray-500 font-bold border border-white/5 shadow-2xl">
+                                    <a key={idx} href={prod.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-xl transition-colors group">
+                                        <div className="w-32 h-32 bg-white/10 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center text-gray-500 font-bold border border-white/5 shadow-2xl">
                                             {prod.image_url ? (
                                                 <img src={prod.image_url} alt={prod.name} className="w-full h-full object-contain p-1" />
                                             ) : (
