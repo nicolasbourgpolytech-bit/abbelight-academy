@@ -2,7 +2,7 @@
 
 import { ContentItem } from "@/types/content";
 import { useMemo } from "react";
-import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 interface StatsHistogramsProps {
     articles: ContentItem[];
@@ -58,11 +58,17 @@ export function StatsHistograms({ articles }: StatsHistogramsProps) {
     return (
         <div className="flex gap-4 items-center">
             {/* Articles by Year */}
-            <div className="w-40 h-16">
+            <div className="w-48 h-24">
                 <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1 text-right">By Year</p>
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data.years}>
-                        <XAxis dataKey="name" hide />
+                    <BarChart data={data.years} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                        <XAxis
+                            dataKey="name"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#9ca3af', fontSize: 8 }}
+                            interval="preserveStartEnd"
+                        />
                         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
                         <Bar dataKey="value" radius={[2, 2, 0, 0]}>
                             {data.years.map((entry, index) => (
@@ -74,13 +80,21 @@ export function StatsHistograms({ articles }: StatsHistogramsProps) {
             </div>
 
             {/* Articles by Domain */}
-            <div className="w-40 h-16">
+            <div className="w-48 h-24">
                 <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1 text-right">By Domain</p>
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data.domains}>
-                        <XAxis dataKey="name" hide />
+                    <BarChart data={data.domains} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
+                        <XAxis type="number" hide />
+                        <YAxis
+                            dataKey="name"
+                            type="category"
+                            width={50}
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#9ca3af', fontSize: 8 }}
+                        />
                         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                        <Bar dataKey="value" radius={[2, 2, 0, 0]}>
+                        <Bar dataKey="value" radius={[0, 2, 2, 0]}>
                             {data.domains.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill="rgba(217, 70, 239, 0.6)" /> // brand-magenta
                             ))}
