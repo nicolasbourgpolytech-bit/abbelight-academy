@@ -264,13 +264,15 @@ export default function ArticlesPage() {
 
             <div className="flex flex-col md:flex-row gap-8">
                 {/* Advanced Sidebar */}
-                <MultiCategoryFilterSidebar
-                    categories={filterCategories}
-                    selectedFilters={selectedFilters}
-                    counts={filterCounts}
-                    onToggleFilter={handleToggleFilter}
-                    onClearAll={handleClearAll}
-                />
+                <aside className="sticky top-6 self-start h-fit">
+                    <MultiCategoryFilterSidebar
+                        categories={filterCategories}
+                        selectedFilters={selectedFilters}
+                        counts={filterCounts}
+                        onToggleFilter={handleToggleFilter}
+                        onClearAll={handleClearAll}
+                    />
+                </aside>
 
                 {/* Results Grid */}
                 <div className="flex-1">
