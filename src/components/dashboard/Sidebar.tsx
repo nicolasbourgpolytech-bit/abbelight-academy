@@ -103,7 +103,7 @@ export function Sidebar() {
             </nav>
 
             <div className="p-4 border-t border-white/5 bg-black/40">
-                <div className="flex items-center gap-3">
+                <Link href="/dashboard/settings" className="flex items-center gap-3 hover:bg-white/5 p-2 rounded-lg transition-colors -m-2">
                     <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold border border-white/10">
                         {initials}
                     </div>
@@ -111,7 +111,7 @@ export function Sidebar() {
                         <span className="text-sm font-bold text-white truncate" title={displayName}>{displayName}</span>
                         <span className="text-xs text-gray-500 truncate" title={displayCompany}>{displayCompany}</span>
                     </div>
-                </div>
+                </Link>
             </div>
         </aside>
     );
