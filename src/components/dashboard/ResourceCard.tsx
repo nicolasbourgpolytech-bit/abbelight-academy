@@ -72,10 +72,10 @@ export function ResourceCard({ item }: ResourceCardProps) {
                         {item.description}
                     </p>
 
-                    {/* Categorized Tags - Explicit naming and filtering */}
-                    <div className="space-y-1.5 mb-4">
+                    {/* Categorized Tags - Grid Layout 2x2 */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 mb-4">
                         {renderTagGroup("Imaging Method", item.imagingMethod, "bg-brand-green/10 text-brand-green border-brand-green/20", "text-brand-green")}
-                        {renderTagGroup("Application Domain", item.applicationDomain, "bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20", "text-brand-cyan")}
+                        {renderTagGroup("App Domain", item.applicationDomain, "bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20", "text-brand-cyan")}
                         {renderTagGroup("Modality", item.modality, "bg-brand-magenta/10 text-brand-magenta border-brand-magenta/20", "text-brand-magenta")}
                         {renderTagGroup("Product", item.product, "bg-brand-orange/10 text-brand-orange border-brand-orange/20", "text-brand-orange")}
                     </div>
