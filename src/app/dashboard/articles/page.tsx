@@ -241,15 +241,15 @@ export default function ArticlesPage() {
 
                 {/* Content */}
                 <div className="absolute inset-0 p-6 md:p-10 flex flex-col justify-between items-start z-10">
-                    <div className="hidden md:block bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-xl self-end md:self-auto">
-                        <StatsHistograms articles={articles} />
-                    </div>
-
-                    <div className="max-w-2xl mb-2 md:mb-0">
+                    <div className="max-w-2xl">
                         <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 drop-shadow-2xl">Scientific Articles</h1>
                         <p className="text-gray-100 text-lg drop-shadow-md font-medium text-balance">
                             Access our knowledge base of protocols, technical notes, and research papers.
                         </p>
+                    </div>
+
+                    <div className="hidden md:block bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-xl self-end md:self-auto mb-2 md:mb-6">
+                        <StatsHistograms articles={articles} />
                     </div>
                 </div>
             </div>
