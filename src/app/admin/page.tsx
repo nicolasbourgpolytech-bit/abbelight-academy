@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { MultiSelect } from "@/components/admin/MultiSelect";
 
 export default function AdminPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -35,6 +36,32 @@ export default function AdminPage() {
             return [];
         })
     ])).sort();
+
+    const getUniqueValues = (field: string) => Array.from(new Set(
+        articles.flatMap(a => {
+            const val = a[field];
+            if (Array.isArray(val)) return val;
+            if (typeof val === 'string') {
+                try {
+                    const parsed = JSON.parse(val);
+                    return Array.isArray(parsed) ? parsed : [val];
+                } catch { return [val]; }
+            }
+            return [];
+        })
+    )).sort();
+
+    const uniqueAppDomains = getUniqueValues('application_domain');
+    const uniqueImgMethods = getUniqueValues('imaging_method');
+    const uniqueModalities = getUniqueValues('abbelight_imaging_modality');
+    const uniqueProducts = getUniqueValues('abbelight_product');
+
+    const fieldOptions: Record<string, string[]> = {
+        application_domain: uniqueAppDomains,
+        imaging_method: uniqueImgMethods,
+        abbelight_imaging_modality: uniqueModalities,
+        abbelight_product: uniqueProducts
+    };
 
     const [modules, setModules] = useState<any[]>([]);
 
@@ -467,29 +494,7 @@ export default function AdminPage() {
         }
     };
 
-    // Generic Helper for Array Fields (Application Domain, Imaging Method, etc.)
-    const toggleArrayItem = (field: string, item: string) => {
-        if (!item.trim()) return;
-        const currentItems = editingArticle[field] || [];
-        if (currentItems.includes(item)) {
-            setEditingArticle({ ...editingArticle, [field]: currentItems.filter((i: string) => i !== item) });
-        } else {
-            setEditingArticle({ ...editingArticle, [field]: [...currentItems, item] });
-        }
-    };
 
-    const addArrayItem = (field: string, item: string) => {
-        if (!item.trim()) return;
-        const currentItems = editingArticle[field] || [];
-        if (!currentItems.includes(item)) {
-            setEditingArticle({ ...editingArticle, [field]: [...currentItems, item] });
-        }
-    };
-
-    const removeArrayItem = (field: string, item: string) => {
-        const currentItems = editingArticle[field] || [];
-        setEditingArticle({ ...editingArticle, [field]: currentItems.filter((i: string) => i !== item) });
-    };
 
     if (!isAuthenticated) {
         return (
@@ -1342,31 +1347,13 @@ export default function AdminPage() {
                                                 { label: "Abbelight Modality", field: "abbelight_imaging_modality" },
                                                 { label: "Abbelight Product", field: "abbelight_product" },
                                             ].map((item) => (
-                                                <div key={item.field}>
-                                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">{item.label}</label>
-                                                    <div className="flex gap-2 mb-2">
-                                                        <input
-                                                            type="text"
-                                                            className="flex-1 bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white text-sm"
-                                                            placeholder={`Add ${item.label}...`}
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter') {
-                                                                    e.preventDefault();
-                                                                    addArrayItem(item.field, (e.target as HTMLInputElement).value);
-                                                                    (e.target as HTMLInputElement).value = '';
-                                                                }
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {editingArticle?.[item.field]?.map((val: string) => (
-                                                            <span key={val} className="bg-primary/20 text-primary text-xs px-2 py-1 rounded flex items-center gap-1">
-                                                                {val}
-                                                                <button type="button" onClick={() => removeArrayItem(item.field, val)} className="hover:text-white">&times;</button>
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </div>
+                                                <MultiSelect
+                                                    key={item.field}
+                                                    label={item.label}
+                                                    value={Array.isArray(editingArticle?.[item.field]) ? editingArticle?.[item.field] : []}
+                                                    options={fieldOptions[item.field] || []}
+                                                    onChange={(val) => setEditingArticle({ ...editingArticle, [item.field]: val })}
+                                                />
                                             ))}
                                         </div>
                                     </div>
