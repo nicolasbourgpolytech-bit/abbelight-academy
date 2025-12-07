@@ -54,7 +54,7 @@ export function ResourceCard({ item }: ResourceCardProps) {
 
                 {/* Content - Compact Layout */}
                 <div className="p-4 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-2">
+                    <div className="flex justify-between items-start mb-1">
                         <div className="flex flex-wrap gap-2 items-center">
                             {item.isNew && (
                                 <span className="bg-primary text-black text-[9px] font-bold px-1.5 py-0.5 rounded shadow animate-pulse">
@@ -67,43 +67,56 @@ export function ResourceCard({ item }: ResourceCardProps) {
                         </div>
                     </div>
 
-                    <h3 className="text-base font-bold text-white mb-2 group-hover:text-primary transition-colors leading-tight">
+                    <h3 className="text-base font-bold text-white mb-1 group-hover:text-primary transition-colors leading-tight">
                         {item.title}
                     </h3>
 
-                    <p className="text-xs text-gray-400 mb-3 border-b border-white/5 pb-2 line-clamp-2">
-                        {item.description}
-                    </p>
+                    {/* Journal and Authors Line */}
+                    <div className="mb-3 text-xs text-gray-400 flex flex-wrap items-center gap-2 border-b border-white/5 pb-2">
+                        {item.journal && (
+                            <span className="font-semibold text-gray-300">{item.journal}</span>
+                        )}
 
-                    {/* Highly Structured Tag Stack - Single Column Compact */}
-                    <div className="flex flex-col gap-1.5 mb-3">
+                        {(item.firstAuthor || item.lastAuthor) && item.journal && (
+                            <span className="text-gray-600">•</span>
+                        )}
+
+                        {item.firstAuthor && (
+                            <span className="italic">
+                                <span className="text-[10px] uppercase tracking-wide text-gray-500 not-italic mr-1">First:</span>
+                                {item.firstAuthor}
+                            </span>
+                        )}
+
+                        {item.lastAuthor && item.firstAuthor && (
+                            <span className="text-gray-600">•</span>
+                        )}
+
+                        {item.lastAuthor && (
+                            <span className="italic">
+                                <span className="text-[10px] uppercase tracking-wide text-gray-500 not-italic mr-1">Last:</span>
+                                {item.lastAuthor}
+                            </span>
+                        )}
+
+                        {/* Fallback if no specific authors but generic author exists */}
+                        {!item.firstAuthor && !item.lastAuthor && item.author && (
+                            <span>{item.author}</span>
+                        )}
+                    </div>
+
+                    {/* Replaced Description with above line as requested since description was just duplicate info */}
+
+                    {/* Highly Structured Tag Stack - Compact Single Column */}
+                    <div className="flex flex-col gap-1.5 mb-2">
                         {renderTagGroup("Imaging Method", item.imagingMethod, "bg-brand-green/10 text-brand-green border-brand-green/20", "text-brand-green")}
                         {renderTagGroup("App Domain", item.applicationDomain, "bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20", "text-brand-cyan")}
                         {renderTagGroup("Modality", item.modality, "bg-brand-magenta/10 text-brand-magenta border-brand-magenta/20", "text-brand-magenta")}
                         {renderTagGroup("Product", item.product, "bg-brand-orange/10 text-brand-orange border-brand-orange/20", "text-brand-orange")}
                     </div>
 
-                    <div className="flex items-center justify-between text-[10px] text-gray-500 font-medium mt-auto pt-1">
-                        <div className="flex flex-col gap-0.5">
-                            {/* Explicit Authors - Compact */}
-                            {item.firstAuthor && (
-                                <span className="flex items-center gap-2">
-                                    <span className="w-20 text-gray-600 uppercase font-bold tracking-wider">First Author</span>
-                                    <span className="text-gray-300 truncate max-w-[150px]">{item.firstAuthor}</span>
-                                </span>
-                            )}
-                            {item.lastAuthor && (
-                                <span className="flex items-center gap-2">
-                                    <span className="w-20 text-gray-600 uppercase font-bold tracking-wider">Last Author</span>
-                                    <span className="text-gray-300 truncate max-w-[150px]">{item.lastAuthor}</span>
-                                </span>
-                            )}
-                            {!item.firstAuthor && !item.lastAuthor && item.author && (
-                                <span>{item.author}</span>
-                            )}
-                        </div>
-
-                        <span className="text-white group-hover:translate-x-1 transition-transform flex items-center gap-1 self-end opacity-60 group-hover:opacity-100">
+                    <div className="flex items-center justify-end text-[10px] text-gray-500 font-medium mt-auto pt-1">
+                        <span className="text-white group-hover:translate-x-1 transition-transform flex items-center gap-1 opacity-60 group-hover:opacity-100">
                             Read more
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                         </span>
