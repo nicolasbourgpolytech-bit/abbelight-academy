@@ -248,7 +248,7 @@ export default function ArticlesPage() {
                         </p>
                     </div>
 
-                    <div className="hidden md:flex bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-xl self-end md:self-auto mb-2 md:mb-6 flex-col justify-center min-h-[160px]">
+                    <div className="hidden md:flex bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-xl self-end md:self-auto mb-2 md:mb-1 flex-col justify-center min-h-[160px]">
                         <StatsHistograms articles={articles} />
                     </div>
                 </div>
