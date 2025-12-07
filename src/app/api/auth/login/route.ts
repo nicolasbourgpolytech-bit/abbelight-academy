@@ -35,11 +35,12 @@ export async function POST(request: Request) {
             lastName: user.last_name,
             email: user.email,
             company: user.company,
-            role: user.roles, // Ideally map this correctly if needed
+            roles: user.roles || ["general"],
+            name: `${user.first_name} ${user.last_name}`,
             status: user.status,
-            xp: user.xp,
-            level: user.level,
-            badges: user.badges
+            xp: user.xp || 0,
+            level: user.level || 1,
+            badges: user.badges || []
         };
 
         return NextResponse.json({ user: userProfile }, { status: 200 });
