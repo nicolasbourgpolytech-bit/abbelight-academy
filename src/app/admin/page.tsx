@@ -356,6 +356,28 @@ export default function AdminPage() {
         }
     };
 
+    const handleRejectUser = async (userId: number) => {
+        if (!confirm("Are you sure you want to reject this user?")) return;
+
+        try {
+            const res = await fetch('/api/admin/users/reject', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId })
+            });
+
+            if (res.ok) {
+                alert("User rejected.");
+                fetchUsers(); // Refresh
+            } else {
+                const data = await res.json();
+                alert("Error: " + data.error);
+            }
+        } catch (error) {
+            alert("Request failed");
+        }
+    };
+
     // --- ARTICLE HANDLERS ---
 
     const handleSaveArticle = async (e: React.FormEvent) => {
@@ -1452,8 +1474,8 @@ export default function AdminPage() {
                                             key={status}
                                             onClick={() => setUserFilterStatus(status)}
                                             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${userFilterStatus === status
-                                                    ? 'bg-primary text-black shadow-lg'
-                                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                                ? 'bg-primary text-black shadow-lg'
+                                                : 'text-gray-400 hover:text-white hover:bg-white/5'
                                                 }`}
                                         >
                                             {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -1504,7 +1526,10 @@ export default function AdminPage() {
                                                         >
                                                             Approve
                                                         </button>
-                                                        <button className="px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 rounded-lg font-semibold transition-colors text-sm">
+                                                        <button
+                                                            onClick={() => handleRejectUser(user.id)}
+                                                            className="px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 rounded-lg font-semibold transition-colors text-sm"
+                                                        >
                                                             Reject
                                                         </button>
                                                     </>

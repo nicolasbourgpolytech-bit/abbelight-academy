@@ -4,68 +4,47 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
-import { UserRole } from "@/types/user";
 
 export function LoginForm() {
     const [loading, setLoading] = useState(false);
-    const [selectedPersona, setSelectedPersona] = useState<string>("general");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState<string | null>(null);
     const router = useRouter();
     const { login } = useUser();
 
-    const personas = [
-        { id: "general", label: "General User", roles: ["general"] },
-        { id: "reagent", label: "Reagent Customer", roles: ["general", "reagent"] },
-        { id: "safe", label: "SAFe Instrument User", roles: ["general", "safe"] },
-        { id: "full", label: "Full Access (Reagent + SAFe)", roles: ["general", "reagent", "safe"] },
-    ];
-
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setError(null);
 
-        const persona = personas.find(p => p.id === selectedPersona);
-        const roles = (persona?.roles || ["general"]) as UserRole[];
-
-        setTimeout(() => {
-            login("John Doe", roles);
-            setLoading(false);
+        try {
+            await login(email, password);
             router.push("/dashboard");
-        }, 1000);
+        } catch (err: any) {
+            setError(err.message || "Login failed");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <div className="w-full max-w-md">
             <form onSubmit={handleSubmit} className="glass-card shadow-2xl relative overflow-hidden group">
-
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-secondary to-accent" />
 
                 <div className="mb-8 text-center">
                     <h2 className="text-3xl font-bold tracking-tight text-white mb-2">Welcome Back</h2>
-                    <p className="text-sm text-gray-400">Select a persona to simulate login role</p>
+                    <p className="text-sm text-gray-400">Sign in to access Abbelight Academy</p>
                 </div>
 
-                <div className="space-y-6">
-                    <div className="space-y-2">
-                        <label className="text-sm font-semibold text-gray-300 uppercase tracking-wide">
-                            Simulate Role
-                        </label>
-                        <div className="grid grid-cols-1 gap-2">
-                            {personas.map((p) => (
-                                <button
-                                    key={p.id}
-                                    type="button"
-                                    onClick={() => setSelectedPersona(p.id)}
-                                    className={`w-full text-left px-4 py-3 rounded border transition-all ${selectedPersona === p.id
-                                            ? "bg-primary/20 border-primary text-white"
-                                            : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
-                                        }`}
-                                >
-                                    <span className="font-bold block text-sm">{p.label}</span>
-                                </button>
-                            ))}
-                        </div>
+                {error && (
+                    <div className="mb-6 p-3 bg-red-500/20 border border-red-500/30 rounded text-red-200 text-sm text-center">
+                        {error}
                     </div>
+                )}
 
+                <div className="space-y-6">
                     <div className="space-y-2">
                         <label htmlFor="email" className="text-sm font-semibold text-gray-300 uppercase tracking-wide">
                             Email Address
@@ -73,10 +52,26 @@ export function LoginForm() {
                         <input
                             id="email"
                             type="email"
-                            placeholder="demo@abbelight.com"
-                            disabled
-                            className="w-full px-4 py-3 bg-white/5 border border-white/10 text-gray-500 cursor-not-allowed"
-                            value="demo@abbelight.com"
+                            required
+                            placeholder="name@company.com"
+                            className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label htmlFor="password" className="text-sm font-semibold text-gray-300 uppercase tracking-wide">
+                            Password
+                        </label>
+                        <input
+                            id="password"
+                            type="password"
+                            required
+                            placeholder="Your password (or temporary code)"
+                            className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                         />
                     </div>
 
@@ -85,7 +80,7 @@ export function LoginForm() {
                         disabled={loading}
                         className="w-full py-4 bg-primary text-black font-bold text-lg uppercase tracking-wider hover:bg-white transition-all duration-300 shadow-[0_4px_20px_-5px_rgba(0,202,248,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading ? "Simulating Login..." : "Sign In & Explore"}
+                        {loading ? "Signing In..." : "Sign In"}
                     </button>
                 </div>
 

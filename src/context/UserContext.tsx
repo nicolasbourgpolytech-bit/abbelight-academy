@@ -5,7 +5,7 @@ import { UserProfile, UserRole } from '@/types/user';
 
 interface UserContextType {
     user: UserProfile | null;
-    login: (name: string, roles: UserRole[]) => void;
+    login: (email: string, password?: string) => Promise<any>;
     logout: () => void;
     isLoading: boolean;
 }
@@ -30,24 +30,28 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
     }, []);
 
-    const login = (name: string, roles: UserRole[]) => {
-        // TODO: Replace with real Login API
-        const newUser: UserProfile = {
-            id: 1, // Temp ID
-            name,
-            email: 'demo@abbelight.com',
-            roles,
-            company: 'Demo Institute',
-            status: 'active',
-            xp: 1250,
-            level: 5,
-            badges: [
-                { id: '1', name: 'Early Adopter', description: 'Joined during the beta phase', icon: '🚀', unlockedAt: new Date() },
-                { id: '2', name: 'First Light', description: 'Completed "Fundamentals of SMLM"', icon: '💡', unlockedAt: new Date() }
-            ]
-        };
-        setUser(newUser);
-        localStorage.setItem('abbelight_user', JSON.stringify(newUser));
+    const login = async (email: string, password?: string) => {
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "Login failed");
+            }
+
+            const user = data.user;
+            setUser(user);
+            localStorage.setItem('abbelight_user', JSON.stringify(user));
+            return user;
+        } catch (error) {
+            console.error("Login error:", error);
+            throw error;
+        }
     };
 
     const logout = () => {
