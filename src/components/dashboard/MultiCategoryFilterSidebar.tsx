@@ -41,21 +41,32 @@ export function MultiCategoryFilterSidebar({ categories, selectedFilters, counts
                         </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        {Object.entries(selectedFilters).flatMap(([catId, options]) =>
-                            options.map(option => (
+                        {Object.entries(selectedFilters).flatMap(([catId, options]) => {
+                            // Dynamic Chip Color based on Category
+                            const getChipColorClass = (id: string) => {
+                                switch (id) {
+                                    case 'imagingMethod': return 'bg-brand-green/20 text-brand-green border-brand-green/30 hover:bg-brand-green/30';
+                                    case 'applicationDomain': return 'bg-brand-cyan/20 text-brand-cyan border-brand-cyan/30 hover:bg-brand-cyan/30';
+                                    case 'modality': return 'bg-brand-magenta/20 text-brand-magenta border-brand-magenta/30 hover:bg-brand-magenta/30';
+                                    case 'product': return 'bg-brand-orange/20 text-brand-orange border-brand-orange/30 hover:bg-brand-orange/30';
+                                    default: return 'bg-white/10 text-gray-300 border-white/20 hover:bg-white/20';
+                                }
+                            };
+                            const colorClass = getChipColorClass(catId);
+
+                            return options.map(option => (
                                 <button
                                     key={`${catId}-${option}`}
                                     onClick={() => onToggleFilter(catId, option)}
-                                    // Use Brand Green for chips to contrast with the Cyan headers
-                                    className="flex items-center gap-1.5 bg-brand-green/20 text-brand-green border border-brand-green/30 px-2 py-1 rounded-full text-xs font-medium hover:bg-brand-green/30 transition-colors group"
+                                    className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-colors border group ${colorClass}`}
                                 >
                                     <span>{option}</span>
                                     <svg className="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
-                            ))
-                        )}
+                            ));
+                        })}
                     </div>
                 </div>
             )}
