@@ -23,6 +23,10 @@ export default function AdminPage() {
     const [isEditingArticle, setIsEditingArticle] = useState(false);
     const [importing, setImporting] = useState(false);
 
+    // User State
+    const [users, setUsers] = useState<any[]>([]);
+    const [userFilterStatus, setUserFilterStatus] = useState<string>('all');
+
     // Derived state for tag suggestions (Webinars + Articles)
     const allUniqueTags = Array.from(new Set([
         ...webinars.flatMap(w => {
@@ -144,8 +148,18 @@ export default function AdminPage() {
 
             // Fetch articles
             fetchArticles();
+
+            // Fetch users
+            fetchUsers();
         }
     }, [isAuthenticated]);
+
+    // Re-fetch users when filter changes
+    useEffect(() => {
+        if (isAuthenticated && activeTab === 'users') {
+            fetchUsers();
+        }
+    }, [userFilterStatus, activeTab]);
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
@@ -293,6 +307,53 @@ export default function AdminPage() {
     const removeTag = (tagToRemove: string) => {
         const currentTags = editingWebinar.tags || [];
         setEditingWebinar({ ...editingWebinar, tags: currentTags.filter((t: string) => t !== tagToRemove) });
+    };
+
+    // --- USER HANDLERS ---
+
+    const fetchUsers = async () => {
+        try {
+            const url = userFilterStatus === 'all'
+                ? '/api/admin/users'
+                : `/api/admin/users?status=${userFilterStatus}`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+            setUsers(data);
+        } catch (error) {
+            console.error("Failed to fetch users", error);
+        }
+    };
+
+    const handleApproveUser = async (userId: number) => {
+        if (!confirm("Approve this user and send password?")) return;
+
+        try {
+            const res = await fetch('/api/admin/users/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                alert(`User Approved! Temp Password: ${data.tempPassword} (Email Mocked)`);
+                fetchUsers(); // Refresh
+            } else {
+                alert("Error: " + data.error);
+            }
+        } catch (error) {
+            alert("Request failed");
+        }
+    };
+
+    const getUserStatusColor = (status: string) => {
+        switch (status) {
+            case 'active': return 'bg-green-500/20 text-green-400 border-green-500/20';
+            case 'pending': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20';
+            case 'rejected': return 'bg-red-500/20 text-red-400 border-red-500/20';
+            default: return 'bg-gray-500/20 text-gray-400 border-gray-500/20';
+        }
     };
 
     // --- ARTICLE HANDLERS ---
@@ -1374,6 +1435,89 @@ export default function AdminPage() {
                                         </button>
                                     </div>
                                 </form>
+                            )}
+                        </div>
+                    )}
+
+                    {activeTab === 'users' && (
+                        <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white">User Management</h2>
+                                    <p className="text-gray-400 text-sm">Validate new account requests and manage permissions.</p>
+                                </div>
+                                <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
+                                    {['all', 'pending', 'active', 'rejected'].map((status) => (
+                                        <button
+                                            key={status}
+                                            onClick={() => setUserFilterStatus(status)}
+                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${userFilterStatus === status
+                                                    ? 'bg-primary text-black shadow-lg'
+                                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                                }`}
+                                        >
+                                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {users.length === 0 ? (
+                                <div className="text-center py-20 bg-white/5 rounded-xl border border-white/10">
+                                    <p className="text-gray-400 text-lg">No users found</p>
+                                </div>
+                            ) : (
+                                <div className="grid gap-4">
+                                    {users.map((user: any) => (
+                                        <div key={user.id} className="bg-white/5 border border-white/10 p-6 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-white/[0.07] transition-colors group">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-3">
+                                                    <h3 className="text-xl font-bold text-white group-hover:text-primary transition-colors">{user.first_name} {user.last_name}</h3>
+                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase border ${getUserStatusColor(user.status)}`}>
+                                                        {user.status}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-4 text-sm text-gray-400">
+                                                    <span className="flex items-center gap-2">
+                                                        📧 {user.email}
+                                                    </span>
+                                                    <span className="flex items-center gap-2">
+                                                        🏢 {user.company}
+                                                    </span>
+                                                </div>
+                                                <div className="pt-2">
+                                                    <span className="px-2 py-1 rounded bg-white/5 text-gray-300 text-xs border border-white/10">
+                                                        {Array.isArray(user.roles) ? user.roles.join(', ') : (typeof user.roles === 'string' ? JSON.parse(user.roles).join(', ') : "general")}
+                                                    </span>
+                                                </div>
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    Registered: {new Date(user.created_at).toLocaleDateString()}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-3">
+                                                {user.status === 'pending' && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleApproveUser(user.id)}
+                                                            className="px-4 py-2 bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20 rounded-lg font-semibold transition-colors text-sm"
+                                                        >
+                                                            Approve
+                                                        </button>
+                                                        <button className="px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 rounded-lg font-semibold transition-colors text-sm">
+                                                            Reject
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {user.status === 'active' && (
+                                                    <button className="px-4 py-2 bg-white/5 text-gray-400 border border-white/10 rounded-lg font-semibold text-sm cursor-not-allowed opacity-50">
+                                                        Active
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     )}
