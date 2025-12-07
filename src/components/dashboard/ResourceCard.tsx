@@ -14,13 +14,14 @@ export function ResourceCard({ item }: ResourceCardProps) {
     const renderTagGroup = (label: string, tags: string[] | undefined, colorClass: string, labelColor: string) => {
         if (!tags || tags.length === 0) return null;
         return (
-            <div className="flex flex-col sm:flex-row sm:items-baseline gap-2">
-                <span className={`w-28 shrink-0 text-[10px] font-bold uppercase tracking-wider ${labelColor} opacity-80`}>{label}</span>
-                <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-col sm:flex-row sm:items-baseline gap-1.5">
+                <span className={`w-24 shrink-0 text-[10px] font-bold uppercase tracking-wider ${labelColor} opacity-80 pt-0.5`}>{label}</span>
+                <div className="flex flex-wrap gap-1">
                     {tags.map(tag => (
                         <span
                             key={tag}
-                            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${colorClass}`}
+                            // Reduced font size and padding for compactness
+                            className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${colorClass}`}
                         >
                             {tag}
                         </span>
@@ -33,14 +34,14 @@ export function ResourceCard({ item }: ResourceCardProps) {
     return (
         <Link href={item.url} className="block group w-full">
             <div className="glass-card p-0 h-full flex flex-col md:flex-row overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1">
-                {/* Thumbnail Area */}
-                <div className={`h-48 md:h-auto md:w-64 relative flex-shrink-0 bg-gradient-to-br ${isWebinar ? 'from-purple-900 to-black' : 'from-blue-900 to-black'} flex items-center justify-center`}>
+                {/* Thumbnail Area - Compact height on desktop */}
+                <div className={`h-32 md:h-auto md:w-56 relative flex-shrink-0 bg-gradient-to-br ${isWebinar ? 'from-purple-900 to-black' : 'from-blue-900 to-black'} flex items-center justify-center`}>
                     {item.thumbnailUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" />
                     ) : (
                         <div className="text-white/20">
-                            <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
                                 {isWebinar ? (
                                     <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 ) : (
@@ -51,50 +52,50 @@ export function ResourceCard({ item }: ResourceCardProps) {
                     )}
                 </div>
 
-                {/* Content */}
-                <div className="p-6 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="flex flex-wrap gap-2">
+                {/* Content - Compact Layout */}
+                <div className="p-4 flex-1 flex flex-col">
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="flex flex-wrap gap-2 items-center">
                             {item.isNew && (
-                                <span className="bg-primary text-black text-[10px] font-bold px-2 py-0.5 rounded shadow animate-pulse">
+                                <span className="bg-primary text-black text-[9px] font-bold px-1.5 py-0.5 rounded shadow animate-pulse">
                                     NEW
                                 </span>
                             )}
-                            <span className="text-xs text-gray-400 font-mono">
+                            <span className="text-[10px] text-gray-500 font-mono">
                                 {new Date(item.date).toLocaleDateString()}
                             </span>
                         </div>
                     </div>
 
-                    <h3 className="text-xl font-bold text-white mb-3 group-hover:text-primary transition-colors">
+                    <h3 className="text-base font-bold text-white mb-2 group-hover:text-primary transition-colors leading-tight">
                         {item.title}
                     </h3>
 
-                    <p className="text-sm text-gray-400 mb-6 border-b border-white/5 pb-4">
+                    <p className="text-xs text-gray-400 mb-3 border-b border-white/5 pb-2 line-clamp-2">
                         {item.description}
                     </p>
 
-                    {/* Highly Structured Tag Stack - Single Column */}
-                    <div className="flex flex-col gap-2 mb-6">
+                    {/* Highly Structured Tag Stack - Single Column Compact */}
+                    <div className="flex flex-col gap-1.5 mb-3">
                         {renderTagGroup("Imaging Method", item.imagingMethod, "bg-brand-green/10 text-brand-green border-brand-green/20", "text-brand-green")}
                         {renderTagGroup("App Domain", item.applicationDomain, "bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20", "text-brand-cyan")}
                         {renderTagGroup("Modality", item.modality, "bg-brand-magenta/10 text-brand-magenta border-brand-magenta/20", "text-brand-magenta")}
                         {renderTagGroup("Product", item.product, "bg-brand-orange/10 text-brand-orange border-brand-orange/20", "text-brand-orange")}
                     </div>
 
-                    <div className="flex items-center justify-between text-xs text-gray-500 font-medium mt-auto">
-                        <div className="flex flex-col gap-1">
-                            {/* Explicit Authors */}
+                    <div className="flex items-center justify-between text-[10px] text-gray-500 font-medium mt-auto pt-1">
+                        <div className="flex flex-col gap-0.5">
+                            {/* Explicit Authors - Compact */}
                             {item.firstAuthor && (
                                 <span className="flex items-center gap-2">
-                                    <span className="w-20 text-gray-600 uppercase text-[10px] font-bold tracking-wider">First Author</span>
-                                    <span className="text-gray-300">{item.firstAuthor}</span>
+                                    <span className="w-20 text-gray-600 uppercase font-bold tracking-wider">First Author</span>
+                                    <span className="text-gray-300 truncate max-w-[150px]">{item.firstAuthor}</span>
                                 </span>
                             )}
                             {item.lastAuthor && (
                                 <span className="flex items-center gap-2">
-                                    <span className="w-20 text-gray-600 uppercase text-[10px] font-bold tracking-wider">Last Author</span>
-                                    <span className="text-gray-300">{item.lastAuthor}</span>
+                                    <span className="w-20 text-gray-600 uppercase font-bold tracking-wider">Last Author</span>
+                                    <span className="text-gray-300 truncate max-w-[150px]">{item.lastAuthor}</span>
                                 </span>
                             )}
                             {!item.firstAuthor && !item.lastAuthor && item.author && (
@@ -102,7 +103,7 @@ export function ResourceCard({ item }: ResourceCardProps) {
                             )}
                         </div>
 
-                        <span className="text-white group-hover:translate-x-1 transition-transform flex items-center gap-1 self-end">
+                        <span className="text-white group-hover:translate-x-1 transition-transform flex items-center gap-1 self-end opacity-60 group-hover:opacity-100">
                             Read more
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                         </span>
