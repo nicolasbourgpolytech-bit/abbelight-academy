@@ -1810,6 +1810,8 @@ export default function AdminPage() {
                                                         {[
                                                             '/product-images/safe-mn360-v3.png',
                                                             '/product-images/safe-mn180-v3.png',
+                                                            '/product-images/safe-m90-v3.png',
+                                                            '/product-images/safe-m45-v3.png',
                                                             '/product-images/safe-mn360-dark.png',
                                                             '/product-images/safe-mn360-neutral.png',
                                                             '/product-images/safe-mn360-lab.png',
