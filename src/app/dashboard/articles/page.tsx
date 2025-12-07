@@ -129,7 +129,7 @@ export default function ArticlesPage() {
             if (!val) return false;
 
             if (Array.isArray(val)) {
-                return selectedOptions.some(opt => val.includes(opt));
+                return selectedOptions.every(opt => val.includes(opt));
             } else {
                 return selectedOptions.includes(val as string);
             }
