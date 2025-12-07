@@ -38,28 +38,10 @@ export function ResourceCard({ item }: ResourceCardProps) {
             rel="noopener noreferrer"
             className="block group w-full"
         >
-            <div className="glass-card p-0 h-full flex flex-col md:flex-row overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1">
-                {/* Thumbnail Area - Compact height on desktop */}
-                <div className={`h-32 md:h-auto md:w-56 relative flex-shrink-0 bg-gradient-to-br ${isWebinar ? 'from-purple-900 to-black' : 'from-blue-900 to-black'} flex items-center justify-center`}>
-                    {item.thumbnailUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" />
-                    ) : (
-                        <div className="text-white/20">
-                            <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
-                                {isWebinar ? (
-                                    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                ) : (
-                                    <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                                )}
-                            </svg>
-                        </div>
-                    )}
-                </div>
-
+            <div className="glass-card p-0 h-full flex flex-col overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1">
                 {/* Content - Compact Layout */}
-                <div className="p-4 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-1">
+                <div className="p-5 flex-1 flex flex-col">
+                    <div className="flex justify-between items-start mb-2">
                         <div className="flex flex-wrap gap-2 items-center">
                             {item.isNew && (
                                 <span className="bg-primary text-black text-[9px] font-bold px-1.5 py-0.5 rounded shadow animate-pulse">
@@ -72,12 +54,12 @@ export function ResourceCard({ item }: ResourceCardProps) {
                         </div>
                     </div>
 
-                    <h3 className="text-base font-bold text-white mb-1 group-hover:text-primary transition-colors leading-tight">
+                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-primary transition-colors leading-tight">
                         {item.title}
                     </h3>
 
                     {/* Journal and Authors Line */}
-                    <div className="mb-3 text-xs text-gray-400 flex flex-wrap items-center gap-2 border-b border-white/5 pb-2">
+                    <div className="mb-4 text-xs text-gray-400 flex flex-wrap items-center gap-2 border-b border-white/5 pb-3">
                         {item.journal && (
                             <span className="font-semibold text-gray-300">{item.journal}</span>
                         )}
@@ -111,7 +93,7 @@ export function ResourceCard({ item }: ResourceCardProps) {
                     </div>
 
                     {/* Highly Structured Tag Stack - Compact Single Column */}
-                    <div className="flex flex-col gap-1.5 mb-2">
+                    <div className="flex flex-col gap-2 mt-auto">
                         {renderTagGroup("Imaging Method", item.imagingMethod, "bg-brand-green/10 text-brand-green border-brand-green/20", "text-brand-green")}
                         {renderTagGroup("App Domain", item.applicationDomain, "bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20", "text-brand-cyan")}
                         {renderTagGroup("Modality", item.modality, "bg-brand-magenta/10 text-brand-magenta border-brand-magenta/20", "text-brand-magenta")}
