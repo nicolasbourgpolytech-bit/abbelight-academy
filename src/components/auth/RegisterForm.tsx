@@ -5,15 +5,62 @@ import { useState } from "react";
 
 export function RegisterForm() {
     const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        firstName: "",
+        lastName: "",
+        company: "",
+        email: "",
+    });
+    const [selectedRoles, setSelectedRoles] = useState<string[]>(["general"]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const roleOptions = [
+        { id: "reagent", label: "Reagent Customer" },
+        { id: "safe", label: "SAFe Instrument User" },
+        { id: "abbelighter", label: "Abbelighter" },
+        { id: "abbelighter_admin", label: "Abbelighter Admin" },
+    ];
+
+    const toggleRole = (roleId: string) => {
+        setSelectedRoles(prev =>
+            prev.includes(roleId)
+                ? prev.filter(r => r !== roleId)
+                : [...prev, roleId]
+        );
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData({ ...formData, [e.target.id]: e.target.value });
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        // Simulate registration
-        setTimeout(() => {
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...formData,
+                    roles: selectedRoles
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Registration failed");
+            }
+
+            alert("Registration request sent! Please wait for admin approval. You will receive an email with your temporary password.");
+            // Reset form or redirect
+            setFormData({ firstName: "", lastName: "", company: "", email: "" });
+            setSelectedRoles(["general"]);
+        } catch (error) {
+            alert((error as Error).message);
+        } finally {
             setLoading(false);
-            alert("Registration request sent! Please check your email.");
-        }, 1500);
+        }
     };
 
     return (
@@ -38,6 +85,8 @@ export function RegisterForm() {
                                 id="firstName"
                                 type="text"
                                 required
+                                value={formData.firstName}
+                                onChange={handleChange}
                                 placeholder="John"
                                 className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder:text-gray-600 focus:outline-none focus:border-accent/50 focus:bg-white/10 transition-all duration-300"
                             />
@@ -50,6 +99,8 @@ export function RegisterForm() {
                                 id="lastName"
                                 type="text"
                                 required
+                                value={formData.lastName}
+                                onChange={handleChange}
                                 placeholder="Doe"
                                 className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder:text-gray-600 focus:outline-none focus:border-accent/50 focus:bg-white/10 transition-all duration-300"
                             />
@@ -64,6 +115,8 @@ export function RegisterForm() {
                             id="company"
                             type="text"
                             required
+                            value={formData.company}
+                            onChange={handleChange}
                             placeholder="Institute of Optics..."
                             className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder:text-gray-600 focus:outline-none focus:border-accent/50 focus:bg-white/10 transition-all duration-300"
                         />
@@ -77,22 +130,30 @@ export function RegisterForm() {
                             id="email"
                             type="email"
                             required
+                            value={formData.email}
+                            onChange={handleChange}
                             placeholder="name@abbelight.com"
                             className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder:text-gray-600 focus:outline-none focus:border-accent/50 focus:bg-white/10 transition-all duration-300"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label htmlFor="password" className="text-sm font-semibold text-gray-300 uppercase tracking-wide">
-                            Password
+                        <label className="text-sm font-semibold text-gray-300 uppercase tracking-wide">
+                            Access Type (Select all that apply)
                         </label>
-                        <input
-                            id="password"
-                            type="password"
-                            required
-                            placeholder="••••••••"
-                            className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder:text-gray-600 focus:outline-none focus:border-accent/50 focus:bg-white/10 transition-all duration-300"
-                        />
+                        <div className="grid grid-cols-1 gap-2">
+                            {roleOptions.map((role) => (
+                                <label key={role.id} className="flex items-center space-x-3 p-3 border border-white/10 rounded bg-white/5 hover:bg-white/10 cursor-pointer transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedRoles.includes(role.id)}
+                                        onChange={() => toggleRole(role.id)}
+                                        className="w-5 h-5 accent-accent"
+                                    />
+                                    <span className="text-white text-sm">{role.label}</span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
 
                     <button
@@ -100,7 +161,7 @@ export function RegisterForm() {
                         disabled={loading}
                         className="w-full py-4 bg-white text-black font-bold text-lg uppercase tracking-wider hover:bg-accent hover:text-white transition-all duration-300 shadow-[0_4px_20px_-5px_rgba(255,255,255,0.3)] disabled:opacity-50 disabled:cursor-not-allowed mt-4"
                     >
-                        {loading ? "Sending Request..." : "Create Account"}
+                        {loading ? "Sending Request..." : "Request Access"}
                     </button>
                 </div>
 

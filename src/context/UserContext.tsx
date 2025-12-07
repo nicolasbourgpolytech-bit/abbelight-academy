@@ -31,11 +31,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const login = (name: string, roles: UserRole[]) => {
-        const newUser = {
+        // TODO: Replace with real Login API
+        const newUser: UserProfile = {
+            id: 1, // Temp ID
             name,
             email: 'demo@abbelight.com',
             roles,
             company: 'Demo Institute',
+            status: 'active',
             xp: 1250,
             level: 5,
             badges: [
