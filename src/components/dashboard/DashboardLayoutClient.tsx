@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 
 export default function DashboardLayoutClient({
     children,
@@ -12,11 +13,23 @@ export default function DashboardLayoutClient({
 }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const pathname = usePathname();
+    const router = useRouter();
+    const { user, isLoading } = useUser();
 
     // Close sidebar when route changes
     useEffect(() => {
         setSidebarOpen(false);
     }, [pathname]);
+
+    // Protect Dashboard Routes
+    useEffect(() => {
+        if (!isLoading && !user) {
+            router.push('/login');
+        }
+    }, [user, isLoading, router]);
+
+    if (isLoading) return <div className="min-h-screen bg-black flex items-center justify-center text-gray-500">Loading...</div>;
+    if (!user) return null;
 
     return (
         <div className="min-h-screen bg-black text-white selection:bg-primary/30 font-sans">

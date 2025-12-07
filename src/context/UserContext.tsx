@@ -18,13 +18,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     // Load user from local storage on mount
     React.useEffect(() => {
-        const storedUser = localStorage.getItem('abbelight_user');
+        const storedUser = localStorage.getItem('abbelight_session_v2');
         if (storedUser) {
             try {
                 setUser(JSON.parse(storedUser));
             } catch (e) {
                 console.error("Failed to parse user from local storage", e);
-                localStorage.removeItem('abbelight_user');
+                localStorage.removeItem('abbelight_session_v2');
             }
         }
         setIsLoading(false);
@@ -46,7 +46,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
             const user = data.user;
             setUser(user);
-            localStorage.setItem('abbelight_user', JSON.stringify(user));
+            localStorage.setItem('abbelight_session_v2', JSON.stringify(user));
             return user;
         } catch (error) {
             console.error("Login error:", error);
@@ -56,7 +56,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     const logout = () => {
         setUser(null);
-        localStorage.removeItem('abbelight_user');
+        localStorage.removeItem('abbelight_session_v2');
     };
 
     return (
