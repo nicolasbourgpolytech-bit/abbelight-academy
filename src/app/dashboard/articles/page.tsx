@@ -233,6 +233,8 @@ export default function ArticlesPage() {
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                     priority
+                    quality={100}
+                    unoptimized
                 />
 
                 {/* Gradient Overlays */}
