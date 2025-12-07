@@ -58,53 +58,57 @@ export function StatsHistograms({ articles }: StatsHistogramsProps) {
     return (
         <div className="flex gap-6 items-center">
             {/* Articles by Year */}
-            <div className="w-56 h-28">
+            <div className="w-56">
                 <p className="text-[10px] uppercase tracking-widest mb-1 text-right text-cyan-500">By Year</p>
-                <ResponsiveContainer width="100%" height="100%" className="[&_.recharts-surface]:outline-none [&_*]:outline-none [&_*]:focus:outline-none">
-                    <BarChart data={data.years} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
-                        <XAxis type="number" hide />
-                        <YAxis
-                            dataKey="name"
-                            type="category"
-                            width={30}
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fill: '#9ca3af', fontSize: 9 }}
-                            interval={0}
-                        />
-                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                        <Bar dataKey="value" radius={[0, 2, 2, 0]}>
-                            {data.years.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill="rgba(6, 182, 212, 0.6)" /> // brand-cyan
-                            ))}
-                        </Bar>
-                    </BarChart>
-                </ResponsiveContainer>
+                <div className="h-28">
+                    <ResponsiveContainer width="100%" height="100%" className="[&_.recharts-surface]:outline-none [&_*]:outline-none [&_*]:focus:outline-none">
+                        <BarChart data={data.years} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
+                            <XAxis type="number" hide />
+                            <YAxis
+                                dataKey="name"
+                                type="category"
+                                width={30}
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fill: '#9ca3af', fontSize: 9 }}
+                                interval={0}
+                            />
+                            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                            <Bar dataKey="value" radius={[0, 2, 2, 0]}>
+                                {data.years.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill="rgba(6, 182, 212, 0.6)" /> // brand-cyan
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
 
             {/* Articles by Domain */}
-            <div className="w-72 h-28">
+            <div className="w-72">
                 <p className="text-[10px] uppercase tracking-widest mb-1 text-right text-fuchsia-500">By Domain</p>
-                <ResponsiveContainer width="100%" height="100%" className="[&_.recharts-surface]:outline-none [&_*]:outline-none [&_*]:focus:outline-none">
-                    <BarChart data={data.domains} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
-                        <XAxis type="number" hide />
-                        <YAxis
-                            dataKey="name"
-                            type="category"
-                            width={110}
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fill: '#9ca3af', fontSize: 9 }}
-                            interval={0}
-                        />
-                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                        <Bar dataKey="value" radius={[0, 2, 2, 0]}>
-                            {data.domains.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill="rgba(217, 70, 239, 0.6)" /> // brand-magenta
-                            ))}
-                        </Bar>
-                    </BarChart>
-                </ResponsiveContainer>
+                <div className="h-28">
+                    <ResponsiveContainer width="100%" height="100%" className="[&_.recharts-surface]:outline-none [&_*]:outline-none [&_*]:focus:outline-none">
+                        <BarChart data={data.domains} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
+                            <XAxis type="number" hide />
+                            <YAxis
+                                dataKey="name"
+                                type="category"
+                                width={110}
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fill: '#9ca3af', fontSize: 9 }}
+                                interval={0}
+                            />
+                            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                            <Bar dataKey="value" radius={[0, 2, 2, 0]}>
+                                {data.domains.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill="rgba(217, 70, 239, 0.6)" /> // brand-magenta
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
         </div>
     );
