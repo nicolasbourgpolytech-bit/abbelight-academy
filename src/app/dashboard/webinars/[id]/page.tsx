@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 import { ContentItem } from "@/types/content";
 
-const SUGGESTED_WEBINARS = [
-    { id: "2", title: "Live Q&A: Advanced Data Analysis", thumbnail: "", duration: "60 min", views: "1.2k" },
-    { id: "3", title: "Breakthroughs in Neurobiology", thumbnail: "", duration: "50 min", views: "850" },
-    { id: "4", title: "Intro to Super-Resolution", thumbnail: "", duration: "30 min", views: "2.4k" },
-];
+
 
 export default function WebinarDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const [id, setId] = useState<string | null>(null);
@@ -98,20 +94,28 @@ export default function WebinarDetailPage({ params }: { params: Promise<{ id: st
                         </p>
                     </div>
 
-                    {/* Authors Section */}
+
+
+                </div>
+
+                {/* Right Sidebar (Suggested) */}
+                {/* Right Sidebar (Speakers & Products) */}
+                <div className="w-full lg:w-[350px] flex-shrink-0 flex flex-col gap-8">
+
+                    {/* Speakers Section */}
                     {authors.length > 0 && (
-                        <div className="mb-8">
+                        <div>
                             <h3 className="text-lg font-bold text-white mb-4">Speakers</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-3">
                                 {authors.map((author: any, idx: number) => (
-                                    <div key={idx} className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10">
-                                        <div className="w-12 h-12 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
+                                    <div key={idx} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                                        <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
                                             {author.photo ? <img src={author.photo} alt={author.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-white">{author.firstName?.[0]}</div>}
                                         </div>
                                         <div>
-                                            <div className="font-bold text-white">{author.firstName} {author.name}</div>
-                                            <div className="text-xs text-primary">{author.title}</div>
-                                            <div className="text-xs text-gray-400">{author.institute}</div>
+                                            <div className="font-bold text-sm text-white">{author.firstName} {author.name}</div>
+                                            <div className="text-[10px] text-primary">{author.title}</div>
+                                            <div className="text-[10px] text-gray-400">{author.institute}</div>
                                         </div>
                                     </div>
                                 ))}
@@ -121,42 +125,19 @@ export default function WebinarDetailPage({ params }: { params: Promise<{ id: st
 
                     {/* Associated Products Section */}
                     {products.length > 0 && (
-                        <div className="mb-8">
+                        <div>
                             <h3 className="text-lg font-bold text-white mb-4">Featured Products</h3>
-                            <div className="flex flex-wrap gap-4">
+                            <div className="flex flex-col gap-2">
                                 {products.map((prod: any, idx: number) => (
-                                    <a key={idx} href={prod.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 px-4 py-3 rounded-xl transition-colors group">
-                                        <span className="font-bold text-primary group-hover:text-white transition-colors">{prod.name}</span>
-                                        <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                    <a key={idx} href={prod.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 px-3 py-2 rounded-lg transition-colors group">
+                                        <span className="font-bold text-sm text-primary group-hover:text-white transition-colors">{prod.name}</span>
+                                        <svg className="w-3 h-3 text-primary ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                                     </a>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                </div>
-
-                {/* Right Sidebar (Suggested) */}
-                <div className="w-full lg:w-[350px] flex-shrink-0">
-                    <h3 className="text-lg font-bold text-white mb-4">Up Next</h3>
-                    <div className="flex flex-col gap-4">
-                        {SUGGESTED_WEBINARS.map(rec => (
-                            <div key={rec.id} className="flex gap-3 group cursor-pointer">
-                                <div className="w-40 h-24 bg-gray-800 rounded-lg relative overflow-hidden flex-shrink-0 border border-white/10 group-hover:border-primary/50 transition-colors">
-                                    {/* Thumbnail Placeholder */}
-                                    <div className="absolute inset-0 flex items-center justify-center text-white/10">
-                                        <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                    </div>
-                                    <div className="absolute bottom-1 right-1 bg-black/80 px-1 rounded text-[10px] font-mono">{rec.duration}</div>
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="text-sm font-bold text-white line-clamp-2 mb-1 group-hover:text-primary transition-colors">{rec.title}</h4>
-                                    <div className="text-xs text-gray-500">Abbelight Academy</div>
-                                    <div className="text-xs text-gray-500">{rec.views} views</div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
                 </div>
 
             </div>
