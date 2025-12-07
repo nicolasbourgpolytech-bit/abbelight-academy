@@ -21,7 +21,7 @@
   --warning: #FF9B35;
   /* Abbelight Orange */
   --warning-foreground: #000000;
-  
+
   --brand-cyan: #00CAF8;
   --brand-green: #00D296;
   --brand-magenta: #FF73FF;
@@ -48,7 +48,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
-  
+
   --color-brand-cyan: var(--brand-cyan);
   --color-brand-green: var(--brand-green);
   --color-brand-magenta: var(--brand-magenta);
@@ -89,4 +89,22 @@ body {
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   @apply p-8 transition-all duration-300 hover:border-primary/50;
+}
+
+/* Custom Scrollbar for Sidebar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
 }

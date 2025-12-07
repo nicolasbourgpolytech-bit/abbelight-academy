@@ -129,7 +129,7 @@ export default function ArticlesPage() {
             if (!val) return false;
 
             if (Array.isArray(val)) {
-                return selectedOptions.every(opt => val.includes(opt));
+                return selectedOptions.some(opt => val.includes(opt));
             } else {
                 return selectedOptions.includes(val as string);
             }
@@ -266,7 +266,7 @@ export default function ArticlesPage() {
 
             <div className="flex flex-col md:flex-row gap-8">
                 {/* Advanced Sidebar */}
-                <aside className="md:sticky md:top-32 self-start h-fit">
+                <aside className="md:sticky md:top-32 self-start h-fit max-h-[calc(100vh-9rem)] overflow-y-auto pr-2 custom-scrollbar">
                     <MultiCategoryFilterSidebar
                         categories={filterCategories}
                         selectedFilters={selectedFilters}
