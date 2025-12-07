@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 
 const navItems = [
     {
@@ -52,6 +53,17 @@ const navItems = [
 
 export function Sidebar() {
     const pathname = usePathname();
+    const { user } = useUser();
+
+    // Get initials or fallback
+    const initials = user?.name
+        ? user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+        : (user?.firstName && user?.lastName)
+            ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+            : "U";
+
+    const displayName = user?.name || (user?.firstName ? `${user.firstName} ${user.lastName}` : "User");
+    const displayCompany = user?.company || "Abbelight";
 
     return (
         <aside className="w-64 h-full bg-black/90 backdrop-blur-xl border-r border-white/10 flex flex-col">
@@ -92,12 +104,12 @@ export function Sidebar() {
 
             <div className="p-4 border-t border-white/5 bg-black/40">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold">
-                        JD
+                    <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold border border-white/10">
+                        {initials}
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-sm font-bold text-white">John Doe</span>
-                        <span className="text-xs text-gray-500">Institut Optique</span>
+                    <div className="flex flex-col overflow-hidden">
+                        <span className="text-sm font-bold text-white truncate" title={displayName}>{displayName}</span>
+                        <span className="text-xs text-gray-500 truncate" title={displayCompany}>{displayCompany}</span>
                     </div>
                 </div>
             </div>
