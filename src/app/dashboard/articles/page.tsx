@@ -147,6 +147,8 @@ export default function ArticlesPage() {
                 a.description.toLowerCase().includes(q) ||
                 a.author?.toLowerCase().includes(q) ||
                 (a.journal && a.journal.toLowerCase().includes(q)) ||
+                (a.firstAuthor && a.firstAuthor.toLowerCase().includes(q)) ||
+                (a.lastAuthor && a.lastAuthor.toLowerCase().includes(q)) ||
                 (a.tags && a.tags.some(tag => tag.toLowerCase().includes(q)))
             );
         }
