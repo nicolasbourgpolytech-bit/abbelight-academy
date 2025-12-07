@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import Image from "next/image";
 import { ContentFilterBar } from "@/components/dashboard/ContentFilterBar";
 import { ResourceCard } from "@/components/dashboard/ResourceCard";
 import { MultiCategoryFilterSidebar } from "@/components/dashboard/MultiCategoryFilterSidebar";
 import { ContentItem } from "@/types/content";
 import { StatsHistograms } from "@/components/dashboard/StatsHistograms";
-import Image from "next/image";
 
 export default function ArticlesPage() {
     const [articles, setArticles] = useState<ContentItem[]>([]);
@@ -129,11 +129,8 @@ export default function ArticlesPage() {
             if (!val) return false;
 
             if (Array.isArray(val)) {
-                // For Arrays (Tags), use AND logic: Article must have ALL selected tags
-                // User requirement: "les filtres fonctionnent en AND surtout ceux dans la même catégorie"
                 return selectedOptions.every(opt => val.includes(opt));
             } else {
-                // For Strings (Journal, Author), use OR logic: Article must match ANY selected value
                 return selectedOptions.includes(val as string);
             }
         });
@@ -186,15 +183,6 @@ export default function ArticlesPage() {
         };
 
         Object.keys(categoryKeys).forEach(catId => {
-            // Context counts: 
-            // Standard behavior: Count items available if I ADD this filter to current selection.
-            // But since current selection within catId is AND (for arrays) or OR (for scalars), it varies.
-
-            // Simplified approach for context:
-            // Filter by ALL OTHER categories.
-            // Then count distribution.
-            // This is "Global OR" context within the category, which is correct for showing "Potential results".
-
             const contextFilters = { ...selectedFilters };
             delete contextFilters[catId]; // Remove restriction on current category
 
@@ -211,27 +199,13 @@ export default function ArticlesPage() {
             const catCounts: Record<string, number> = {};
             const { key, isArray } = categoryKeys[catId];
 
-            // Optimization for AND logic: 
-            // If I have selected ["A"] in this category, and I look at "B":
-            // Standard UI implies hitting "B" will result in "A AND B".
-            // So count for "B" should be: How many articles have BOTH A and B?
-            // Meaning we SHOULD NOT exclude current category selection, but rather combine it?
-
-            // Let's refine based on user request "AND logic".
-            // If isArray (AND logic):
-            // Count for option "O" = Count of articles matching (ContextFilters + CurrentSelection + O).
-            // If isScalar (OR logic):
-            // Count for option "O" = Count of articles matching (ContextFilters + O). (Since clicking O adds to OR set).
-
             contextArticles.forEach(a => {
                 const val = a[key];
                 if (!val) return;
 
-                // Check if this article matches CURRENT selection in this category (for AND logic Refinement)
-                // For isArray: Does it have all ALREADY selected tags?
                 if (isArray && selectedFilters[catId]?.length > 0) {
                     const hasAllSelected = selectedFilters[catId].every(sel => (val as string[]).includes(sel));
-                    if (!hasAllSelected) return; // If it doesn't match current AND criteria, it can't contribute to future AND criteria
+                    if (!hasAllSelected) return;
                 }
 
                 if (isArray && Array.isArray(val)) {
@@ -251,27 +225,33 @@ export default function ArticlesPage() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <div className="border-b border-white/10 pb-6 flex flex-col md:flex-row justify-between items-end gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Scientific Articles</h1>
-                    <p className="text-gray-400">Access our knowledge base of protocols, technical notes, and research papers.</p>
-                </div>
-                <div className="hidden md:block">
-                    <StatsHistograms articles={articles} />
-
-                </div>
-
-            </div>
-
-            <div className="relative w-full h-32 md:h-48 rounded-2xl overflow-hidden mb-8 border border-white/10 shadow-2xl">
+            {/* Banner Header with Overlay */}
+            <div className="relative w-full aspect-[32/9] min-h-[300px] rounded-2xl overflow-hidden mb-8 border border-white/10 shadow-2xl group">
                 <Image
                     src="/smlm_banner.png"
                     alt="SMLM Scientific Articles"
                     fill
-                    className="object-cover"
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
                     priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+                {/* Gradient Overlays */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent md:hidden" />
+
+                {/* Content */}
+                <div className="absolute inset-0 p-6 md:p-10 flex flex-col md:flex-row justify-between items-end z-10">
+                    <div className="max-w-2xl mb-2 md:mb-0">
+                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 drop-shadow-2xl">Scientific Articles</h1>
+                        <p className="text-gray-100 text-lg drop-shadow-md font-medium text-balance">
+                            Access our knowledge base of protocols, technical notes, and research papers.
+                        </p>
+                    </div>
+
+                    <div className="hidden md:block">
+                        <StatsHistograms articles={articles} />
+                    </div>
+                </div>
             </div>
 
             <ContentFilterBar onSearch={setSearch} onSortChange={setSort} />
@@ -314,6 +294,6 @@ export default function ArticlesPage() {
                     )}
                 </div>
             </div>
-        </div >
+        </div>
     );
 }
