@@ -7,14 +7,29 @@ interface ResourceCardProps {
     item: ContentItem;
 }
 
+// Deterministic color assignment based on string hash
+const getTagColor = (tag: string) => {
+    const colors = [
+        'bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20',
+        'bg-brand-green/10 text-brand-green border-brand-green/20',
+        'bg-brand-magenta/10 text-brand-magenta border-brand-magenta/20',
+        'bg-brand-orange/10 text-brand-orange border-brand-orange/20',
+    ];
+    let hash = 0;
+    for (let i = 0; i < tag.length; i++) {
+        hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+};
+
 export function ResourceCard({ item }: ResourceCardProps) {
     const isWebinar = item.type === 'webinar';
 
     return (
-        <Link href={item.url} className="block group h-full">
-            <div className="glass-card p-0 h-full flex flex-col overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1">
-                {/* Thumbnail Area */}
-                <div className={`h-48 w-full relative bg-gradient-to-br ${isWebinar ? 'from-purple-900 to-black' : 'from-blue-900 to-black'} flex items-center justify-center`}>
+        <Link href={item.url} className="block group w-full">
+            <div className="glass-card p-0 h-full flex flex-col md:flex-row overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1">
+                {/* Thumbnail Area - Left Side on Desktop */}
+                <div className={`h-48 md:h-auto md:w-64 relative flex-shrink-0 bg-gradient-to-br ${isWebinar ? 'from-purple-900 to-black' : 'from-blue-900 to-black'} flex items-center justify-center`}>
                     {item.thumbnailUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" />
@@ -40,34 +55,49 @@ export function ResourceCard({ item }: ResourceCardProps) {
                     )}
                 </div>
 
-                {/* NEW Ribbon */}
-                {item.isNew && (
-                    <div className="absolute top-4 right-4 bg-primary text-black text-xs font-bold px-3 py-1 rounded shadow-lg animate-pulse z-10">
-                        NEW
-                    </div>
-                )}
-
-                {/* Content */}
+                {/* Content - Right Side */}
                 <div className="p-6 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-3">
-                        <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded ${isWebinar ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}`}>
-                            {item.type}
-                        </span>
-                        <span className="text-xs text-gray-500 font-mono">
-                            {new Date(item.date).toLocaleDateString()}
-                        </span>
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="flex flex-wrap gap-2">
+                            {item.isNew && (
+                                <span className="bg-primary text-black text-[10px] font-bold px-2 py-0.5 rounded shadow animate-pulse">
+                                    NEW
+                                </span>
+                            )}
+                            <span className="text-xs text-gray-400 font-mono">
+                                {new Date(item.date).toLocaleDateString()}
+                            </span>
+                        </div>
                     </div>
 
-                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                    <h3 className="text-xl font-bold text-white mb-3 group-hover:text-primary transition-colors">
                         {item.title}
                     </h3>
-                    <p className="text-sm text-gray-400 line-clamp-3 mb-4 flex-1">
+
+                    <p className="text-sm text-gray-400 mb-4 flex-1">
                         {item.description}
                     </p>
 
-                    <div className="border-t border-white/5 pt-4 flex items-center justify-between text-xs text-gray-500 font-medium">
+                    {/* Colorful Tags */}
+                    {item.tags && item.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            {item.tags.map(tag => (
+                                <span
+                                    key={tag}
+                                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border ${getTagColor(tag)}`}
+                                >
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="border-t border-white/5 pt-4 flex items-center justify-between text-xs text-gray-500 font-medium mt-auto">
                         <span>{isWebinar ? item.duration : item.author}</span>
-                        <span className="text-white group-hover:translate-x-1 transition-transform">Read more &rarr;</span>
+                        <span className="text-white group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                            Read more
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                        </span>
                     </div>
                 </div>
             </div>

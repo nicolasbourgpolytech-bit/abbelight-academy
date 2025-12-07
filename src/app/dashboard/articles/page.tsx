@@ -49,7 +49,7 @@ export default function ArticlesPage() {
                             type: 'article',
                             url: a.doi_link || '#',
                             author: a.first_author || a.last_author,
-                            tags: [...appDomains, ...imgMethods].slice(0, 3),
+                            tags: [...appDomains, ...imgMethods, ...modalities, ...products],
                             isNew: false,
 
                             // Extended Metadata for Filtering
@@ -100,7 +100,6 @@ export default function ArticlesPage() {
             { id: 'journal', title: 'Journal', options: extractOptions('journal') },
             { id: 'firstAuthor', title: 'First Author', options: extractOptions('firstAuthor') },
             { id: 'lastAuthor', title: 'Last Author', options: extractOptions('lastAuthor') },
-            { id: 'customer', title: 'Customer', options: extractOptions('customer') }
         ].filter(c => c.options.length > 0);
     }, [articles]);
 
@@ -272,7 +271,7 @@ export default function ArticlesPage() {
                         <div className="text-center py-20 text-gray-500">Loading articles...</div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 gap-6">
                                 {filteredAndSortedArticles.map(item => (
                                     <ResourceCard key={item.id} item={item} />
                                 ))}
