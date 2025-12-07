@@ -9,7 +9,7 @@ interface ContentFilterBarProps {
 
 export function ContentFilterBar({ onSearch, onSortChange }: ContentFilterBarProps) {
     return (
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="flex flex-col md:flex-row gap-4">
             {/* Search Input */}
             <div className="flex-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

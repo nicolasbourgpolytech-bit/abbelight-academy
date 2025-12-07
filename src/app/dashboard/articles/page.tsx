@@ -260,11 +260,13 @@ export default function ArticlesPage() {
                 </div>
             </div>
 
-            <ContentFilterBar onSearch={setSearch} onSortChange={setSort} />
+            <div className="md:sticky md:top-0 md:z-30 md:bg-black/90 md:backdrop-blur-xl md:-mx-8 md:px-8 py-4 mb-6 transition-all">
+                <ContentFilterBar onSearch={setSearch} onSortChange={setSort} />
+            </div>
 
             <div className="flex flex-col md:flex-row gap-8">
                 {/* Advanced Sidebar */}
-                <aside className="sticky top-6 self-start h-fit">
+                <aside className="md:sticky md:top-32 self-start h-fit">
                     <MultiCategoryFilterSidebar
                         categories={filterCategories}
                         selectedFilters={selectedFilters}
