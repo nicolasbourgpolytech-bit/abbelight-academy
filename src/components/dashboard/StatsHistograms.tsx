@@ -31,7 +31,7 @@ export function StatsHistograms({ articles }: StatsHistogramsProps) {
 
         const years = Object.entries(yearCounts)
             .map(([name, value]) => ({ name, value }))
-            .sort((a, b) => a.name.localeCompare(b.name));
+            .sort((a, b) => b.name.localeCompare(a.name)); // Descending so latest year is processed first
 
         const domains = Object.entries(domainCounts)
             .map(([name, value]) => ({ name, value }))
@@ -59,7 +59,7 @@ export function StatsHistograms({ articles }: StatsHistogramsProps) {
         <div className="flex gap-6 items-center">
             {/* Articles by Year */}
             <div className="w-56 h-28">
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1 text-right">By Year</p>
+                <p className="text-[10px] uppercase tracking-widest mb-1 text-right text-cyan-500">By Year</p>
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data.years} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
                         <XAxis type="number" hide />
@@ -83,15 +83,15 @@ export function StatsHistograms({ articles }: StatsHistogramsProps) {
             </div>
 
             {/* Articles by Domain */}
-            <div className="w-64 h-28">
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1 text-right">By Domain</p>
+            <div className="w-72 h-28">
+                <p className="text-[10px] uppercase tracking-widest mb-1 text-right text-fuchsia-500">By Domain</p>
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data.domains} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
                         <XAxis type="number" hide />
                         <YAxis
                             dataKey="name"
                             type="category"
-                            width={80}
+                            width={110}
                             axisLine={false}
                             tickLine={false}
                             tick={{ fill: '#9ca3af', fontSize: 9 }}
