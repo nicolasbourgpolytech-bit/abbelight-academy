@@ -9,18 +9,77 @@ import { ContentItem } from "@/types/content";
 import { StatsHistograms } from "@/components/dashboard/StatsHistograms";
 import { useUser } from "@/context/UserContext";
 
-import { useUser } from "@/context/UserContext";
-
-// ... existing imports
-
 export default function ArticlesPage() {
     const { user } = useUser();
     const isAdmin = user?.roles?.includes('abbelighter_admin');
 
     const [articles, setArticles] = useState<ContentItem[]>([]);
-    // ... state
+    const [isLoading, setIsLoading] = useState(true);
+    const [search, setSearch] = useState("");
+    const [sort, setSort] = useState<'date-desc' | 'date-asc' | 'title'>("date-desc");
 
-    // ... useEffects
+    // Advanced Filter State: { "categoryId": ["option1", "option2"] }
+    const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
+
+    useEffect(() => {
+        const fetchArticles = async () => {
+            try {
+                const res = await fetch('/api/articles');
+                const data = await res.json();
+                if (res.ok && data.articles) {
+                    const mappedArticles: ContentItem[] = data.articles.map((a: any) => {
+                        // Helper to safely parse JSON arrays and flatten nested JSON strings
+                        const parseArray = (val: any) => {
+                            let arr = Array.isArray(val) ? val : JSON.parse(val || '[]');
+                            return arr.flatMap((item: any) => {
+                                if (typeof item === 'string' && item.trim().startsWith('[') && item.trim().endsWith(']')) {
+                                    try {
+                                        const parsed = JSON.parse(item);
+                                        return Array.isArray(parsed) ? parsed : item;
+                                    } catch { return item; }
+                                }
+                                return item;
+                            }).filter(Boolean);
+                        };
+
+                        const appDomains = parseArray(a.application_domain);
+                        const imgMethods = parseArray(a.imaging_method);
+                        const modalities = parseArray(a.abbelight_imaging_modality);
+                        const products = parseArray(a.abbelight_product);
+
+                        return {
+                            id: a.id.toString(),
+                            title: a.title,
+                            description: `${a.journal || 'Journal'} - ${a.first_author || 'Author'}`,
+                            date: a.publication_date,
+                            type: 'article',
+                            url: a.doi_link || '#',
+                            author: a.first_author || a.last_author,
+                            tags: [...appDomains, ...imgMethods, ...modalities, ...products],
+                            isNew: false,
+
+                            // Extended Metadata for Filtering
+                            applicationDomain: appDomains,
+                            imagingMethod: imgMethods,
+                            modality: modalities,
+                            product: products,
+                            journal: a.journal,
+                            firstAuthor: a.first_author,
+                            lastAuthor: a.last_author,
+                            customer: a.abbelight_customer
+                        };
+                    });
+                    setArticles(mappedArticles);
+                }
+            } catch (error) {
+                console.error("Failed to fetch articles", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchArticles();
+    }, []);
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -294,9 +353,11 @@ export default function ArticlesPage() {
                                 </p>
                             </div>
 
-                            <div className="hidden md:flex bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-xl self-end md:self-auto mb-2 md:mb-1 flex-col justify-center min-h-[160px]">
-                                <StatsHistograms articles={articles} />
-                            </div>
+                            {isAdmin && (
+                                <div className="hidden md:flex bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-xl self-end md:self-auto mb-2 md:mb-1 flex-col justify-center min-h-[160px]">
+                                    <StatsHistograms articles={articles} />
+                                </div>
+                            )}
                         </div>
                     </div>
 
