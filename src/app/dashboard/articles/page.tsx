@@ -6,6 +6,7 @@ import { ResourceCard } from "@/components/dashboard/ResourceCard";
 import { MultiCategoryFilterSidebar } from "@/components/dashboard/MultiCategoryFilterSidebar";
 import { ContentItem } from "@/types/content";
 import { StatsHistograms } from "@/components/dashboard/StatsHistograms";
+import Image from "next/image";
 
 export default function ArticlesPage() {
     const [articles, setArticles] = useState<ContentItem[]>([]);
@@ -257,7 +258,20 @@ export default function ArticlesPage() {
                 </div>
                 <div className="hidden md:block">
                     <StatsHistograms articles={articles} />
+
                 </div>
+
+            </div>
+
+            <div className="relative w-full h-32 md:h-48 rounded-2xl overflow-hidden mb-8 border border-white/10 shadow-2xl">
+                <Image
+                    src="/smlm_banner.png"
+                    alt="SMLM Scientific Articles"
+                    fill
+                    className="object-cover"
+                    priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             </div>
 
             <ContentFilterBar onSearch={setSearch} onSortChange={setSort} />
@@ -300,6 +314,6 @@ export default function ArticlesPage() {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
