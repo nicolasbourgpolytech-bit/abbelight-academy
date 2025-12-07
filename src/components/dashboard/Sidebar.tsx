@@ -54,7 +54,7 @@ export function Sidebar() {
     const pathname = usePathname();
 
     return (
-        <aside className="fixed left-0 top-0 bottom-0 w-64 bg-black/90 backdrop-blur-xl border-r border-white/10 z-50 flex flex-col">
+        <aside className="w-64 h-full bg-black/90 backdrop-blur-xl border-r border-white/10 flex flex-col">
             <div className="p-6 border-b border-white/5 flex items-center gap-3">
                 <div className="relative w-24 h-8 transition-transform hover:scale-105">
                     <Image
