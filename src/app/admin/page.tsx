@@ -1266,7 +1266,7 @@ export default function AdminPage() {
                                                                 value=""
                                                             >
                                                                 <option value="">-- Helper: Select Product --</option>
-                                                                {products.map(p => (
+                                                                {Array.isArray(products) && products.map(p => (
                                                                     <option key={p.id} value={p.id}>{p.name}</option>
                                                                 ))}
                                                             </select>
@@ -1716,37 +1716,40 @@ export default function AdminPage() {
                                         </button>
                                     </div>
                                     <div className="grid gap-4">
-                                        {products.map((prod: any) => (
-                                            <div key={prod.id} className="bg-gray-900/40 border border-white/10 rounded-xl p-4 flex items-center justify-between hover:border-primary/30 transition-colors group">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-16 h-16 bg-gray-800 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-500 font-bold text-xl overflow-hidden border border-white/5">
-                                                        {prod.image_url ? <img src={prod.image_url} alt="" className="w-full h-full object-cover" /> : prod.name?.[0]}
+                                        {Array.isArray(products) && products.length > 0 ? (
+                                            products.map((prod: any) => (
+                                                <div key={prod.id} className="bg-gray-900/40 border border-white/10 rounded-xl p-4 flex items-center justify-between hover:border-primary/30 transition-colors group">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-16 h-16 bg-gray-800 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-500 font-bold text-xl overflow-hidden border border-white/5">
+                                                            {prod.image_url ? <img src={prod.image_url} alt="" className="w-full h-full object-cover" /> : prod.name?.[0]}
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="font-bold text-white group-hover:text-primary transition-colors">{prod.name}</h3>
+                                                            <div className="text-xs text-gray-400 truncate max-w-md">{prod.description || prod.link}</div>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <h3 className="font-bold text-white group-hover:text-primary transition-colors">{prod.name}</h3>
-                                                        <div className="text-xs text-gray-400 truncate max-w-md">{prod.description || prod.link}</div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingProduct(prod);
+                                                                setIsEditingProduct(true);
+                                                            }}
+                                                            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteProduct(prod.id)}
+                                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                        >
+                                                            Delete
+                                                        </button>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={() => {
-                                                            setEditingProduct(prod);
-                                                            setIsEditingProduct(true);
-                                                        }}
-                                                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteProduct(prod.id)}
-                                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {products.length === 0 && <p className="text-center text-gray-500 py-10">No products found.</p>}
+                                            ))
+                                        ) : (
+                                            <p className="text-center text-gray-500 py-10">No products found.</p>
+                                        )}
                                     </div>
                                 </>
                             ) : (
