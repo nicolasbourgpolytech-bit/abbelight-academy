@@ -22,9 +22,19 @@ export default function ArticlesPage() {
                 const data = await res.json();
                 if (res.ok && data.articles) {
                     const mappedArticles: ContentItem[] = data.articles.map((a: any) => {
-                        // Helper to safely parse JSON arrays
-                        const parseArray = (val: any) =>
-                            Array.isArray(val) ? val : JSON.parse(val || '[]').filter(Boolean);
+                        // Helper to safely parse JSON arrays and flatten nested JSON strings
+                        const parseArray = (val: any) => {
+                            let arr = Array.isArray(val) ? val : JSON.parse(val || '[]');
+                            return arr.flatMap((item: any) => {
+                                if (typeof item === 'string' && item.trim().startsWith('[') && item.trim().endsWith(']')) {
+                                    try {
+                                        const parsed = JSON.parse(item);
+                                        return Array.isArray(parsed) ? parsed : item;
+                                    } catch { return item; }
+                                }
+                                return item;
+                            }).filter(Boolean);
+                        };
 
                         const appDomains = parseArray(a.application_domain);
                         const imgMethods = parseArray(a.imaging_method);
