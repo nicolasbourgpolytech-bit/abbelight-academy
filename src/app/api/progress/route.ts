@@ -69,7 +69,8 @@ export async function POST(request: Request) {
             const moduleXp = modules[0]?.xp || 0;
 
             if (moduleXp > 0) {
-                await sql`UPDATE users SET xp = xp + ${moduleXp} WHERE id = ${user.id}`;
+                await sql`UPDATE users SET xp = COALESCE(xp, 0) + ${moduleXp} WHERE id = ${user.id}`;
+                console.log(`[XP Award] Awarded ${moduleXp} XP to user ${user.id} for module ${moduleId}`);
             }
 
             // 3. Check for Learning Path Completion
@@ -115,7 +116,8 @@ export async function POST(request: Request) {
                 if (allCompleted) {
                     // Award Bonus (50% of path total)
                     const bonus = Math.floor(pathTotalXp * 0.5);
-                    await sql`UPDATE users SET xp = xp + ${bonus} WHERE id = ${user.id}`;
+                    await sql`UPDATE users SET xp = COALESCE(xp, 0) + ${bonus} WHERE id = ${user.id}`;
+                    console.log(`[XP Award] Awarded BONUS ${bonus} XP to user ${user.id} for path ${path.assignment_id}`);
 
                     // Mark path as completed
                     await sql`

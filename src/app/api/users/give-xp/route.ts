@@ -11,7 +11,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'User ID and amount required' }, { status: 400 });
         }
 
-        await sql`UPDATE users SET xp = xp + ${amount} WHERE id = ${userId}`;
+        await sql`UPDATE users SET xp = COALESCE(xp, 0) + ${amount} WHERE id = ${userId}`;
 
         return NextResponse.json({ success: true, message: `Added ${amount} XP` }, { status: 200 });
     } catch (error) {
