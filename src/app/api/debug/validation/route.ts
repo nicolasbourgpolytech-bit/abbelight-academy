@@ -5,12 +5,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
-    const email = searchParams.get('email');
+    const emailParam = searchParams.get('email')?.trim();
+    const userIdParam = searchParams.get('userId'); // Add support for ID lookup
     const moduleIdParam = searchParams.get('moduleId');
-
-    if (!email) {
-        return NextResponse.json({ error: 'Email parameter required' }, { status: 400 });
-    }
 
     const logs: string[] = [];
     function log(msg: string) {
@@ -19,17 +16,35 @@ export async function GET(request: Request) {
     }
 
     try {
-        log(`Starting validation simulation for email: ${email}`);
+        log(`Starting validation simulation. Email: '${emailParam}', UserId: '${userIdParam}'`);
 
-        // 1. Get User
-        const { rows: users } = await sql`SELECT * FROM users WHERE email ILIKE ${email}`;
-        const user = users[0];
+        let user = null;
+
+        // 1. Try finding by ID first if provided (most reliable)
+        if (userIdParam && !isNaN(parseInt(userIdParam))) {
+            const { rows: usersById } = await sql`SELECT * FROM users WHERE id = ${userIdParam}`;
+            if (usersById.length > 0) {
+                user = usersById[0];
+                log(`Found user by ID ${userIdParam}: ${user.email}`);
+            }
+        }
+
+        // 2. Fallback to Email
+        if (!user && emailParam) {
+            const { rows: usersByEmail } = await sql`SELECT * FROM users WHERE email ILIKE ${emailParam}`;
+            if (usersByEmail.length > 0) {
+                user = usersByEmail[0];
+                log(`Found user by Email ${emailParam}: ID ${user.id}`);
+            }
+        }
 
         if (!user) {
-            log('User not found');
-            return NextResponse.json({ logs, error: 'User not found' }, { status: 404 });
+            log('User not found by ID or Email.');
+            // Dump all users to debug
+            const { rows: allUsers } = await sql`SELECT id, email FROM users LIMIT 50`;
+            log(`Available Users in DB: ${JSON.stringify(allUsers)}`);
+            return NextResponse.json({ logs, error: 'User not found. See logs for available users.' }, { status: 404 });
         }
-        log(`User found: ID ${user.id}`);
 
         // 2. Mock Module ID if not provided (just to list paths)
         // If provided, we filter by it like the real POST
