@@ -59,6 +59,31 @@ export function UserProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('abbelight_session_v2');
     };
 
+    // Heartbeat mechanism
+    React.useEffect(() => {
+        if (!user) return;
+
+        const sendHeartbeat = async () => {
+            try {
+                await fetch('/api/user/heartbeat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email })
+                });
+            } catch (error) {
+                console.error("Heartbeat failed", error);
+            }
+        };
+
+        // Send immediately on login/load
+        sendHeartbeat();
+
+        // Then every 60 seconds
+        const interval = setInterval(sendHeartbeat, 60000);
+
+        return () => clearInterval(interval);
+    }, [user]);
+
     return (
         <UserContext.Provider value={{ user, login, logout, isLoading }}>
             {children}

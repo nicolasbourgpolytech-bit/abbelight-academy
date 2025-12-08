@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -50,6 +50,31 @@ export function Sidebar() {
     const { user, logout } = useUser();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
 
+    // Online Users State
+    const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+
+    // Fetch online users periodically if admin
+    useEffect(() => {
+        if (!user || !user.roles.includes('abbelighter_admin')) return;
+
+        const fetchOnlineUsers = async () => {
+            try {
+                const res = await fetch('/api/users/online');
+                if (res.ok) {
+                    const data = await res.json();
+                    setOnlineUsers(data.users);
+                }
+            } catch (e) {
+                console.error("Failed to fetch online users", e);
+            }
+        };
+
+        fetchOnlineUsers();
+        const interval = setInterval(fetchOnlineUsers, 30000); // 30s update
+
+        return () => clearInterval(interval);
+    }, [user]);
+
     // Get initials or fallback
     const initials = user?.name
         ? user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
@@ -82,7 +107,7 @@ export function Sidebar() {
                 </span>
             </div>
 
-            <nav className="flex-1 px-4 py-8 space-y-2">
+            <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
                 {navItems.map((item) => {
                     const isActive = item.href === "/dashboard"
                         ? pathname === item.href
@@ -102,6 +127,30 @@ export function Sidebar() {
                         </Link>
                     );
                 })}
+
+                {/* Online Users Section */}
+                {user?.roles.includes('abbelighter_admin') && (
+                    <div className="mt-8 pt-6 border-t border-white/10">
+                        <div className="px-4 mb-3 flex items-center justify-between text-xs font-bold text-gray-500 uppercase tracking-widest">
+                            <span>Online Users</span>
+                            <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
+                                {onlineUsers.length}
+                            </span>
+                        </div>
+                        <div className="space-y-1">
+                            {onlineUsers.length === 0 ? (
+                                <p className="px-4 text-xs text-gray-600 italic">No one else online</p>
+                            ) : (
+                                onlineUsers.map((u) => (
+                                    <div key={u.id} className="px-4 py-2 flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                        <span className="truncate">{u.first_name || u.email}</span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                )}
             </nav>
 
             <div className="p-4 border-t border-white/5 bg-black/40 relative">
