@@ -96,7 +96,7 @@ export async function GET(request: Request) {
                 // ILIKE CHECK
                 const { rows: progress } = await sql`
                     SELECT is_completed, completed_at FROM user_module_progress 
-                    WHERE user_email ILIKE ${email} AND module_id = ${m.id} AND is_completed = TRUE
+                    WHERE user_email ILIKE ${user.email} AND module_id = ${m.id} AND is_completed = TRUE
                 `;
 
                 const isCompleted = progress.length > 0;
