@@ -73,9 +73,9 @@ export async function POST(request: Request) {
                 console.log(`[XP Award] Awarded ${moduleXp} XP to user ${user.id} for module ${moduleId}`);
             }
 
-            // 3. Check for Learning Path Completion (Recursive)
+            // 3. Check for Learning Path Completion
             let pathCompleted = false;
-            let totalBonusXp = 0;
+            let bonusXp = 0;
 
             // Find active paths for this user that contain this module
             const { rows: activePaths } = await sql`
@@ -88,10 +88,72 @@ export async function POST(request: Request) {
             `;
 
             for (const path of activePaths) {
-                const result = await checkPathCompletion(user, email, path.assignment_id, path.learning_path_id);
-                if (result.completed) {
+                // Check if all modules in this path are completed
+                const { rows: pathModules } = await sql`
+                    SELECT m.id, m.xp 
+                    FROM modules m
+                    JOIN learning_path_modules lpm ON lpm.module_id = m.id
+                    WHERE lpm.learning_path_id = ${path.learning_path_id}
+                `;
+
+                // Check completion status for each module
+                let allCompleted = true;
+                let pathTotalXp = 0;
+
+                for (const m of pathModules) {
+                    pathTotalXp += (m.xp || 0);
+                    // Check if user has completed this module
+                    const { rows: progress } = await sql`
+                        SELECT is_completed FROM user_module_progress 
+                        WHERE user_email = ${email} AND module_id = ${m.id} AND is_completed = TRUE
+                    `;
+                    if (progress.length === 0) {
+                        allCompleted = false;
+                        break;
+                    }
+                }
+
+                if (allCompleted) {
+                    // Award Bonus (50% of path total)
+                    const bonus = Math.floor(pathTotalXp * 0.5);
+                    await sql`UPDATE users SET xp = COALESCE(xp, 0) + ${bonus} WHERE id = ${user.id}`;
+                    console.log(`[XP Award] Awarded BONUS ${bonus} XP to user ${user.id} for path ${path.assignment_id}`);
+
+                    // Mark CURRENT path as completed
+                    await sql`
+                        UPDATE user_learning_paths 
+                        SET status = 'completed', completed_at = NOW() 
+                        WHERE id = ${path.assignment_id}
+                    `;
+
                     pathCompleted = true;
-                    totalBonusXp += result.bonusXp;
+                    bonusXp += bonus;
+
+                    // --- CHRONOLOGICAL UNLOCKING LOGIC ---
+                    // 1. Get all paths for this user sorted by creation date
+                    const { rows: allUserPaths } = await sql`
+                        SELECT ulp.id, ulp.status, lp.created_at
+                        FROM user_learning_paths ulp
+                        JOIN learning_paths lp ON ulp.learning_path_id = lp.id
+                        WHERE ulp.user_id = ${user.id}
+                        ORDER BY lp.created_at ASC
+                    `;
+
+                    // 2. Find current path index
+                    const currentIndex = allUserPaths.findIndex(p => p.id === path.assignment_id);
+
+                    // 3. Unlock NEXT path if it exists and is currently locked
+                    if (currentIndex !== -1 && currentIndex < allUserPaths.length - 1) {
+                        const nextPath = allUserPaths[currentIndex + 1];
+                        if (nextPath.status === 'locked') {
+                            await sql`
+                                UPDATE user_learning_paths 
+                                SET status = 'in_progress', updated_at = NOW()
+                                WHERE id = ${nextPath.id}
+                            `;
+                            console.log(`[Path Unlock] Unlocked next path (ID: ${nextPath.id}) for user ${user.id}`);
+                        }
+                    }
                 }
             }
 
@@ -99,8 +161,13 @@ export async function POST(request: Request) {
                 success: true,
                 moduleXp,
                 pathCompleted,
-                bonusXp: totalBonusXp,
-                newTotalXp: (user.xp || 0) + moduleXp + totalBonusXp,
+                bonusXp,
+                newTotalXp: (user.xp || 0) + moduleXp + bonusXp,
+                debug: {
+                    userFound: !!user,
+                    moduleId,
+                    dbXp: moduleXp
+                }
             }, { status: 200 });
         }
 
@@ -110,99 +177,4 @@ export async function POST(request: Request) {
         console.error("Progress Error:", error);
         return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
-}
-
-// --- Recursive Path Completion Helper ---
-async function checkPathCompletion(
-    user: any,
-    userEmail: string,
-    assignmentId: number,
-    learningPathId: number
-): Promise<{ completed: boolean; bonusXp: number }> {
-    console.log(`[Check Path] Checking path assignment ${assignmentId} for user ${user.id}`);
-
-    // 1. Get all modules for this path
-    const { rows: pathModules } = await sql`
-        SELECT m.id, m.xp 
-        FROM modules m
-        JOIN learning_path_modules lpm ON lpm.module_id = m.id
-        WHERE lpm.learning_path_id = ${learningPathId}
-    `;
-
-    // 2. Check if all modules are completed
-    let allCompleted = true;
-    let pathTotalXp = 0;
-
-    for (const m of pathModules) {
-        pathTotalXp += (m.xp || 0);
-        // Check if user has completed this module
-        const { rows: progress } = await sql`
-            SELECT is_completed FROM user_module_progress 
-            WHERE user_email = ${userEmail} AND module_id = ${m.id} AND is_completed = TRUE
-        `;
-        if (progress.length === 0) {
-            allCompleted = false;
-            break;
-        }
-    }
-
-    if (!allCompleted) {
-        return { completed: false, bonusXp: 0 };
-    }
-
-    // --- PATH IS COMPLETED ---
-
-    // 3. Mark path as completed
-    await sql`
-        UPDATE user_learning_paths 
-        SET status = 'completed', completed_at = NOW() 
-        WHERE id = ${assignmentId}
-    `;
-    console.log(`[Path Complete] Marked path assignment ${assignmentId} as completed`);
-
-    // 4. Award Bonus (50% of path total)
-    const bonus = Math.floor(pathTotalXp * 0.5);
-    if (bonus > 0) {
-        await sql`UPDATE users SET xp = COALESCE(xp, 0) + ${bonus} WHERE id = ${user.id}`;
-        console.log(`[XP Award] Awarded BONUS ${bonus} XP to user ${user.id} for path assignment ${assignmentId}`);
-    }
-
-    let totalBonus = bonus;
-
-    // 5. UNLOCK NEXT PATH (And Recursively Check It)
-
-    // a. Get all paths for this user sorted by creation date (to find sequence)
-    // We join on learning_paths to order by the original path creation order (or a sequence number if we had one)
-    const { rows: allUserPaths } = await sql`
-        SELECT ulp.id, ulp.learning_path_id, ulp.status, lp.created_at
-        FROM user_learning_paths ulp
-        JOIN learning_paths lp ON ulp.learning_path_id = lp.id
-        WHERE ulp.user_id = ${user.id}
-        ORDER BY lp.created_at ASC
-    `;
-
-    const currentIndex = allUserPaths.findIndex(p => p.id === assignmentId);
-
-    if (currentIndex !== -1 && currentIndex < allUserPaths.length - 1) {
-        const nextPath = allUserPaths[currentIndex + 1];
-
-        // Only unlock if it's currently locked
-        if (nextPath.status === 'locked') {
-            await sql`
-                UPDATE user_learning_paths 
-                SET status = 'in_progress', updated_at = NOW()
-                WHERE id = ${nextPath.id}
-            `;
-            console.log(`[Path Unlock] Unlocked next path (ID: ${nextPath.id}) for user ${user.id}`);
-
-            // **RECURSIVE CHECK**: Immediately check if this newly unlocked path is *already* completed
-            // (e.g., if it consists of modules the user has already done in previous paths)
-            const nextResult = await checkPathCompletion(user, userEmail, nextPath.id, nextPath.learning_path_id);
-            if (nextResult.completed) {
-                totalBonus += nextResult.bonusXp;
-            }
-        }
-    }
-
-    return { completed: true, bonusXp: totalBonus };
 }
