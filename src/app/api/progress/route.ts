@@ -73,6 +73,11 @@ export async function POST(request: Request) {
                 console.log(`[XP Award] Awarded ${moduleXp} XP to user ${user.id} for module ${moduleId}`);
             }
 
+            // CRITICAL FIX: Ensure Sequential Unlocking is Valid
+            // If we have a 'locked' path that follows a 'completed' path, we MUST unlock it
+            // otherwise it will never be checked for completion.
+            await ensureSequentialPathUnlocking(user, email);
+
             // 3. Check for Learning Path Completion (Recursive)
             let pathCompleted = false;
             let totalBonusXp = 0;
@@ -86,7 +91,6 @@ export async function POST(request: Request) {
                 AND ulp.status = 'in_progress'
                 AND lpm.module_id = ${moduleId}
             `;
-            console.log(`[Progress POST] Found ${activePaths.length} active paths containing module ${moduleId} for user ${user.id}`);
             console.log(`[Progress POST] Found ${activePaths.length} active paths containing module ${moduleId} for user ${user.id}`);
 
             for (const path of activePaths) {
@@ -209,4 +213,39 @@ async function checkPathCompletion(
     }
 
     return { completed: true, bonusXp: totalBonus };
+}
+
+// --- Sequence Repair Helper ---
+async function ensureSequentialPathUnlocking(user: any, userEmail: string) {
+    console.log(`[Sequence Check] verifying path sequence for user ${user.id}`);
+
+    // 1. Get all paths sorted chronologically
+    const { rows: allUserPaths } = await sql`
+        SELECT ulp.id, ulp.learning_path_id, ulp.status, lp.created_at
+        FROM user_learning_paths ulp
+        JOIN learning_paths lp ON ulp.learning_path_id = lp.id
+        WHERE ulp.user_id = ${user.id}
+        ORDER BY lp.created_at ASC
+    `;
+
+    // 2. Iterate to find broken chain
+    for (let i = 0; i < allUserPaths.length - 1; i++) {
+        const current = allUserPaths[i];
+        const next = allUserPaths[i + 1];
+
+        // If current is completed but next is locked, UNLOCK IT
+        if (current.status === 'completed' && next.status === 'locked') {
+            console.log(`[Sequence Check] Found broken chain! Path ${current.id} is completed but ${next.id} is locked. Unlocking ${next.id}...`);
+
+            await sql`
+                UPDATE user_learning_paths 
+                SET status = 'in_progress', updated_at = NOW()
+                WHERE id = ${next.id}
+            `;
+
+            // IMMEDIATE CHECK: The newly unlocked path might ALREADY be complete
+            // (e.g. it shares modules with previous paths)
+            await checkPathCompletion(user, userEmail, next.id, next.learning_path_id);
+        }
+    }
 }
