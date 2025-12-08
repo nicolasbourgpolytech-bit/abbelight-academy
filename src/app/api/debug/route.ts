@@ -20,7 +20,7 @@ export async function GET(request: Request) {
         const { rows: chapters } = await sql`SELECT * FROM user_progress WHERE user_email ILIKE ${email}`;
 
         // 4. Learning Paths
-        let paths = [];
+        let paths: any[] = [];
         if (users.length > 0) {
             const { rows: userPaths } = await sql`SELECT * FROM user_learning_paths WHERE user_id = ${users[0].id}`;
             paths = userPaths;
