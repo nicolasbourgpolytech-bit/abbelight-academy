@@ -5,8 +5,9 @@ import Image from "next/image";
 import { ContentFilterBar } from "@/components/dashboard/ContentFilterBar";
 import { ResourceCard } from "@/components/dashboard/ResourceCard";
 import { MultiCategoryFilterSidebar } from "@/components/dashboard/MultiCategoryFilterSidebar";
+
 import { ContentItem } from "@/types/content";
-import { StatsHistograms } from "@/components/dashboard/StatsHistograms";
+import { StatsPanel } from "@/components/dashboard/StatsPanel";
 import { useUser } from "@/context/UserContext";
 
 export default function ArticlesPage() {
@@ -249,22 +250,17 @@ export default function ArticlesPage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent md:hidden" />
 
-                {/* Content */}
-                <div className={`absolute inset-0 p-6 md:p-10 flex flex-col items-start z-10 ${isAdmin ? 'justify-between' : 'justify-center'}`}>
+                <div className="absolute inset-0 p-6 md:p-10 flex flex-col items-center justify-center z-10 text-center">
                     <div className="max-w-2xl">
                         <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 drop-shadow-2xl">Scientific Articles</h1>
                         <p className="text-gray-100 text-lg drop-shadow-md font-medium text-balance">
                             Access our knowledge base of protocols, technical notes, and research papers.
                         </p>
                     </div>
-
-                    {isAdmin && (
-                        <div className="hidden md:flex bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-6 shadow-xl self-end md:self-auto mb-2 md:mb-1 flex-col justify-center min-h-[220px]">
-                            <StatsHistograms articles={articles} />
-                        </div>
-                    )}
                 </div>
             </div>
+
+            {isAdmin && <StatsPanel articles={articles} />}
 
             <div className="md:sticky md:top-0 md:z-30 md:bg-black/90 md:backdrop-blur-xl md:-mx-8 md:px-8 py-4 mb-6 transition-all">
                 <ContentFilterBar onSearch={setSearch} onSortChange={setSort} />
