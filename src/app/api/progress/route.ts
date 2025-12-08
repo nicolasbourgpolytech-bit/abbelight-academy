@@ -11,10 +11,10 @@ export async function GET(request: Request) {
 
     try {
         const { rows: chapters } = await sql`
-            SELECT module_id, chapter_id FROM user_progress WHERE user_email = ${email}
+            SELECT module_id, chapter_id FROM user_progress WHERE user_email ILIKE ${email}
         `;
         const { rows: modules } = await sql`
-            SELECT module_id FROM user_module_progress WHERE user_email = ${email} AND is_completed = TRUE
+            SELECT module_id FROM user_module_progress WHERE user_email ILIKE ${email} AND is_completed = TRUE
         `;
 
         return NextResponse.json({

@@ -44,6 +44,7 @@ const HistorySection = ({ modules }: { modules: any[] }) => {
 
 export default function AcademyPage() {
     const { user } = useUser();
+    const { progress: lmsProgress } = useLmsProgress();
     const [modules, setModules] = useState<any[]>([]);
     const [learningPaths, setLearningPaths] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -133,12 +134,17 @@ export default function AcademyPage() {
                 </div>
                 <div className="flex gap-4 overflow-x-auto pb-4">
                     {modules.filter(m => {
-                        const { getModuleProgress } = useLmsProgress();
-                        // Hooks inside callback is bad practice! 
-                        // Need to refactor: we can't use hook inside map callback.
-                        // Use a separate filtered list derived from state.
-                        return false;
-                    }).length === 0 && <div className="text-gray-500 text-sm">No completed modules yet.</div>}
+                        // Check if module ID is in the completed list (ensure string comparison)
+                        return lmsProgress?.completedModuleIds?.includes(m.id.toString());
+                    }).length > 0 ? (
+                        modules.filter(m => lmsProgress?.completedModuleIds?.includes(m.id.toString())).map(module => (
+                            <div key={module.id} className="min-w-[300px]">
+                                <ConnectedModuleCard module={module} />
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-gray-500 text-sm">No completed modules yet.</div>
+                    )}
                 </div>
             </section>
 
