@@ -149,6 +149,21 @@ export default function AcademyPage() {
                             <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                             My Learning Journey
                         </h2>
+                        <button
+                            onClick={async () => {
+                                if (confirm('Are you sure you want to reset your entire learning journey? All progress will be lost.')) {
+                                    await fetch('/api/users/reset-xp', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ userId: user?.id })
+                                    });
+                                    window.location.reload();
+                                }
+                            }}
+                            className="bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs px-3 py-1.5 rounded-lg border border-red-500/20 transition-all font-bold uppercase tracking-wider"
+                        >
+                            Reset Journey
+                        </button>
                     </div>
 
                     <div className="relative">
