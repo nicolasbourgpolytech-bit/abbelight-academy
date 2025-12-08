@@ -8,6 +8,7 @@ interface UserContextType {
     login: (email: string, password?: string) => Promise<any>;
     logout: () => void;
     isLoading: boolean;
+    refreshUser: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -95,8 +96,27 @@ export function UserProvider({ children }: { children: ReactNode }) {
         return () => clearInterval(interval);
     }, [user]);
 
+    const refreshUser = async () => {
+        if (!user?.email) return;
+        try {
+            const res = await fetch(`/api/users?email=${encodeURIComponent(user.email)}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.users && data.users.length > 0) {
+                    const updatedUser = data.users[0];
+                    // Merge with existing session data if needed (token etc), but for now replace profile fields
+                    const newUser = { ...user, ...updatedUser };
+                    setUser(newUser);
+                    localStorage.setItem('abbelight_session_v2', JSON.stringify(newUser));
+                }
+            }
+        } catch (e) {
+            console.error("Failed to refresh user", e);
+        }
+    };
+
     return (
-        <UserContext.Provider value={{ user, login, logout, isLoading }}>
+        <UserContext.Provider value={{ user, login, logout, isLoading, refreshUser }}>
             {children}
         </UserContext.Provider>
     );

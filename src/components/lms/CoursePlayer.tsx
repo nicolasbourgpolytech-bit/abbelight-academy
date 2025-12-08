@@ -9,12 +9,15 @@ import { CompletionScreen } from "./CompletionScreen";
 import { SlideViewer } from "./SlideViewer";
 import { useLmsProgress } from "@/hooks/useLmsProgress";
 
+import { useUser } from "@/context/UserContext";
+
 interface CoursePlayerProps {
     module: Module;
     pathId?: string;
 }
 
 export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
+    const { refreshUser } = useUser();
     const [activeChapterId, setActiveChapterId] = useState(module.chapters[0].id);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isModuleCompleted, setIsModuleCompleted] = useState(false);
@@ -60,6 +63,7 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
             // Last chapter finished
             const result = await markModuleComplete(module.id);
             setIsModuleCompleted(true);
+            await refreshUser(); // Sync XP to global context
 
             // Check for Path Auto-Advance
             if (pathId && result) {

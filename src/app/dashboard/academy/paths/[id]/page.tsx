@@ -102,10 +102,13 @@ export default function LearningPathDetailsPage() {
 
                         // Sequential check: Previous module must be completed
                         let isLocked = false;
-                        if (index > 0) {
-                            const prevModule = modules[index - 1];
-                            const prevProgress = getModuleProgress(prevModule.id, prevModule.chapters?.length || 0);
-                            if (prevProgress < 100) isLocked = true;
+                        // UNLESS path is fully completed/unlocked for review
+                        if (path.status !== 'completed') {
+                            if (index > 0) {
+                                const prevModule = modules[index - 1];
+                                const prevProgress = getModuleProgress(prevModule.id, prevModule.chapters?.length || 0);
+                                if (prevProgress < 100) isLocked = true;
+                            }
                         }
 
                         return (
