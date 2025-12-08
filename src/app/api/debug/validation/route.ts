@@ -8,6 +8,7 @@ export async function GET(request: Request) {
     const emailParam = searchParams.get('email')?.trim();
     const userIdParam = searchParams.get('userId'); // Add support for ID lookup
     const moduleIdParam = searchParams.get('moduleId');
+    const fixParam = searchParams.get('fix') === 'true';
 
     const logs: string[] = [];
     function log(msg: string) {
@@ -16,7 +17,7 @@ export async function GET(request: Request) {
     }
 
     try {
-        log(`Starting validation simulation. Email: '${emailParam}', UserId: '${userIdParam}'`);
+        log(`Starting validation simulation. Email: '${emailParam}', UserId: '${userIdParam}', Fix: '${fixParam}'`);
 
         let user = null;
 
@@ -47,8 +48,6 @@ export async function GET(request: Request) {
         }
 
         // 2. Mock Module ID if not provided (just to list paths)
-        // If provided, we filter by it like the real POST
-        // 2. Mock Module ID if not provided (just to list paths)
         // Check ALL paths for user first to debug status
         const { rows: allUserPaths } = await sql`
             SELECT ulp.*, lp.title, lp.created_at
@@ -67,7 +66,17 @@ export async function GET(request: Request) {
 
             if (next) {
                 if (p.status === 'completed' && next.status === 'locked') {
-                    log(`   >>> SEQUENCE BREAK DETECTED! Path ${p.title} is completed, but ${next.title} is locked. Logic SHOULD unlock ${next.title}.`);
+                    if (fixParam) {
+                        log(`   >>> APPLYING FIX: Unlocking ${next.title} (ID: ${next.id})...`);
+                        await sql`
+                            UPDATE user_learning_paths 
+                            SET status = 'in_progress', updated_at = NOW()
+                            WHERE id = ${next.id}
+                        `;
+                        log(`   >>> FIX APPLIED. Path unlocked.`);
+                    } else {
+                        log(`   >>> SEQUENCE BREAK DETECTED! Path ${p.title} is completed, but ${next.title} is locked. Logic SHOULD unlock ${next.title}. (Run with &fix=true to repair)`);
+                    }
                 } else if (p.status === 'completed' && next.status !== 'locked') {
                     log(`   (Sequence OK: Next path ${next.title} is ${next.status})`);
                 } else if (p.status !== 'completed' && next.status === 'locked') {
