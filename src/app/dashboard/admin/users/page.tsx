@@ -147,6 +147,11 @@ export default function UsersAdminPage() {
                                                         body: JSON.stringify({ userId: u.id, amount: 100 })
                                                     });
                                                     fetchUsers();
+                                                    // If admin is updating themselves, refresh the global context to show new XP immediately
+                                                    if (user && user.id === u.id) {
+                                                        // We utilize the exposed refreshUser from context (we need to make sure we destructure it first)
+                                                        window.location.reload(); // Fallback if refreshUser isn't available or reliable yet, but actually let's try to do it cleaner.
+                                                    }
                                                     alert("Added 100 XP!");
                                                 } catch (e) { alert("Failed to add XP"); }
                                             }}

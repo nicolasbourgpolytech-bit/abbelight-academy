@@ -23,6 +23,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
         if (storedUser) {
             try {
                 setUser(JSON.parse(storedUser));
+                // Immediately sync with server to get latest XP/data
+                // We define this internal async function to key off the stored email
+                const userObj = JSON.parse(storedUser);
+                if (userObj.email) {
+                    fetch(`/api/users?email=${encodeURIComponent(userObj.email)}`)
+                        .then(res => res.ok ? res.json() : null)
+                        .then(data => {
+                            if (data && data.users && data.users.length > 0) {
+                                const updatedUser = { ...userObj, ...data.users[0] };
+                                setUser(updatedUser);
+                                localStorage.setItem('abbelight_session_v2', JSON.stringify(updatedUser));
+                            }
+                        })
+                        .catch(err => console.error("Background user sync failed", err));
+                }
             } catch (e) {
                 console.error("Failed to parse user from local storage", e);
                 localStorage.removeItem('abbelight_session_v2');
