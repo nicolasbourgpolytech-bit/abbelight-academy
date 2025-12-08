@@ -27,11 +27,20 @@ export async function GET(request: Request) {
 
         // 3. Inspect raw user_learning_paths for duplicates or status issues
         let rawUserPaths: any[] = [];
+        let userModuleProgress: any[] = [];
         if (userId) {
             // Validate integer/number to verify it's a valid DB ID, preventing crashes on UUIDs
             if (!isNaN(parseInt(userId))) {
-                const result = await sql`SELECT * FROM user_learning_paths WHERE user_id = ${userId}`;
-                rawUserPaths = result.rows;
+                const pathsResult = await sql`SELECT * FROM user_learning_paths WHERE user_id = ${userId}`;
+                rawUserPaths = pathsResult.rows;
+
+                // Also fetch module progress (using email since that table uses email, need to find email first)
+                const userResult = await sql`SELECT email FROM users WHERE id = ${userId}`;
+                if (userResult.rows.length > 0) {
+                    const email = userResult.rows[0].email;
+                    const progressResult = await sql`SELECT * FROM user_module_progress WHERE user_email = ${email}`;
+                    userModuleProgress = progressResult.rows;
+                }
             }
         }
 
@@ -54,6 +63,7 @@ export async function GET(request: Request) {
             }, [] as any[]),
             userPaths,
             rawUserPaths,
+            userModuleProgress,
             allUsers
         }, { status: 200 });
 
