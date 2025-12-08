@@ -101,12 +101,12 @@ export default function LearningPathDetailsPage() {
                         const isCompleted = progress === 100;
 
                         // Sequential check: Previous module must be completed
-                        // let isLocked = false;
-                        // if (index > 0) {
-                        //    const prevModule = modules[index-1];
-                        //    const prevProgress = getModuleProgress(prevModule.id, prevModule.chapters?.length || 0);
-                        //    if (prevProgress < 100) isLocked = true;
-                        // }
+                        let isLocked = false;
+                        if (index > 0) {
+                            const prevModule = modules[index - 1];
+                            const prevProgress = getModuleProgress(prevModule.id, prevModule.chapters?.length || 0);
+                            if (prevProgress < 100) isLocked = true;
+                        }
 
                         return (
                             <div key={module.id} className="relative">
@@ -117,7 +117,8 @@ export default function LearningPathDetailsPage() {
                                 <ModuleCard
                                     module={module}
                                     progress={progress}
-                                // isLocked={isLocked}
+                                    isLocked={isLocked}
+                                    pathId={id}
                                 />
                             </div>
                         );

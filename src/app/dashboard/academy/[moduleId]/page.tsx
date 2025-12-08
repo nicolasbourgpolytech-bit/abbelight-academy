@@ -6,11 +6,15 @@ import { MOCK_MODULES } from "@/data/mockLms";
 import Link from "next/link";
 import { Module } from "@/types/lms";
 
+import { useSearchParams } from "next/navigation";
+
 export default function ModulePage({ params }: { params: Promise<{ moduleId: string }> }) {
     // Unwrap params Promise for Next.js 15+ compatibility
     const [moduleId, setModuleId] = useState<string | null>(null);
     const [module, setModule] = useState<Module | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const searchParams = useSearchParams();
+    const pathId = searchParams.get('pathId');
 
     useEffect(() => {
         params.then(p => setModuleId(p.moduleId));
@@ -71,6 +75,7 @@ export default function ModulePage({ params }: { params: Promise<{ moduleId: str
     if (isLoading) return <div className="p-20 text-center text-gray-500 animate-pulse">Loading course content...</div>;
 
     if (!module) {
+        // ... (keep existing 404) ... (omitted for brevity in prompt, but keeping in file)
         return (
             <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
                 <h1 className="text-4xl font-bold text-white mb-4">Module Not Found</h1>
@@ -84,7 +89,7 @@ export default function ModulePage({ params }: { params: Promise<{ moduleId: str
 
     return (
         <div className="animate-fade-in pb-10">
-            <CoursePlayer module={module} />
+            <CoursePlayer module={module} pathId={pathId || undefined} />
         </div>
     );
 }

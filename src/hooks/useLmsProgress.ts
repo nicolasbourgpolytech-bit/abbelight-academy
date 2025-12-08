@@ -84,7 +84,7 @@ export const useLmsProgress = () => {
             }));
 
             try {
-                await fetch('/api/progress', {
+                const res = await fetch('/api/progress', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -93,10 +93,14 @@ export const useLmsProgress = () => {
                         type: 'module'
                     })
                 });
+                if (res.ok) {
+                    return await res.json();
+                }
             } catch (err) {
                 console.error("Failed to save module progress", err);
             }
         }
+        return null;
     };
 
     const getModuleProgress = (moduleId: string, totalChapters: number) => {

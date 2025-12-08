@@ -7,9 +7,12 @@ interface ModuleCardProps {
     module: Module;
     progress?: number; // 0 to 100
     isLocked?: boolean;
+    pathId?: string;
 }
 
-export function ModuleCard({ module, progress = 0, isLocked = false }: ModuleCardProps) {
+export function ModuleCard({ module, progress = 0, isLocked = false, pathId }: ModuleCardProps) {
+    const linkHref = `/dashboard/academy/${module.id}${pathId ? `?pathId=${pathId}` : ''}`;
+
     return (
         <div className={`group relative bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-300 flex flex-col h-full ${isLocked ? 'opacity-60 grayscale' : ''}`}>
             {/* Thumbnail */}
@@ -68,7 +71,7 @@ export function ModuleCard({ module, progress = 0, isLocked = false }: ModuleCar
                                 />
                             </div>
                             <Link
-                                href={`/dashboard/academy/${module.id}`}
+                                href={linkHref}
                                 className="block w-full text-center mt-3 py-2 bg-white/5 hover:bg-primary hover:text-black text-white text-xs font-bold uppercase tracking-wider rounded transition-colors"
                             >
                                 Continue
@@ -76,10 +79,10 @@ export function ModuleCard({ module, progress = 0, isLocked = false }: ModuleCar
                         </div>
                     ) : (
                         <Link
-                            href={isLocked ? '#' : `/dashboard/academy/${module.id}`}
+                            href={isLocked ? '#' : linkHref}
                             className={`block w-full text-center py-2 text-xs font-bold uppercase tracking-wider rounded transition-colors ${isLocked
-                                    ? 'cursor-not-allowed text-gray-600 bg-white/5'
-                                    : 'bg-primary text-black hover:bg-white'
+                                ? 'cursor-not-allowed text-gray-600 bg-white/5'
+                                : 'bg-primary text-black hover:bg-white'
                                 }`}
                         >
                             {isLocked ? 'Restricted Access' : 'Start Module'}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Chapter, Module } from "@/types/lms";
 import { QuizPlayer } from "./QuizPlayer";
 import { CompletionScreen } from "./CompletionScreen";
@@ -10,9 +11,10 @@ import { useLmsProgress } from "@/hooks/useLmsProgress";
 
 interface CoursePlayerProps {
     module: Module;
+    pathId?: string;
 }
 
-export default function CoursePlayer({ module }: CoursePlayerProps) {
+export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
     const [activeChapterId, setActiveChapterId] = useState(module.chapters[0].id);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isModuleCompleted, setIsModuleCompleted] = useState(false);
@@ -27,16 +29,43 @@ export default function CoursePlayer({ module }: CoursePlayerProps) {
     const activeIndex = module.chapters.findIndex(c => c.id === activeChapterId);
 
     // Simple navigation handlers
-    const nextChapter = () => {
-        // Mark current chapter as complete before moving on
+    const router = useRouter();
+    // Need to import useRouter at top level first! 
+    // I will do that in a separate edit or assume I can do it here if I check imports.
+
+    const nextChapter = async () => {
+        // Mark current chapter as complete
         markChapterComplete(module.id, activeChapter.id);
 
         if (activeIndex < module.chapters.length - 1) {
             setActiveChapterId(module.chapters[activeIndex + 1].id);
         } else {
             // Last chapter finished
-            markModuleComplete(module.id);
+            const result = await markModuleComplete(module.id);
             setIsModuleCompleted(true);
+
+            // Check for Path Auto-Advance
+            if (pathId && result) {
+                // Result contains pathCompleted, bonusXp etc.
+                if (result.pathCompleted) {
+                    // Path Completed!
+                    // Maybe show confetti or alert before redirect?
+                    // For now, let CompletionScreen handle it or redirect after short delay.
+                } else {
+                    // Fetch Path Details to find NEXT module
+                    try {
+                        const pathRes = await fetch(`/api/learning-paths/${pathId}`);
+                        const pathData = await pathRes.json();
+                        const modules = pathData.modules || [];
+                        const currentIdx = modules.findIndex((m: any) => m.id.toString() === module.id.toString());
+                        if (currentIdx !== -1 && currentIdx < modules.length - 1) {
+                            const nextMod = modules[currentIdx + 1];
+                            router.push(`/dashboard/academy/${nextMod.id}?pathId=${pathId}`);
+                            return; // Skip setting isModuleCompleted to avoid showing completion screen briefly
+                        }
+                    } catch (e) { console.error(e); }
+                }
+            }
         }
     };
 
