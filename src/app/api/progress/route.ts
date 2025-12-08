@@ -198,7 +198,7 @@ async function checkPathCompletion(
         if (nextPath.status === 'locked') {
             await sql`
                 UPDATE user_learning_paths 
-                SET status = 'in_progress', updated_at = NOW()
+                SET status = 'in_progress'
                 WHERE id = ${nextPath.id}
             `;
             console.log(`[Path Unlock] Unlocked next path (ID: ${nextPath.id}) for user ${user.id}`);
@@ -239,7 +239,7 @@ async function ensureSequentialPathUnlocking(user: any, userEmail: string) {
 
             await sql`
                 UPDATE user_learning_paths 
-                SET status = 'in_progress', updated_at = NOW()
+                SET status = 'in_progress'
                 WHERE id = ${next.id}
             `;
 

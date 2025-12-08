@@ -70,7 +70,7 @@ export async function GET(request: Request) {
                         log(`   >>> APPLYING FIX: Unlocking ${next.title} (ID: ${next.id})...`);
                         await sql`
                             UPDATE user_learning_paths 
-                            SET status = 'in_progress', updated_at = NOW()
+                            SET status = 'in_progress'
                             WHERE id = ${next.id}
                         `;
                         log(`   >>> FIX APPLIED. Path unlocked.`);
