@@ -28,8 +28,11 @@ export async function GET(request: Request) {
         // 3. Inspect raw user_learning_paths for duplicates or status issues
         let rawUserPaths: any[] = [];
         if (userId) {
-            const result = await sql`SELECT * FROM user_learning_paths WHERE user_id = ${userId}`;
-            rawUserPaths = result.rows;
+            // Validate integer/number to verify it's a valid DB ID, preventing crashes on UUIDs
+            if (!isNaN(parseInt(userId))) {
+                const result = await sql`SELECT * FROM user_learning_paths WHERE user_id = ${userId}`;
+                rawUserPaths = result.rows;
+            }
         }
 
         // 4. Dump users
