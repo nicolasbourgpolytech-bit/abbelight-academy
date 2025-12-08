@@ -1,3 +1,4 @@
+
 import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
 
@@ -24,21 +25,19 @@ export async function POST(request: Request) {
         // Reset Chapter Progress
         await sql`DELETE FROM user_progress WHERE user_email = ${email}`;
 
-        // Reset Learning Paths Status
+        // Reset Learning Paths
+        // First delete existing states to avoid duplicates/conflicts
         await sql`DELETE FROM user_learning_paths WHERE user_id = ${userId}`;
 
-        // Re-assign default paths? Or just leave empty?
-        // Usually paths are assigned. If we delete, they disappear from "My Paths".
-        // Better: Set status back to 'in_progress' and completed_at = NULL?
-        // But what if they weren't started?
-        // Let's UPDATE instead of DELETE for paths, so assignments stay.
+        // Restore/Assign ALL learning paths to this user (for testing/admin purpose)
+        // This effectively "Re-enrolls" them in everything
         await sql`
-            UPDATE user_learning_paths 
-            SET status = 'in_progress', completed_at = NULL 
-            WHERE user_id = ${userId}
+            INSERT INTO user_learning_paths (user_id, learning_path_id, status, start_date)
+            SELECT ${userId}, id, 'in_progress', NOW()
+            FROM learning_paths
         `;
 
-        return NextResponse.json({ success: true, message: "XP and Progress reset (Full Wipe)" }, { status: 200 });
+        return NextResponse.json({ success: true, message: "XP Reset & All Paths Re-assigned" }, { status: 200 });
     } catch (error) {
         console.error("Reset XP Error:", error);
         return NextResponse.json({ error: (error as Error).message }, { status: 500 });
