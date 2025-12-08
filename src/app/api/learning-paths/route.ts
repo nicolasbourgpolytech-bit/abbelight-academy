@@ -18,11 +18,11 @@ export async function GET(request: Request) {
         FROM learning_paths lp
         JOIN user_learning_paths ulp ON lp.id = ulp.learning_path_id
         WHERE ulp.user_id = ${userId}
-        ORDER BY lp.created_at DESC
+        ORDER BY lp.created_at ASC
        `;
         } else {
             // Admin: List all paths
-            result = await sql`SELECT * FROM learning_paths ORDER BY created_at DESC`;
+            result = await sql`SELECT * FROM learning_paths ORDER BY created_at ASC`;
         }
 
         return NextResponse.json({ paths: result.rows }, { status: 200 });

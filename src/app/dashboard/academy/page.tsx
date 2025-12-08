@@ -141,44 +141,96 @@ export default function AcademyPage() {
                 </div>
             </div>
 
-            {/* Learning Paths - Moved to Top */}
+            {/* Learning Paths - Timeline View */}
             {learningPaths.length > 0 && (
                 <section>
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-8">
                         <h2 className="text-xl font-bold text-white flex items-center gap-2">
                             <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                            My Learning Paths
+                            My Learning Journey
                         </h2>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {learningPaths.map(path => (
-                            <div key={path.id} className="bg-[#0F1115] border border-white/5 rounded-2xl overflow-hidden hover:border-primary/50 transition-all group cursor-pointer relative flex flex-col">
-                                <div className="absolute top-0 left-0 w-1 h-full bg-primary/50 group-hover:bg-primary transition-colors" />
-                                <div className="p-6 flex flex-col h-full">
-                                    <div className="flex-1">
-                                        <h3 className="text-lg font-bold text-white mb-2 group-hover:text-primary transition-colors">{path.title}</h3>
-                                        <p className="text-sm text-gray-400 mb-4 line-clamp-2">{path.description}</p>
-                                    </div>
 
-                                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                                            {path.status === 'completed' ? 'Completed' : 'In Progress'}
-                                        </span>
-                                        <Link
-                                            href={`/dashboard/academy/paths/${path.id}`}
-                                            className="bg-white/5 hover:bg-white/10 hover:text-primary text-white text-xs px-4 py-2 rounded-lg transition-all font-semibold"
-                                        >
-                                            Continue Learning Path
-                                        </Link>
+                    <div className="relative">
+                        {/* Vertical Timeline Line */}
+                        <div className="absolute left-6 top-8 bottom-8 w-0.5 bg-gradient-to-b from-primary via-primary/20 to-transparent lg:left-8" />
+
+                        <div className="space-y-8">
+                            {learningPaths.map((path, index) => {
+                                const isCompleted = path.status === 'completed';
+                                const isCurrent = !isCompleted && (index === 0 || learningPaths[index - 1]?.status === 'completed');
+                                const isLocked = !isCompleted && !isCurrent;
+
+                                return (
+                                    <div key={path.id} className={`relative flex gap-6 lg:gap-8 ${isLocked ? 'opacity-50 grayscale' : ''}`}>
+
+                                        {/* Timeline Node */}
+                                        <div className="relative z-10 flex-shrink-0">
+                                            <div className={`w-12 h-12 lg:w-16 lg:h-16 rounded-full border-4 flex items-center justify-center shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all duration-500
+                                                ${isCompleted
+                                                    ? 'bg-green-500 border-green-500 text-black'
+                                                    : isCurrent
+                                                        ? 'bg-black border-primary text-primary shadow-[0_0_30px_rgba(59,130,246,0.3)]'
+                                                        : 'bg-black border-white/10 text-gray-500'
+                                                }`}>
+                                                {isCompleted ? (
+                                                    <svg className="w-6 h-6 lg:w-8 lg:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                                                ) : (
+                                                    <span className="text-lg lg:text-2xl font-bold">{index + 1}</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Card Content */}
+                                        <div className={`flex-1 overflow-hidden transition-all duration-300 ${isCurrent ? 'transform scale-[1.01]' : ''}`}>
+                                            <div className={`
+                                                relative bg-[#0F1115] border rounded-2xl overflow-hidden p-6 lg:p-8
+                                                ${isCurrent ? 'border-primary border-2 shadow-[0_4px_30px_rgba(59,130,246,0.1)]' : 'border-white/5'}
+                                                ${isLocked ? 'bg-black/40' : 'group hover:border-white/20'}
+                                            `}>
+                                                {/* Active Glow Effect */}
+                                                {isCurrent && (
+                                                    <div className="absolute top-0 left-0 w-1 h-full bg-primary shadow-[0_0_20px_rgb(59,130,246)]" />
+                                                )}
+
+                                                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <h3 className={`text-xl font-bold ${isCurrent ? 'text-white' : 'text-gray-200'}`}>{path.title}</h3>
+                                                            {isCurrent && <span className="text-xs font-bold text-black bg-primary px-2 py-0.5 rounded animate-pulse">CURRENT STEP</span>}
+                                                            {isCompleted && <span className="text-xs font-bold text-black bg-green-500 px-2 py-0.5 rounded">COMPLETED</span>}
+                                                        </div>
+                                                        <p className="text-gray-400 max-w-2xl">{path.description}</p>
+                                                    </div>
+
+                                                    <div className="flex-shrink-0">
+                                                        {isLocked ? (
+                                                            <button disabled className="bg-white/5 text-gray-500 px-6 py-3 rounded-xl font-bold text-sm cursor-not-allowed border border-white/5">
+                                                                Locked
+                                                            </button>
+                                                        ) : (
+                                                            <Link
+                                                                href={`/dashboard/academy/paths/${path.id}`}
+                                                                className={`
+                                                                    inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all
+                                                                    ${isCompleted
+                                                                        ? 'bg-white/10 text-white hover:bg-white/20'
+                                                                        : 'bg-primary text-black hover:bg-primary-light hover:scale-105 shadow-lg shadow-primary/20'
+                                                                    }
+                                                                `}
+                                                            >
+                                                                {isCompleted ? 'Review Path' : 'Start Path'}
+                                                                <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                                            </Link>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                {path.status === 'completed' && (
-                                    <div className="absolute top-4 right-4 text-green-500">
-                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" /></svg>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                                );
+                            })}
+                        </div>
                     </div>
                 </section>
             )}
