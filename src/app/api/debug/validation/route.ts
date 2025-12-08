@@ -51,13 +51,30 @@ export async function GET(request: Request) {
         // 2. Mock Module ID if not provided (just to list paths)
         // Check ALL paths for user first to debug status
         const { rows: allUserPaths } = await sql`
-            SELECT ulp.*, lp.title
+            SELECT ulp.*, lp.title, lp.created_at
             FROM user_learning_paths ulp
             JOIN learning_paths lp ON ulp.learning_path_id = lp.id
             WHERE ulp.user_id = ${user.id}
+            ORDER BY lp.created_at ASC
         `;
-        log(`DEBUG: User has ${allUserPaths.length} assigned paths:`);
-        allUserPaths.forEach(p => log(` - [${p.id}] "${p.title}" (LP:${p.learning_path_id}) Status: ${p.status}`));
+        log(`DEBUG: User has ${allUserPaths.length} assigned paths (Ordered by CreatedAt):`);
+
+        // Simulate Sequence Check
+        for (let i = 0; i < allUserPaths.length; i++) {
+            const p = allUserPaths[i];
+            const next = allUserPaths[i + 1];
+            log(` - [${i}] LP:${p.learning_path_id} "${p.title}" (AssignID:${p.id}) Status: ${p.status} Created: ${p.created_at}`);
+
+            if (next) {
+                if (p.status === 'completed' && next.status === 'locked') {
+                    log(`   >>> SEQUENCE BREAK DETECTED! Path ${p.title} is completed, but ${next.title} is locked. Logic SHOULD unlock ${next.title}.`);
+                } else if (p.status === 'completed' && next.status !== 'locked') {
+                    log(`   (Sequence OK: Next path ${next.title} is ${next.status})`);
+                } else if (p.status !== 'completed' && next.status === 'locked') {
+                    log(`   (Sequence OK: Path ${p.title} is ${p.status}, so next path remains locked)`);
+                }
+            }
+        }
 
         // Now try to find the specific match
         const activePathsQuery = moduleIdParam
