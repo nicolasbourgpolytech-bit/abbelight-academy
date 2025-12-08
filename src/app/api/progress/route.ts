@@ -86,6 +86,8 @@ export async function POST(request: Request) {
                 AND ulp.status = 'in_progress'
                 AND lpm.module_id = ${moduleId}
             `;
+            console.log(`[Progress POST] Found ${activePaths.length} active paths containing module ${moduleId} for user ${user.id}`);
+            console.log(`[Progress POST] Found ${activePaths.length} active paths containing module ${moduleId} for user ${user.id}`);
 
             for (const path of activePaths) {
                 const result = await checkPathCompletion(user, email, path.assignment_id, path.learning_path_id);
@@ -136,11 +138,13 @@ async function checkPathCompletion(
     for (const m of pathModules) {
         pathTotalXp += (m.xp || 0);
         // Check if user has completed this module
+        // Use ILIKE to be case-insensitive on email
         const { rows: progress } = await sql`
             SELECT is_completed FROM user_module_progress 
-            WHERE user_email = ${userEmail} AND module_id = ${m.id} AND is_completed = TRUE
+            WHERE user_email ILIKE ${userEmail} AND module_id = ${m.id} AND is_completed = TRUE
         `;
         if (progress.length === 0) {
+            console.log(`[Check Path] Module ${m.id} NOT completed for path ${assignmentId} (Email input: ${userEmail})`);
             allCompleted = false;
             break;
         }
