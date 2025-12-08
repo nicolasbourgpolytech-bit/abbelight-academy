@@ -10,7 +10,7 @@ export async function GET(request: Request) {
         const { rows } = await sql`
             SELECT id, first_name, last_name, email, company, last_seen, level, xp
             FROM users 
-            WHERE last_seen > NOW() - INTERVAL '5 minutes'
+            WHERE last_seen > NOW() - INTERVAL '1 minute'
             ORDER BY last_seen DESC
         `;
 

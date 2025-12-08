@@ -54,7 +54,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const logout = () => {
+    const logout = async () => {
+        if (user?.email) {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email })
+                });
+            } catch (e) {
+                console.error("Failed to notify server of logout", e);
+            }
+        }
         setUser(null);
         localStorage.removeItem('abbelight_session_v2');
     };
@@ -78,8 +89,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         // Send immediately on login/load
         sendHeartbeat();
 
-        // Then every 60 seconds
-        const interval = setInterval(sendHeartbeat, 60000);
+        // Then every 20 seconds
+        const interval = setInterval(sendHeartbeat, 20000);
 
         return () => clearInterval(interval);
     }, [user]);
