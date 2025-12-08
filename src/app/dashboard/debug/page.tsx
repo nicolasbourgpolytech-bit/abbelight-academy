@@ -52,22 +52,45 @@ export default function DebugPage() {
                     <pre className="mt-4 bg-black/50 p-4 rounded text-red-200 overflow-auto whitespace-pre-wrap font-mono text-sm">
                         {JSON.stringify(data.error, null, 2)}
                     </pre>
-                    <div className="mt-4">
+                    <div className="mt-4 flex flex-col gap-2">
                         <button
                             onClick={async () => {
-                                if (!confirm("This will attempt to create missing tables. Continue?")) return;
+                                if (!confirm("Create Progress Tables?")) return;
                                 try {
                                     const res = await fetch('/api/setup-progress-db');
-                                    const result = await res.json();
-                                    alert(JSON.stringify(result));
+                                    alert(JSON.stringify(await res.json()));
                                     window.location.reload();
-                                } catch (e) {
-                                    alert("Setup failed: " + e);
-                                }
+                                } catch (e) { alert("Failed: " + e); }
                             }}
-                            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded font-bold transition-colors"
+                            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded font-bold transition-colors text-sm"
                         >
-                            Attempt Auto-Fix (Create Tables)
+                            1. Create Progress Tables
+                        </button>
+                        <button
+                            onClick={async () => {
+                                if (!confirm("Create Learning Path Tables?")) return;
+                                try {
+                                    const res = await fetch('/api/setup-learning-paths-db');
+                                    alert(JSON.stringify(await res.json()));
+                                    window.location.reload();
+                                } catch (e) { alert("Failed: " + e); }
+                            }}
+                            className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded font-bold transition-colors text-sm"
+                        >
+                            2. Create Learning Path Tables
+                        </button>
+                        <button
+                            onClick={async () => {
+                                if (!confirm("Create Modules Tables?")) return;
+                                try {
+                                    const res = await fetch('/api/seed');
+                                    alert(JSON.stringify(await res.json()));
+                                    window.location.reload();
+                                } catch (e) { alert("Failed: " + e); }
+                            }}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold transition-colors text-sm"
+                        >
+                            3. Create Modules/Chapters Tables
                         </button>
                     </div>
                 </div>
