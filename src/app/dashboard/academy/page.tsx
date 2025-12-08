@@ -170,7 +170,7 @@ export default function AcademyPage() {
                         {/* Vertical Timeline Line */}
                         <div className="absolute left-6 top-8 bottom-8 w-0.5 bg-gradient-to-b from-primary via-primary/20 to-transparent lg:left-8" />
 
-                        <div className={`space-y-8 pr-2 ${learningPaths.length > 3 ? 'lg:max-h-[800px] lg:overflow-y-auto custom-scrollbar' : ''}`}>
+                        <div className={`space-y-8 pr-2 ${learningPaths.length > 3 ? 'lg:max-h-[600px] lg:overflow-y-auto custom-scrollbar' : ''}`}>
                             {learningPaths.map((path, index) => {
                                 const isCompleted = path.status === 'completed';
                                 const isCurrent = !isCompleted && (index === 0 || learningPaths[index - 1]?.status === 'completed');
