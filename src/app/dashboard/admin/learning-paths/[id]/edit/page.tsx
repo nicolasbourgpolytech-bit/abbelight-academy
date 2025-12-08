@@ -37,9 +37,9 @@ export default function EditLearningPathPage() {
     const [allUsers, setAllUsers] = useState<User[]>([]);
     const [assignedUserIds, setAssignedUserIds] = useState<string[]>([]); // Storing IDs as strings for MultiSelect compatibility if needed, but easier as numbers. Let's use string for MultiSelect or custom logic.
 
-    // Prerequisites State
-    const [allPaths, setAllPaths] = useState<LearningPath[]>([]);
-    const [prerequisiteIds, setPrerequisiteIds] = useState<string[]>([]);
+    // Prerequisites State - DEPRECATED
+    // const [allPaths, setAllPaths] = useState<LearningPath[]>([]);
+    // const [prerequisiteIds, setPrerequisiteIds] = useState<string[]>([]);
 
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -92,10 +92,6 @@ export default function EditLearningPathPage() {
                 const currentUsers = pathData.users || [];
                 setAssignedUserIds(currentUsers.map((u: any) => u.id.toString()));
 
-                // Set prerequisites
-                const currentPrereqs = pathData.prerequisites || [];
-                setPrerequisiteIds(currentPrereqs.map((p: any) => p.id.toString()));
-
                 // Fetch All Modules
                 const modulesRes = await fetch('/api/modules');
                 if (modulesRes.ok) {
@@ -108,14 +104,6 @@ export default function EditLearningPathPage() {
                 if (usersRes.ok) {
                     const usersData = await usersRes.json();
                     setAllUsers(usersData.users || []);
-                }
-
-                // Fetch All Paths (for prerequisites)
-                const pathsRes = await fetch('/api/learning-paths');
-                if (pathsRes.ok) {
-                    const pathsData = await pathsRes.json();
-                    // Filter out current path to avoid cycles
-                    setAllPaths((pathsData.paths || []).filter((p: any) => p.id.toString() !== id));
                 }
 
             } catch (err) {
@@ -139,7 +127,7 @@ export default function EditLearningPathPage() {
                     description,
                     moduleIds: pathModules.map(m => m.id),
                     userIds: assignedUserIds.map(uid => parseInt(uid)),
-                    prerequisitesIds: prerequisiteIds.map(pid => parseInt(pid))
+                    // prerequisitesIds: [] // DEPRECATED
                 }),
             });
 
@@ -318,28 +306,12 @@ export default function EditLearningPathPage() {
 
                         <hr className="border-white/10" />
 
+                        {/* Prerequisites Deprecated */}
                         <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">Prerequisites</label>
-                            <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                                {allPaths.map(p => (
-                                    <label key={p.id} className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:bg-white/5 p-1 rounded">
-                                        <input
-                                            type="checkbox"
-                                            checked={prerequisiteIds.includes(p.id.toString())}
-                                            onChange={(e) => {
-                                                if (e.target.checked) setPrerequisiteIds([...prerequisiteIds, p.id.toString()]);
-                                                else setPrerequisiteIds(prerequisiteIds.filter(id => id !== p.id.toString()));
-                                            }}
-                                            className="rounded border-gray-600 bg-black/50 text-primary"
-                                        />
-                                        <span>{p.title}</span>
-                                    </label>
-                                ))}
-                                {allPaths.length === 0 && <p className="text-xs text-gray-500">No other paths available.</p>}
-                            </div>
-                            <p className="text-xs text-gray-500 mt-2">Users must complete selected paths before unlocking this one.</p>
+                            <p className="text-xs text-gray-500">
+                                Order of paths is also managed via <b>Role Sequences</b>.
+                            </p>
                         </div>
-
                     </div>
                 </div>
             </div>
