@@ -52,6 +52,24 @@ export default function DebugPage() {
                     <pre className="mt-4 bg-black/50 p-4 rounded text-red-200 overflow-auto whitespace-pre-wrap font-mono text-sm">
                         {JSON.stringify(data.error, null, 2)}
                     </pre>
+                    <div className="mt-4">
+                        <button
+                            onClick={async () => {
+                                if (!confirm("This will attempt to create missing tables. Continue?")) return;
+                                try {
+                                    const res = await fetch('/api/setup-progress-db');
+                                    const result = await res.json();
+                                    alert(JSON.stringify(result));
+                                    window.location.reload();
+                                } catch (e) {
+                                    alert("Setup failed: " + e);
+                                }
+                            }}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded font-bold transition-colors"
+                        >
+                            Attempt Auto-Fix (Create Tables)
+                        </button>
+                    </div>
                 </div>
             )}
 
