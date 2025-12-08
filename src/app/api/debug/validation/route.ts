@@ -55,7 +55,8 @@ export async function GET(request: Request) {
 
         // Group by assignment_id to avoid checking same path multiple times
         const uniquePaths = Array.from(new Set(activePaths.map(p => p.assignment_id)))
-            .map(id => activePaths.find(p => p.assignment_id === id));
+            .map(id => activePaths.find(p => p.assignment_id === id))
+            .filter((p): p is NonNullable<typeof p> => p !== undefined);
 
         log(`Unique Active Paths to Check: ${uniquePaths.length}`);
 
