@@ -121,7 +121,7 @@ export default function UsersAdminPage() {
                                     <div className="flex items-center gap-3 w-full md:w-auto justify-end">
                                         <button
                                             onClick={async () => {
-                                                if (!confirm("Reset XP for this user?")) return;
+                                                if (!confirm(`Warning: This will reset XP to 0 AND delete all progress for ${u.first_name} ${u.last_name}.\n\nThe user will need to replay all modules to earn XP again.\n\nAre you sure?`)) return;
                                                 try {
                                                     await fetch('/api/users/reset-xp', {
                                                         method: 'POST',
@@ -129,6 +129,7 @@ export default function UsersAdminPage() {
                                                         body: JSON.stringify({ userId: u.id })
                                                     });
                                                     fetchUsers(); // Refresh
+                                                    alert("Reset complete. The user must refresh their page if logged in.");
                                                 } catch (e) { alert("Failed to reset XP"); }
                                             }}
                                             className="p-2 text-yellow-500 hover:text-yellow-400"
