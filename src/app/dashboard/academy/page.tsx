@@ -15,26 +15,44 @@ const ConnectedModuleCard = ({ module, isLocked = false }: { module: any, isLock
 export default function AcademyPage() {
     const { user } = useUser();
     const [modules, setModules] = useState<any[]>([]);
+    const [learningPaths, setLearningPaths] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        fetch('/api/modules')
-            .then(res => res.json())
-            .then(data => {
-                if (data.modules) {
-                    // Enrich modules with mock chapters if empty (for UI compatibility)
-                    const enrichedModules = data.modules.map((m: any) => ({
+        if (!user) return;
+
+        const fetchData = async () => {
+            try {
+                // Fetch Modules (filtered by access)
+                const modulesRes = await fetch(`/api/modules?userId=${user.id}`);
+                const modulesData = await modulesRes.json();
+
+                if (modulesData.modules) {
+                    const enrichedModules = modulesData.modules.map((m: any) => ({
                         ...m,
-                        thumbnailUrl: m.thumbnail_url || m.thumbnailUrl, // Map snake_case from DB
-                        chapters: m.chapters || [], // Ensure chapters array exists
-                        roles: [] // Default roles
+                        thumbnailUrl: m.thumbnail_url || m.thumbnailUrl,
+                        chapters: m.chapters || [],
+                        roles: []
                     }));
                     setModules(enrichedModules);
                 }
-            })
-            .catch(err => console.error(err))
-            .finally(() => setIsLoading(false));
-    }, []);
+
+                // Fetch Learning Paths
+                const pathsRes = await fetch(`/api/learning-paths?userId=${user.id}`);
+                const pathsData = await pathsRes.json();
+                if (pathsData.paths) {
+                    setLearningPaths(pathsData.paths);
+                }
+
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [user]);
 
     // Helper to check provisioned access
     const hasAccess = (module: any) => {
@@ -78,16 +96,49 @@ export default function AcademyPage() {
                 </div>
             </div>
 
-            {/* In Progress / Learning Path */}
+            {/* Learning Paths */}
+            {learningPaths.length > 0 && (
+                <section>
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            My Learning Paths
+                        </h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {learningPaths.map(path => (
+                            <div key={path.id} className="bg-black/40 border border-white/10 rounded-xl overflow-hidden hover:border-primary/50 transition-all group cursor-pointer relative">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
+                                <div className="p-6">
+                                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-primary transition-colors">{path.title}</h3>
+                                    <p className="text-sm text-gray-400 mb-4 line-clamp-2">{path.description}</p>
+
+                                    <div className="flex items-center justify-between mt-4">
+                                        <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                                            {path.status === 'completed' ? 'Completed' : 'In Progress'}
+                                        </span>
+                                        <button className="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 rounded-lg transition-colors">
+                                            Continue
+                                        </button>
+                                    </div>
+                                </div>
+                                {path.status === 'completed' && (
+                                    <div className="absolute top-4 right-4 text-green-500">
+                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" /></svg>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {/* In Progress Modules (Fallback if no paths or additional) */}
             <section>
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                        Continue Learning
-                    </h2>
+                    <h2 className="text-xl font-bold text-white">Continue Module</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Render specific modules that are "in progress" - Using first module as fallback for now */}
                     {modules.length > 0 && <ConnectedModuleCard module={modules[0]} />}
                 </div>
             </section>
