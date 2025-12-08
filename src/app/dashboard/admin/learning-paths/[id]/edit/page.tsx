@@ -79,7 +79,7 @@ export default function EditLearningPathPage() {
                 }
 
                 // Fetch All Users (for assignment)
-                const usersRes = await fetch('/api/users?status=approved');
+                const usersRes = await fetch('/api/users'); // Fetch all users to debug
                 if (usersRes.ok) {
                     const usersData = await usersRes.json();
                     setAllUsers(usersData.users || []);
