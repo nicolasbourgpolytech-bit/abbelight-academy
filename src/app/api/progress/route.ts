@@ -119,7 +119,7 @@ export async function POST(request: Request) {
                     await sql`UPDATE users SET xp = COALESCE(xp, 0) + ${bonus} WHERE id = ${user.id}`;
                     console.log(`[XP Award] Awarded BONUS ${bonus} XP to user ${user.id} for path ${path.assignment_id}`);
 
-                    // Mark path as completed
+                    // Mark CURRENT path as completed
                     await sql`
                         UPDATE user_learning_paths 
                         SET status = 'completed', completed_at = NOW() 
@@ -128,6 +128,32 @@ export async function POST(request: Request) {
 
                     pathCompleted = true;
                     bonusXp += bonus;
+
+                    // --- CHRONOLOGICAL UNLOCKING LOGIC ---
+                    // 1. Get all paths for this user sorted by creation date
+                    const { rows: allUserPaths } = await sql`
+                        SELECT ulp.id, ulp.status, lp.created_at
+                        FROM user_learning_paths ulp
+                        JOIN learning_paths lp ON ulp.learning_path_id = lp.id
+                        WHERE ulp.user_id = ${user.id}
+                        ORDER BY lp.created_at ASC
+                    `;
+
+                    // 2. Find current path index
+                    const currentIndex = allUserPaths.findIndex(p => p.id === path.assignment_id);
+
+                    // 3. Unlock NEXT path if it exists and is currently locked
+                    if (currentIndex !== -1 && currentIndex < allUserPaths.length - 1) {
+                        const nextPath = allUserPaths[currentIndex + 1];
+                        if (nextPath.status === 'locked') {
+                            await sql`
+                                UPDATE user_learning_paths 
+                                SET status = 'in_progress', updated_at = NOW()
+                                WHERE id = ${nextPath.id}
+                            `;
+                            console.log(`[Path Unlock] Unlocked next path (ID: ${nextPath.id}) for user ${user.id}`);
+                        }
+                    }
                 }
             }
 
