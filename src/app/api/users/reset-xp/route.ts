@@ -19,10 +19,10 @@ export async function POST(request: Request) {
         await sql`UPDATE users SET xp = 0 WHERE id = ${userId}`;
 
         // Reset Module Progress
-        await sql`DELETE FROM user_module_progress WHERE user_email = ${email}`;
+        await sql`DELETE FROM user_module_progress WHERE user_email ILIKE ${email}`;
 
         // Reset Chapter Progress
-        await sql`DELETE FROM user_progress WHERE user_email = ${email}`;
+        await sql`DELETE FROM user_progress WHERE user_email ILIKE ${email}`;
 
         // Reset Learning Paths - SAFE UPDATE (Preserve assignments)
         // 1. Get user's EXISTING assigned paths ordered by creation date
