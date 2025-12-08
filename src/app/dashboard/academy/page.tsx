@@ -25,7 +25,7 @@ const HistorySection = ({ modules }: { modules: any[] }) => {
     return (
         <section>
             <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-white">Completed Modules History</h2>
+                <h2 className="text-xl font-bold text-white">Completed Modules</h2>
             </div>
             {completedModules.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -98,59 +98,50 @@ export default function AcademyPage() {
     return (
         <div className="space-y-12 animate-fade-in">
             {/* Header Stats */}
-            <div className="bg-gradient-to-r from-primary/20 to-purple-900/20 border border-white/10 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-purple-600 p-[2px]">
-                        <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden relative">
-                            <span className="text-2xl font-bold text-white">{user?.name ? user.name.charAt(0) : 'U'}</span>
+            <div className="relative overflow-hidden rounded-3xl bg-[#0F1115] border border-white/5 p-8 lg:p-12">
+                {/* Background Decor */}
+                <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 blur-[128px] rounded-full -translate-y-1/2 translate-x-1/2" />
+
+                <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+                    <div className="flex items-center gap-6">
+                        <div className="relative">
+                            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 p-[1px]">
+                                <div className="w-full h-full rounded-2xl bg-black/90 backdrop-blur-xl flex items-center justify-center overflow-hidden">
+                                    <span className="text-3xl font-bold text-white">{user?.name ? user.name.charAt(0) : 'U'}</span>
+                                </div>
+                            </div>
+                            <div className="absolute -bottom-2 -right-2 bg-green-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-[#0F1115]">
+                                ONLINE
+                            </div>
+                        </div>
+
+                        <div>
+                            <h1 className="text-4xl font-bold text-white mb-2">
+                                Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">{user?.name.split(' ')[0]}</span>
+                            </h1>
+                            <div className="flex items-center gap-3 text-sm text-gray-400">
+                                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/5">
+                                    🔥 3 day streak
+                                </span>
+                                <span>Keep up the good work!</span>
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <h1 className="text-3xl font-bold text-white mb-1">Welcome back, {user?.name.split(' ')[0]}</h1>
-                        <p className="text-gray-400">You are on a <span className="text-primary font-bold">3 day streak</span>! Keep it up.</p>
-                    </div>
-                </div>
 
-                <div className="flex items-center gap-8 bg-black/40 p-4 rounded-xl border border-white/5">
-                    <div className="text-center px-4 border-r border-white/10">
-                        <div className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Total XP</div>
-                        <div className="text-2xl font-bold text-primary">{user?.xp || 0}</div>
-                    </div>
-                    <div className="text-center px-4 border-r border-white/10">
-                        <div className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Modules</div>
-                        <div className="text-2xl font-bold text-white">{modules.length} <span className="text-gray-600 text-sm">/ {modules.length}</span></div>
-                    </div>
-                    <div className="text-center px-4">
-                        <div className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Certificates</div>
-                        <div className="text-2xl font-bold text-white">0</div>
+                    <div className="grid grid-cols-2 gap-4 w-full lg:w-auto">
+                        <div className="p-4 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
+                            <div className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Total XP</div>
+                            <div className="text-2xl font-bold text-primary">{user?.xp || 0}</div>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
+                            <div className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Modules</div>
+                            <div className="text-2xl font-bold text-white">{modules.length}</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* History / Completed Modules */}
-            <section>
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-white">Completed Modules</h2>
-                </div>
-                <div className="flex gap-4 overflow-x-auto pb-4">
-                    {modules.filter(m => {
-                        // Check if module ID is in the completed list (ensure string comparison)
-                        return lmsProgress?.completedModuleIds?.includes(m.id.toString());
-                    }).length > 0 ? (
-                        modules.filter(m => lmsProgress?.completedModuleIds?.includes(m.id.toString())).map(module => (
-                            <div key={module.id} className="min-w-[300px]">
-                                <ConnectedModuleCard module={module} />
-                            </div>
-                        ))
-                    ) : (
-                        <div className="text-gray-500 text-sm">No completed modules yet.</div>
-                    )}
-                </div>
-            </section>
-
-            <HistorySection modules={modules} />
-
-            {/* Learning Paths */}
+            {/* Learning Paths - Moved to Top */}
             {learningPaths.length > 0 && (
                 <section>
                     <div className="flex items-center justify-between mb-6">
@@ -161,21 +152,23 @@ export default function AcademyPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {learningPaths.map(path => (
-                            <div key={path.id} className="bg-black/40 border border-white/10 rounded-xl overflow-hidden hover:border-primary/50 transition-all group cursor-pointer relative">
-                                <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
-                                <div className="p-6">
-                                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-primary transition-colors">{path.title}</h3>
-                                    <p className="text-sm text-gray-400 mb-4 line-clamp-2">{path.description}</p>
+                            <div key={path.id} className="bg-[#0F1115] border border-white/5 rounded-2xl overflow-hidden hover:border-primary/50 transition-all group cursor-pointer relative flex flex-col">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-primary/50 group-hover:bg-primary transition-colors" />
+                                <div className="p-6 flex flex-col h-full">
+                                    <div className="flex-1">
+                                        <h3 className="text-lg font-bold text-white mb-2 group-hover:text-primary transition-colors">{path.title}</h3>
+                                        <p className="text-sm text-gray-400 mb-4 line-clamp-2">{path.description}</p>
+                                    </div>
 
-                                    <div className="flex items-center justify-between mt-4">
+                                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
                                         <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
                                             {path.status === 'completed' ? 'Completed' : 'In Progress'}
                                         </span>
                                         <Link
                                             href={`/dashboard/academy/paths/${path.id}`}
-                                            className="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 rounded-lg transition-colors"
+                                            className="bg-white/5 hover:bg-white/10 hover:text-primary text-white text-xs px-4 py-2 rounded-lg transition-all font-semibold"
                                         >
-                                            Continue
+                                            Continue Learning Path
                                         </Link>
                                     </div>
                                 </div>
@@ -190,42 +183,8 @@ export default function AcademyPage() {
                 </section>
             )}
 
-            {/* In Progress Modules (Fallback if no paths or additional) */}
-            <section>
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-white">Continue Module</h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {modules.length > 0 && <ConnectedModuleCard module={modules[0]} />}
-                </div>
-            </section>
-
-            {/* Full Catalog */}
-            <section>
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-white">Course Catalog</h2>
-                    <div className="flex gap-2">
-                        {['All', 'Theory', 'Hardware', 'Software'].map(filter => (
-                            <button key={filter} className="px-3 py-1 rounded-full text-xs font-bold border border-white/10 hover:bg-white/10 text-gray-400 transition-colors">
-                                {filter}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {modules.map(module => {
-                        const isLocked = !hasAccess(module);
-                        return (
-                            <ConnectedModuleCard key={module.id} module={module} isLocked={isLocked} />
-                        );
-                    })}
-                    {modules.length === 0 && (
-                        <div className="col-span-full text-center py-12 text-gray-500">
-                            No modules yet. Check back soon!
-                        </div>
-                    )}
-                </div>
-            </section>
+            {/* Completed Modules History (Unified) */}
+            <HistorySection modules={modules} />
         </div>
     );
 }
