@@ -1,0 +1,159 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useUser } from "@/context/UserContext";
+
+export default function UsersAdminPage() {
+    const { user } = useUser();
+    const [users, setUsers] = useState<any[]>([]);
+    const [userFilterStatus, setUserFilterStatus] = useState<string>('all');
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchUsers = async () => {
+        setIsLoading(true);
+        try {
+            const url = userFilterStatus === 'all'
+                ? '/api/users'
+                : `/api/users?status=${userFilterStatus}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.users) setUsers(data.users);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (user?.roles.includes('abbelighter_admin')) {
+            fetchUsers();
+        }
+    }, [user, userFilterStatus]);
+
+    const handleApproveUser = async (id: number) => {
+        try {
+            const res = await fetch('/api/users', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status: 'approved' })
+            });
+            if (res.ok) fetchUsers();
+            else alert("Failed to approve user");
+        } catch (e) { alert("Error approving user"); }
+    };
+
+    const handleRejectUser = async (id: number) => {
+        if (!confirm("Reject this user?")) return;
+        try {
+            const res = await fetch('/api/users', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status: 'rejected' })
+            });
+            if (res.ok) fetchUsers();
+            else alert("Failed to reject user");
+        } catch (e) { alert("Error rejecting user"); }
+    };
+
+    const handleDeleteUser = async (id: number) => {
+        if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
+        try {
+            const res = await fetch(`/api/users?id=${id}`, { method: 'DELETE' });
+            if (res.ok) fetchUsers();
+            else alert("Failed to delete user");
+        } catch (e) { alert("Error deleting user"); }
+    };
+
+    if (!user || !user.roles.includes('abbelighter_admin')) {
+        return (
+            <div className="text-center p-20 text-red-500">
+                Unauthorized. Admin access only.
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex-1 overflow-y-auto pb-20">
+            <div className="mb-6">
+                <h1 className="text-3xl font-bold text-white mb-2">User Management</h1>
+                <p className="text-gray-400">Approve new sign-ups and manage existing users.</p>
+            </div>
+
+            <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+                <div className="flex items-center gap-4 mb-6">
+                    {['all', 'pending', 'approved', 'rejected'].map(status => (
+                        <button
+                            key={status}
+                            onClick={() => setUserFilterStatus(status)}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold capitalize transition-colors ${userFilterStatus === status
+                                ? 'bg-primary text-black'
+                                : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                                }`}
+                        >
+                            {status}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="space-y-4">
+                    {isLoading ? (
+                        <p className="text-center text-gray-500 py-10">Loading users...</p>
+                    ) : (
+                        <>
+                            {users.map((u: any) => (
+                                <div key={u.id} className="bg-gray-900/40 border border-white/10 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4 w-full md:w-auto">
+                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${u.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                                            u.status === 'approved' ? 'bg-green-500/20 text-green-500' :
+                                                'bg-red-500/20 text-red-500'
+                                            }`}>
+                                            {u.first_name?.[0]}{u.last_name?.[0]}
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-white text-lg">{u.first_name} {u.last_name}</h3>
+                                            <div className="text-sm text-gray-400 flex flex-col">
+                                                <span>{u.email}</span>
+                                                <span className="text-xs text-gray-500">{u.company}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+                                        {u.status === 'pending' && (
+                                            <>
+                                                <button
+                                                    onClick={() => handleApproveUser(u.id)}
+                                                    className="px-4 py-2 bg-green-500/20 text-green-500 border border-green-500/50 rounded-lg text-sm font-bold hover:bg-green-500 hover:text-black transition-colors"
+                                                >
+                                                    Approve
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRejectUser(u.id)}
+                                                    className="px-4 py-2 bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 rounded-lg text-sm font-bold hover:bg-yellow-500 hover:text-black transition-colors"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </>
+                                        )}
+                                        <button
+                                            onClick={() => handleDeleteUser(u.id)}
+                                            className="p-2 text-gray-500 hover:text-red-500 transition-colors"
+                                            title="Delete User"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {users.length === 0 && (
+                                <div className="text-center py-10 text-gray-500">
+                                    No users found matching filter.
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}

@@ -211,19 +211,79 @@ export function Sidebar() {
                         <div className="px-4 mb-3 text-xs font-bold text-gray-500 uppercase tracking-widest">
                             Admin
                         </div>
-                        <Link
-                            href="/dashboard/admin/learning-paths"
-                            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 
+                        <div className="space-y-1">
+                            <Link
+                                href="/dashboard/admin/learning-paths"
+                                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 
                                 ${pathname.startsWith("/dashboard/admin/learning-paths")
-                                    ? "bg-primary/20 text-primary border border-primary/20"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                                }`}
-                        >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0121 18.382V7.618a1 1 0 01-.553-.894L15 4m0 13V4m0 0L9 7" />
-                            </svg>
-                            Learning Paths
-                        </Link>
+                                        ? "bg-primary/20 text-primary border border-primary/20"
+                                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                                    }`}
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0121 18.382V7.618a1 1 0 01-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+                                Learning Paths
+                            </Link>
+
+                            <Link
+                                href="/dashboard/admin/modules"
+                                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 
+                                ${pathname.startsWith("/dashboard/admin/modules")
+                                        ? "bg-primary/20 text-primary border border-primary/20"
+                                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                                    }`}
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                                Modules
+                            </Link>
+
+                            <Link
+                                href="/dashboard/admin/webinars"
+                                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 
+                                ${pathname.startsWith("/dashboard/admin/webinars")
+                                        ? "bg-primary/20 text-primary border border-primary/20"
+                                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                                    }`}
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                Webinars
+                            </Link>
+
+                            <Link
+                                href="/dashboard/admin/articles"
+                                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 
+                                ${pathname.startsWith("/dashboard/admin/articles")
+                                        ? "bg-primary/20 text-primary border border-primary/20"
+                                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                                    }`}
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
+                                Articles
+                            </Link>
+
+                            <Link
+                                href="/dashboard/admin/users"
+                                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 
+                                ${pathname.startsWith("/dashboard/admin/users")
+                                        ? "bg-primary/20 text-primary border border-primary/20"
+                                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                                    }`}
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                Users
+                            </Link>
+
+                            <Link
+                                href="/dashboard/admin/products"
+                                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 
+                                ${pathname.startsWith("/dashboard/admin/products")
+                                        ? "bg-primary/20 text-primary border border-primary/20"
+                                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                                    }`}
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                                Products
+                            </Link>
+                        </div>
                     </div>
                 )}
             </nav>

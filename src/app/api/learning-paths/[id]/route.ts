@@ -30,10 +30,19 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
         WHERE lpp.learning_path_id = ${id}
      `;
 
+        // Get assigned users
+        const { rows: userRows } = await sql`
+            SELECT u.id, u.first_name, u.last_name, u.email
+            FROM users u
+            JOIN user_learning_paths ulp ON u.id = ulp.user_id
+            WHERE ulp.learning_path_id = ${id}
+        `;
+
         return NextResponse.json({
             path: pathRows[0],
             modules: modulesRows,
-            prerequisites: prereqRows
+            prerequisites: prereqRows,
+            users: userRows
         }, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: (error as Error).message }, { status: 500 });
@@ -45,9 +54,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     const { id } = params;
     try {
         const body = await request.json();
-        const { title, description, moduleIds, prerequisitesIds } = body;
-        // moduleIds: array of module IDs in order
-        // prerequisitesIds: array of path IDs
+        const { title, description, moduleIds, prerequisitesIds, userIds } = body;
 
         // 1. Update Path Info
         if (title) {
@@ -78,6 +85,17 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
                 INSERT INTO learning_path_prerequisites (learning_path_id, prerequisite_path_id)
                 VALUES (${id}, ${prereqId})
             `;
+            }
+        }
+
+        // 4. Update Users
+        if (userIds) {
+            await sql`DELETE FROM user_learning_paths WHERE learning_path_id = ${id}`;
+            for (const uid of userIds) {
+                await sql`
+                    INSERT INTO user_learning_paths (learning_path_id, user_id, status)
+                    VALUES (${id}, ${uid}, 'in_progress')
+                `;
             }
         }
 

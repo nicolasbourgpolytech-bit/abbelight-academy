@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { MultiSelect } from "@/components/admin/MultiSelect";
 
 interface Module {
     id: number;
@@ -16,6 +17,13 @@ interface LearningPath {
     description: string;
 }
 
+interface User {
+    id: number;
+    email: string;
+    first_name: string;
+    last_name: string;
+}
+
 export default function EditLearningPathPage() {
     const router = useRouter();
     const params = useParams();
@@ -24,6 +32,15 @@ export default function EditLearningPathPage() {
     const [path, setPath] = useState<LearningPath | null>(null);
     const [pathModules, setPathModules] = useState<Module[]>([]);
     const [allModules, setAllModules] = useState<Module[]>([]);
+
+    // User Assignment State
+    const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [assignedUserIds, setAssignedUserIds] = useState<string[]>([]); // Storing IDs as strings for MultiSelect compatibility if needed, but easier as numbers. Let's use string for MultiSelect or custom logic.
+
+    // Prerequisites State
+    const [allPaths, setAllPaths] = useState<LearningPath[]>([]);
+    const [prerequisiteIds, setPrerequisiteIds] = useState<string[]>([]);
+
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -36,7 +53,7 @@ export default function EditLearningPathPage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch Path Details
+                // Fetch Path Details (includes modules, prerequisites, users)
                 const pathRes = await fetch(`/api/learning-paths/${id}`);
                 if (!pathRes.ok) throw new Error('Failed to fetch path details');
                 const pathData = await pathRes.json();
@@ -46,11 +63,34 @@ export default function EditLearningPathPage() {
                 setDescription(pathData.path.description || "");
                 setPathModules(pathData.modules || []);
 
-                // Fetch All Modules for selection
+                // Set assigned users
+                const currentUsers = pathData.users || [];
+                setAssignedUserIds(currentUsers.map((u: any) => u.id.toString()));
+
+                // Set prerequisites
+                const currentPrereqs = pathData.prerequisites || [];
+                setPrerequisiteIds(currentPrereqs.map((p: any) => p.id.toString()));
+
+                // Fetch All Modules
                 const modulesRes = await fetch('/api/modules');
                 if (modulesRes.ok) {
                     const modulesData = await modulesRes.json();
                     setAllModules(modulesData.modules || []);
+                }
+
+                // Fetch All Users (for assignment)
+                const usersRes = await fetch('/api/users?status=approved');
+                if (usersRes.ok) {
+                    const usersData = await usersRes.json();
+                    setAllUsers(usersData.users || []);
+                }
+
+                // Fetch All Paths (for prerequisites)
+                const pathsRes = await fetch('/api/learning-paths');
+                if (pathsRes.ok) {
+                    const pathsData = await pathsRes.json();
+                    // Filter out current path to avoid cycles
+                    setAllPaths((pathsData.paths || []).filter((p: any) => p.id.toString() !== id));
                 }
 
             } catch (err) {
@@ -72,13 +112,14 @@ export default function EditLearningPathPage() {
                 body: JSON.stringify({
                     title,
                     description,
-                    moduleIds: pathModules.map(m => m.id)
+                    moduleIds: pathModules.map(m => m.id),
+                    userIds: assignedUserIds.map(uid => parseInt(uid)),
+                    prerequisitesIds: prerequisiteIds.map(pid => parseInt(pid))
                 }),
             });
 
             if (!response.ok) throw new Error('Failed to update path');
 
-            // Show success feedback
             alert('Path updated successfully!');
 
         } catch (err) {
@@ -134,7 +175,7 @@ export default function EditLearningPathPage() {
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                    className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-black px-6 py-2 rounded-lg font-bold transition-colors flex items-center gap-2"
                 >
                     {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -232,9 +273,54 @@ export default function EditLearningPathPage() {
                         </div>
                     </div>
 
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                        <h2 className="text-lg font-bold text-white mb-4">Access Control</h2>
-                        <p className="text-sm text-gray-500 italic">User assignment and prerequisites management coming soon.</p>
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+                        <h2 className="text-lg font-bold text-white mb-2">Access Control</h2>
+
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">Assigned Users</label>
+                            <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                                {allUsers.map(user => (
+                                    <label key={user.id} className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:bg-white/5 p-1 rounded">
+                                        <input
+                                            type="checkbox"
+                                            checked={assignedUserIds.includes(user.id.toString())}
+                                            onChange={(e) => {
+                                                if (e.target.checked) setAssignedUserIds([...assignedUserIds, user.id.toString()]);
+                                                else setAssignedUserIds(assignedUserIds.filter(id => id !== user.id.toString()));
+                                            }}
+                                            className="rounded border-gray-600 bg-black/50 text-primary"
+                                        />
+                                        <span>{user.first_name} {user.last_name} ({user.email})</span>
+                                    </label>
+                                ))}
+                                {allUsers.length === 0 && <p className="text-xs text-gray-500">No users found.</p>}
+                            </div>
+                        </div>
+
+                        <hr className="border-white/10" />
+
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">Prerequisites</label>
+                            <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                                {allPaths.map(p => (
+                                    <label key={p.id} className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:bg-white/5 p-1 rounded">
+                                        <input
+                                            type="checkbox"
+                                            checked={prerequisiteIds.includes(p.id.toString())}
+                                            onChange={(e) => {
+                                                if (e.target.checked) setPrerequisiteIds([...prerequisiteIds, p.id.toString()]);
+                                                else setPrerequisiteIds(prerequisiteIds.filter(id => id !== p.id.toString()));
+                                            }}
+                                            className="rounded border-gray-600 bg-black/50 text-primary"
+                                        />
+                                        <span>{p.title}</span>
+                                    </label>
+                                ))}
+                                {allPaths.length === 0 && <p className="text-xs text-gray-500">No other paths available.</p>}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">Users must complete selected paths before unlocking this one.</p>
+                        </div>
+
                     </div>
                 </div>
             </div>
