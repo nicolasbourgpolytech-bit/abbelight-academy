@@ -4,6 +4,9 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+
     try {
         // 1. Get Learning Path Definitions with Modules
         const { rows: pathDefinitions } = await sql`
@@ -22,6 +25,16 @@ export async function GET(request: Request) {
             ORDER BY ulp.user_id, lp.created_at
         `;
 
+        // 3. Inspect raw user_learning_paths for duplicates or status issues
+        let rawUserPaths: any[] = [];
+        if (userId) {
+            const result = await sql`SELECT * FROM user_learning_paths WHERE user_id = ${userId}`;
+            rawUserPaths = result.rows;
+        }
+
+        // 4. Dump users
+        const { rows: allUsers } = await sql`SELECT * FROM users LIMIT 10`;
+
         return NextResponse.json({
             pathDefinitions: pathDefinitions.reduce((acc, row) => {
                 const path = acc.find((p: any) => p.path_id === row.path_id);
@@ -36,7 +49,9 @@ export async function GET(request: Request) {
                 }
                 return acc;
             }, [] as any[]),
-            userPaths
+            userPaths,
+            rawUserPaths,
+            allUsers
         }, { status: 200 });
 
     } catch (error) {

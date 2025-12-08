@@ -155,7 +155,7 @@ export default function AcademyPage() {
                                     await fetch('/api/users/reset-xp', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ userId: user?.id })
+                                        body: JSON.stringify({ userId: user?.id, email: user?.email })
                                     });
                                     window.location.reload();
                                 }
