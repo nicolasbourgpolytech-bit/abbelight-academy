@@ -138,6 +138,24 @@ export default function UsersAdminPage() {
                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                                         </button>
 
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    await fetch('/api/users/give-xp', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ userId: u.id, amount: 100 })
+                                                    });
+                                                    fetchUsers();
+                                                    alert("Added 100 XP!");
+                                                } catch (e) { alert("Failed to add XP"); }
+                                            }}
+                                            className="p-2 text-blue-500 hover:text-blue-400"
+                                            title="Give 100 XP (Test)"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                                        </button>
+
                                         {u.status === 'pending' && (
                                             <>
                                                 <button
