@@ -141,12 +141,50 @@ export function Sidebar() {
                             {onlineUsers.length === 0 ? (
                                 <p className="px-4 text-xs text-gray-600 italic">No one else online</p>
                             ) : (
-                                onlineUsers.map((u) => (
-                                    <div key={u.id} className="px-4 py-2 flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
-                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="truncate">{u.first_name || u.email}</span>
-                                    </div>
-                                ))
+                                onlineUsers.map((u) => {
+                                    const fullName = (u.first_name && u.last_name)
+                                        ? `${u.first_name} ${u.last_name}`
+                                        : u.first_name || u.email.split('@')[0];
+
+                                    return (
+                                        <div key={u.id} className="group/user relative px-4 py-2 flex items-center gap-3 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all rounded-lg mx-2">
+                                            <div className="relative">
+                                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                            </div>
+
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="truncate font-medium">{fullName}</span>
+                                                    {u.level && (
+                                                        <span className="text-[10px] bg-primary/20 text-primary px-1.5 rounded ml-2 border border-primary/20">
+                                                            Lvl {u.level}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Tooltip with Email & Copy */}
+                                            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 border border-white/10 p-2 rounded-lg shadow-xl opacity-0 invisible group-hover/user:opacity-100 group-hover/user:visible transition-all z-50 min-w-[200px]">
+                                                <div className="text-xs text-gray-400 mb-1">Email Address</div>
+                                                <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded border border-white/5">
+                                                    <code className="text-xs text-primary flex-1 truncate">{u.email}</code>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            navigator.clipboard.writeText(u.email);
+                                                        }}
+                                                        className="p-1 hover:bg-white/10 rounded text-gray-400 hover:text-white transition-colors"
+                                                        title="Copy Email"
+                                                    >
+                                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
                             )}
                         </div>
                     </div>

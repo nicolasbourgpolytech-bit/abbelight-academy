@@ -8,7 +8,7 @@ export async function GET(request: Request) {
         // Fetch users active in the last 5 minutes
         // We select basic info to display
         const { rows } = await sql`
-            SELECT id, first_name, last_name, email, company, last_seen
+            SELECT id, first_name, last_name, email, company, last_seen, level, xp
             FROM users 
             WHERE last_seen > NOW() - INTERVAL '5 minutes'
             ORDER BY last_seen DESC
