@@ -26,9 +26,9 @@ export async function GET(request: Request) {
     }
 }
 
-// Helper to get user by email
+// Helper to get user by email (case insensitive)
 async function getUserByEmail(email: string) {
-    const { rows } = await sql`SELECT * FROM users WHERE email = ${email}`;
+    const { rows } = await sql`SELECT * FROM users WHERE email ILIKE ${email}`;
     return rows[0];
 }
 
@@ -134,7 +134,12 @@ export async function POST(request: Request) {
                 moduleXp,
                 pathCompleted,
                 bonusXp,
-                newTotalXp: (user.xp || 0) + moduleXp + bonusXp
+                newTotalXp: (user.xp || 0) + moduleXp + bonusXp,
+                debug: {
+                    userFound: !!user,
+                    moduleId,
+                    dbXp: moduleXp
+                }
             }, { status: 200 });
         }
 
