@@ -48,25 +48,42 @@ export async function GET(request: Request) {
 
         // 2. Mock Module ID if not provided (just to list paths)
         // If provided, we filter by it like the real POST
+        // 2. Mock Module ID if not provided (just to list paths)
+        // Check ALL paths for user first to debug status
+        const { rows: allUserPaths } = await sql`
+            SELECT ulp.*, lp.title
+            FROM user_learning_paths ulp
+            JOIN learning_paths lp ON ulp.learning_path_id = lp.id
+            WHERE ulp.user_id = ${user.id}
+        `;
+        log(`DEBUG: User has ${allUserPaths.length} assigned paths:`);
+        allUserPaths.forEach(p => log(` - [${p.id}] "${p.title}" (LP:${p.learning_path_id}) Status: ${p.status}`));
+
+        // Now try to find the specific match
         const activePathsQuery = moduleIdParam
             ? sql`
-                SELECT ulp.learning_path_id, ulp.id as assignment_id, ulp.status, lpm.module_id
+                SELECT ulp.learning_path_id, ulp.id as assignment_id, ulp.status, lpm.module_id, lp.title
                 FROM user_learning_paths ulp
                 JOIN learning_path_modules lpm ON lpm.learning_path_id = ulp.learning_path_id
+                JOIN learning_paths lp ON ulp.learning_path_id = lp.id
                 WHERE ulp.user_id = ${user.id} 
-                AND ulp.status = 'in_progress'
                 AND lpm.module_id = ${moduleIdParam}
             `
             : sql`
-                SELECT ulp.learning_path_id, ulp.id as assignment_id, ulp.status, lpm.module_id
+                SELECT ulp.learning_path_id, ulp.id as assignment_id, ulp.status, lpm.module_id, lp.title
                 FROM user_learning_paths ulp
                 JOIN learning_path_modules lpm ON lpm.learning_path_id = ulp.learning_path_id
+                JOIN learning_paths lp ON ulp.learning_path_id = lp.id
                 WHERE ulp.user_id = ${user.id} 
-                AND ulp.status = 'in_progress'
             `;
 
-        const { rows: activePaths } = await activePathsQuery;
-        log(`Found ${activePaths.length} active path-module combinations matching criteria.`);
+        const { rows: potentialPaths } = await activePathsQuery;
+        log(`DEBUG: Found ${potentialPaths.length} paths containing Module ${moduleIdParam}:`);
+        potentialPaths.forEach(p => log(` - [${p.assignment_id}] "${p.title}" Status: ${p.status}`));
+
+        // Filter for 'in_progress' as per original logic
+        const activePaths = potentialPaths.filter(p => p.status === 'in_progress');
+        log(`DEBUG: After filtering for 'in_progress', we have ${activePaths.length} paths.`);
 
         // Group by assignment_id to avoid checking same path multiple times
         const uniquePaths = Array.from(new Set(activePaths.map(p => p.assignment_id)))
