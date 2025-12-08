@@ -63,7 +63,7 @@ function DraggableSidebarItem({ path }: { path: LearningPath }) {
 }
 
 // Sortable Sequence Item
-function SortableSequenceItem({ path, id }: SortablePathItemProps) {
+function SortableSequenceItem({ path, id, onRemove }: SortablePathItemProps & { onRemove: (id: string) => void }) {
     const {
         attributes,
         listeners,
@@ -89,10 +89,28 @@ function SortableSequenceItem({ path, id }: SortablePathItemProps) {
                 <h3 className="font-bold text-white">{path.title}</h3>
                 <p className="text-xs text-gray-400 line-clamp-1">{path.description || "No description"}</p>
             </div>
-            <div className="text-primary/50 group-hover:text-primary">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                </svg>
+            <div className="flex items-center gap-2">
+                <button
+                    onPointerDown={(e) => {
+                        e.stopPropagation(); // Prevent drag start when clicking remove
+                        // We need to use pointer down because dnd-kit handles pointer events
+                    }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onRemove(id);
+                    }}
+                    className="p-1.5 hover:bg-black/20 rounded-full text-primary/50 hover:text-red-500 transition-colors"
+                    title="Remove from sequence"
+                >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <div className="text-primary/50 group-hover:text-primary">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                    </svg>
+                </div>
             </div>
         </div>
     );
@@ -238,7 +256,7 @@ export default function PathBuilderPage() {
                     <select
                         value={userType}
                         onChange={(e) => setUserType(e.target.value)}
-                        className="bg-white/10 border-none rounded-lg text-white p-2"
+                        className="bg-white/10 border-none rounded-lg text-white p-2 [&>option]:text-black"
                     >
                         <option value="reagent">Reagent Customer</option>
                         <option value="safe">SAFe Instrument User</option>
@@ -281,7 +299,14 @@ export default function PathBuilderPage() {
                         >
                             <div className="space-y-3 pb-20">
                                 {sequence.map((path) => (
-                                    <SortableSequenceItem key={path.id} id={path.id.toString()} path={path} />
+                                    <SortableSequenceItem
+                                        key={path.id}
+                                        id={path.id.toString()}
+                                        path={path}
+                                        onRemove={(id) => {
+                                            setSequence(prev => prev.filter(p => p.id.toString() !== id));
+                                        }}
+                                    />
                                 ))}
                             </div>
                         </SortableContext>

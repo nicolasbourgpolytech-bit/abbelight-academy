@@ -304,32 +304,16 @@ export default function EditLearningPathPage() {
                         <hr className="border-white/10" />
 
                         <div>
+                            {/* Access Control (Assigned Users) has been deprecated in favor of Role-based Sequences */}
+                            {/* 
                             <div className="flex items-center justify-between mb-2">
                                 <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block">Assigned Users</label>
-                                <button
-                                    onClick={() => setShowBulkAssignModal(true)}
-                                    className="text-xs text-primary hover:text-primary/80 transition-colors"
-                                >
-                                    + Bulk Assign
-                                </button>
                             </div>
-                            <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                                {allUsers.map(user => (
-                                    <label key={user.id} className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:bg-white/5 p-1 rounded">
-                                        <input
-                                            type="checkbox"
-                                            checked={assignedUserIds.includes(user.id.toString())}
-                                            onChange={(e) => {
-                                                if (e.target.checked) setAssignedUserIds([...assignedUserIds, user.id.toString()]);
-                                                else setAssignedUserIds(assignedUserIds.filter(id => id !== user.id.toString()));
-                                            }}
-                                            className="rounded border-gray-600 bg-black/50 text-primary"
-                                        />
-                                        <span>{user.first_name} {user.last_name} ({user.email})</span>
-                                    </label>
-                                ))}
-                                {allUsers.length === 0 && <p className="text-xs text-gray-500">No users found.</p>}
-                            </div>
+                           */}
+                            <p className="text-xs text-gray-500">
+                                Access is now managed via <b>Role Sequences</b>.
+                                Use the <Link href="/dashboard/admin/learning-paths/builder" className="text-primary border-b border-primary/20 hover:border-primary">Path Builder</Link> to assign paths to User Types.
+                            </p>
                         </div>
 
                         <hr className="border-white/10" />
