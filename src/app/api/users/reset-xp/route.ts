@@ -53,7 +53,8 @@ export async function POST(request: Request) {
             ORDER BY lp.created_at ASC
         `;
 
-        console.log(`[Reset] Resetting path ${userAssignments[i].id} to ${status}`);
+            ORDER BY lp.created_at ASC
+            `;
 
         // 2. Update statuses sequentially
         for (let i = 0; i < userAssignments.length; i++) {
@@ -61,9 +62,9 @@ export async function POST(request: Request) {
             // We clear completed_at and updated_at to fully reset
             await sql`
                 UPDATE user_learning_paths 
-                SET status = ${status}, completed_at = NULL
-                WHERE id = ${userAssignments[i].id}
-            `;
+                SET status = ${ status }, completed_at = NULL
+                WHERE id = ${ userAssignments[i].id }
+        `;
         }
 
         return NextResponse.json({ success: true, message: "XP Reset & Paths Reset (Assignments Preserved)" }, { status: 200 });
