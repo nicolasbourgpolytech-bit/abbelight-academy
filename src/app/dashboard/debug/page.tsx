@@ -42,7 +42,33 @@ export default function DebugPage() {
 
             {isLoading && <div className="text-gray-400">Loading...</div>}
 
-            {data && (
+            {/* Error Display */}
+            {data?.error && (
+                <div className="bg-red-900/50 p-6 rounded-xl border border-red-500 mb-8">
+                    <h3 className="text-xl font-bold text-red-500 flex items-center gap-2">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        API Error Detected
+                    </h3>
+                    <pre className="mt-4 bg-black/50 p-4 rounded text-red-200 overflow-auto whitespace-pre-wrap font-mono text-sm">
+                        {JSON.stringify(data.error, null, 2)}
+                    </pre>
+                </div>
+            )}
+
+            {/* Client Side Context Check */}
+            <div className="mb-8 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+                <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-2">Client Context State</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm font-mono">
+                    <div>
+                        <span className="text-gray-500">Email:</span> <span className="text-white">{user?.email}</span>
+                    </div>
+                    <div>
+                        <span className="text-gray-500">ID:</span> <span className="text-white">{user?.id}</span>
+                    </div>
+                </div>
+            </div>
+
+            {data && !data.error && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* User Record */}
                     <div className="bg-gray-900 p-4 rounded border border-white/10">
