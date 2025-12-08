@@ -110,7 +110,7 @@ export default function AcademyPage() {
                                     <span className="text-3xl font-bold text-white">{user?.name ? user.name.charAt(0) : 'U'}</span>
                                 </div>
                             </div>
-                            <div className="absolute -bottom-2 -right-2 bg-green-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-[#0F1115]">
+                            <div className="absolute -bottom-2 -right-2 bg-secondary text-black text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-[#0F1115]">
                                 ONLINE
                             </div>
                         </div>
@@ -183,7 +183,7 @@ export default function AcademyPage() {
                                         <div className="relative z-10 flex-shrink-0">
                                             <div className={`w-12 h-12 lg:w-16 lg:h-16 rounded-full border-4 flex items-center justify-center shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all duration-500
                                                 ${isCompleted
-                                                    ? 'bg-green-500 border-green-500 text-black'
+                                                    ? 'bg-secondary border-secondary text-black'
                                                     : isCurrent
                                                         ? 'bg-black border-primary text-primary shadow-[0_0_30px_rgba(59,130,246,0.3)]'
                                                         : 'bg-black border-white/10 text-gray-500'
@@ -213,7 +213,7 @@ export default function AcademyPage() {
                                                         <div className="flex items-center gap-3 mb-2">
                                                             <h3 className={`text-xl font-bold ${isCurrent ? 'text-white' : 'text-gray-200'}`}>{path.title}</h3>
                                                             {isCurrent && <span className="text-xs font-bold text-black bg-primary px-2 py-0.5 rounded animate-pulse">CURRENT STEP</span>}
-                                                            {isCompleted && <span className="text-xs font-bold text-black bg-green-500 px-2 py-0.5 rounded">COMPLETED</span>}
+                                                            {isCompleted && <span className="text-xs font-bold text-black bg-secondary px-2 py-0.5 rounded">COMPLETED</span>}
                                                         </div>
                                                         <p className="text-gray-400 max-w-2xl">{path.description}</p>
                                                     </div>
