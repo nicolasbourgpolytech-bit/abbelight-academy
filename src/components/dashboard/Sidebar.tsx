@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -53,6 +53,7 @@ export function Sidebar() {
     // Online Users State
     const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
     const [hoveredUser, setHoveredUser] = useState<{ id: number, rect: DOMRect, data: any } | null>(null);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Fetch online users periodically if admin
     useEffect(() => {
@@ -75,6 +76,35 @@ export function Sidebar() {
 
         return () => clearInterval(interval);
     }, [user]);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+    }, []);
+
+    const handleMouseEnterUser = (u: any, e: React.MouseEvent) => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        const rect = e.currentTarget.getBoundingClientRect();
+        setHoveredUser({ id: u.id, rect, data: u });
+    };
+
+    const handleMouseLeaveUser = () => {
+        timeoutRef.current = setTimeout(() => {
+            setHoveredUser(null);
+        }, 300); // 300ms delay to allow moving to tooltip
+    };
+
+    const handleMouseEnterTooltip = () => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+
+    const handleMouseLeaveTooltip = () => {
+        timeoutRef.current = setTimeout(() => {
+            setHoveredUser(null);
+        }, 300);
+    };
 
     // Get initials or fallback
     const initials = user?.name
@@ -151,11 +181,8 @@ export function Sidebar() {
                                         <div
                                             key={u.id}
                                             className="group/user relative px-4 py-2 flex items-center gap-3 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all rounded-lg mx-2 cursor-pointer"
-                                            onMouseEnter={(e) => {
-                                                const rect = e.currentTarget.getBoundingClientRect();
-                                                setHoveredUser({ id: u.id, rect, data: u });
-                                            }}
-                                            onMouseLeave={() => setHoveredUser(null)}
+                                            onMouseEnter={(e) => handleMouseEnterUser(u, e)}
+                                            onMouseLeave={handleMouseLeaveUser}
                                         >
                                             <div className="relative shrink-0">
                                                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
@@ -188,6 +215,8 @@ export function Sidebar() {
                         top: hoveredUser.rect.top - 20,
                         left: hoveredUser.rect.right + 10
                     }}
+                    onMouseEnter={handleMouseEnterTooltip}
+                    onMouseLeave={handleMouseLeaveTooltip}
                 >
                     <div className="font-bold text-white text-sm mb-1">
                         {(hoveredUser.data.first_name && hoveredUser.data.last_name)
