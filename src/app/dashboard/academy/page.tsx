@@ -160,7 +160,7 @@ export default function AcademyPage() {
                                     window.location.reload();
                                 }
                             }}
-                            className="bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs px-3 py-1.5 rounded-lg border border-red-500/20 transition-all font-bold uppercase tracking-wider"
+                            className="bg-warning/10 hover:bg-warning/20 text-warning text-xs px-3 py-1.5 rounded-lg border border-warning/20 transition-all font-bold uppercase tracking-wider"
                         >
                             Reset Journey
                         </button>
@@ -170,7 +170,7 @@ export default function AcademyPage() {
                         {/* Vertical Timeline Line */}
                         <div className="absolute left-6 top-8 bottom-8 w-0.5 bg-gradient-to-b from-primary via-primary/20 to-transparent lg:left-8" />
 
-                        <div className="space-y-8">
+                        <div className={`space-y-8 pr-2 ${learningPaths.length > 3 ? 'lg:max-h-[800px] lg:overflow-y-auto custom-scrollbar' : ''}`}>
                             {learningPaths.map((path, index) => {
                                 const isCompleted = path.status === 'completed';
                                 const isCurrent = !isCompleted && (index === 0 || learningPaths[index - 1]?.status === 'completed');
