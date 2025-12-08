@@ -102,7 +102,7 @@ export default function PathBuilderPage() {
     // State
     const [availablePaths, setAvailablePaths] = useState<LearningPath[]>([]);
     const [sequence, setSequence] = useState<LearningPath[]>([]);
-    const [userType, setUserType] = useState("Sales"); // Default for now
+    const [userType, setUserType] = useState("reagent"); // Default for now
     const [activeId, setActiveId] = useState<string | null>(null);
     const [activeItem, setActiveItem] = useState<LearningPath | null>(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -240,10 +240,10 @@ export default function PathBuilderPage() {
                         onChange={(e) => setUserType(e.target.value)}
                         className="bg-white/10 border-none rounded-lg text-white p-2"
                     >
-                        <option value="Sales">Sales</option>
-                        <option value="Tech">Tech</option>
-                        <option value="Marketing">Marketing</option>
-                        <option value="Admin">Admin</option>
+                        <option value="reagent">Reagent Customer</option>
+                        <option value="safe">SAFe Instrument User</option>
+                        <option value="abbelighter">Abbelighter</option>
+                        <option value="abbelighter_admin">Abbelighter Admin</option>
                     </select>
                     <button
                         onClick={handleSave}
@@ -306,6 +306,6 @@ export default function PathBuilderPage() {
                     ) : null}
                 </DragOverlay>
             </DndContext>
-        </div>
+        </div >
     );
 }
