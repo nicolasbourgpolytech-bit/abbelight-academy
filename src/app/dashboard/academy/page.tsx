@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { ModuleCard } from "@/components/dashboard/ModuleCard";
 import { useLmsProgress } from "@/hooks/useLmsProgress";
+import Link from "next/link";
 
 // Helper Component to render card with hook data
 const ConnectedModuleCard = ({ module, isLocked = false }: { module: any, isLocked?: boolean }) => {
@@ -117,9 +118,12 @@ export default function AcademyPage() {
                                         <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
                                             {path.status === 'completed' ? 'Completed' : 'In Progress'}
                                         </span>
-                                        <button className="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 rounded-lg transition-colors">
+                                        <Link
+                                            href={`/dashboard/academy/paths/${path.id}`}
+                                            className="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 rounded-lg transition-colors"
+                                        >
                                             Continue
-                                        </button>
+                                        </Link>
                                     </div>
                                 </div>
                                 {path.status === 'completed' && (

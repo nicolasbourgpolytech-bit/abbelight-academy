@@ -49,6 +49,31 @@ export default function EditLearningPathPage() {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [showAddModuleModal, setShowAddModuleModal] = useState(false);
+    const [showBulkAssignModal, setShowBulkAssignModal] = useState(false);
+    const [bulkCompany, setBulkCompany] = useState("");
+    const [bulkRole, setBulkRole] = useState("");
+
+    const handleBulkAssign = () => {
+        let usersToAssign = allUsers;
+
+        if (bulkCompany) {
+            usersToAssign = usersToAssign.filter(u => (u as any).company?.toLowerCase().includes(bulkCompany.toLowerCase()));
+        }
+        if (bulkRole) {
+            usersToAssign = usersToAssign.filter(u => {
+                const roles = (u as any).roles || [];
+                return roles.some((r: string) => r.toLowerCase().includes(bulkRole.toLowerCase()));
+            });
+        }
+
+        const newIds = usersToAssign.map(u => u.id.toString());
+        // Merge unique IDs
+        setAssignedUserIds(prev => Array.from(new Set([...prev, ...newIds])));
+        setShowBulkAssignModal(false);
+        setBulkCompany("");
+        setBulkRole("");
+        alert(`Assigned ${newIds.length} users based on criteria.`);
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -276,8 +301,18 @@ export default function EditLearningPathPage() {
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
                         <h2 className="text-lg font-bold text-white mb-2">Access Control</h2>
 
+                        <hr className="border-white/10" />
+
                         <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">Assigned Users</label>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block">Assigned Users</label>
+                                <button
+                                    onClick={() => setShowBulkAssignModal(true)}
+                                    className="text-xs text-primary hover:text-primary/80 transition-colors"
+                                >
+                                    + Bulk Assign
+                                </button>
+                            </div>
                             <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
                                 {allUsers.map(user => (
                                     <label key={user.id} className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:bg-white/5 p-1 rounded">
@@ -356,6 +391,57 @@ export default function EditLearningPathPage() {
                                     </button>
                                 ))
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Bulk Assign Modal */}
+            {showBulkAssignModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowBulkAssignModal(false)} />
+                    <div className="relative bg-[#1A1A1A] border border-white/10 rounded-2xl w-full max-w-md flex flex-col shadow-2xl animate-fade-in-up">
+                        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-white">Bulk Assign Users</h3>
+                            <button onClick={() => setShowBulkAssignModal(false)} className="text-gray-400 hover:text-white">
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Filter by Company</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Abbelight"
+                                    value={bulkCompany}
+                                    onChange={(e) => setBulkCompany(e.target.value)}
+                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Filter by Role</label>
+                                <select
+                                    value={bulkRole}
+                                    onChange={(e) => setBulkRole(e.target.value)}
+                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
+                                >
+                                    <option value="">Any Role</option>
+                                    <option value="abbelighter_admin">Admin</option>
+                                    <option value="abbelighter_client">Client</option>
+                                    <option value="abbelighter_safe">Safe</option>
+                                    <option value="abbelighter_reagent">Reagent</option>
+                                </select>
+                            </div>
+                            <div className="pt-4">
+                                <button
+                                    onClick={handleBulkAssign}
+                                    className="w-full bg-primary hover:bg-primary/90 text-black px-6 py-2 rounded-lg font-bold transition-colors"
+                                >
+                                    Assign Matching Users
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
