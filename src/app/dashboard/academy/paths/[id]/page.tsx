@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ModuleCard } from "@/components/dashboard/ModuleCard";
 import { useLmsProgress } from "@/hooks/useLmsProgress";
 
-export default function LearningPathDetailsPage({ params }: { params: { id: string } }) {
-    const { id } = params;
+export default function LearningPathDetailsPage() {
+    const params = useParams();
+    const id = params.id as string;
     const { user } = useUser();
     const { getModuleProgress } = useLmsProgress();
 

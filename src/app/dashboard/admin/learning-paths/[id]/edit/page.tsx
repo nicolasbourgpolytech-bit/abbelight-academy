@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface Module {
@@ -16,9 +16,10 @@ interface LearningPath {
     description: string;
 }
 
-export default function EditLearningPathPage({ params }: { params: { id: string } }) {
+export default function EditLearningPathPage() {
     const router = useRouter();
-    const { id } = params;
+    const params = useParams();
+    const id = params.id as string;
 
     const [path, setPath] = useState<LearningPath | null>(null);
     const [pathModules, setPathModules] = useState<Module[]>([]);
