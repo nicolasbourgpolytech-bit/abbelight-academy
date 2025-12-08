@@ -7,18 +7,21 @@ export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const status = searchParams.get('status');
+        const email = searchParams.get('email');
 
         let result;
-        if (status && status !== 'all') {
+        if (email) {
+            result = await sql`SELECT * FROM users WHERE email = ${email}`;
+        } else if (status && status !== 'all') {
             result = await sql`
-        SELECT id, first_name, last_name, email, company, status, roles, created_at 
+        SELECT id, first_name, last_name, email, company, status, roles, created_at, xp 
         FROM users 
         WHERE status = ${status} 
         ORDER BY created_at DESC
       `;
         } else {
             result = await sql`
-        SELECT id, first_name, last_name, email, company, status, roles, created_at 
+        SELECT id, first_name, last_name, email, company, status, roles, created_at, xp 
         FROM users 
         ORDER BY created_at DESC
       `;

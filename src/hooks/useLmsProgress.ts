@@ -76,29 +76,34 @@ export const useLmsProgress = () => {
     const markModuleComplete = async (moduleId: string) => {
         if (!user?.email) return;
 
+        // Optimistically update
         if (!progress.completedModuleIds.includes(moduleId)) {
             const newModuleIds = [...progress.completedModuleIds, moduleId];
             setProgress(prev => ({
                 ...prev,
                 completedModuleIds: newModuleIds
             }));
+        }
 
-            try {
-                const res = await fetch('/api/progress', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: user.email,
-                        moduleId: moduleId,
-                        type: 'module'
-                    })
-                });
-                if (res.ok) {
-                    return await res.json();
-                }
-            } catch (err) {
-                console.error("Failed to save module progress", err);
+        // Always call API to ensure sync and potential XP award if not previously credited
+        // This is safe because backend handles idempotency for completion status,
+        // though strictly standard XP systems might prevent double awarding.
+        // For this debugging phase, ensuring the call goes through is safer.
+        try {
+            const res = await fetch('/api/progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: user.email,
+                    moduleId: moduleId,
+                    type: 'module'
+                })
+            });
+            if (res.ok) {
+                return await res.json();
             }
+        } catch (err) {
+            console.error("Failed to save module progress", err);
         }
         return null;
     };
