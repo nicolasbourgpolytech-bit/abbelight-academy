@@ -7,9 +7,14 @@ import Link from "next/link";
 
 interface CompletionScreenProps {
     module: Module;
+    nextModuleId?: string | number;
+    pathId?: string;
 }
 
-export function CompletionScreen({ module }: CompletionScreenProps) {
+export function CompletionScreen({ module, nextModuleId, pathId }: CompletionScreenProps) {
+    const nextModuleHref = nextModuleId && pathId
+        ? `/dashboard/academy/${nextModuleId}?pathId=${pathId}`
+        : null;
     return (
         <div className="w-full h-full flex flex-col items-center justify-center p-8 animate-fade-in text-center relative overflow-hidden">
             {/* Background Glow */}
@@ -41,6 +46,12 @@ export function CompletionScreen({ module }: CompletionScreenProps) {
                 </div>
 
                 <div className="space-y-4 w-full">
+                    {nextModuleHref && (
+                        <Link href={nextModuleHref} className="block w-full py-4 bg-primary text-black rounded-xl font-bold uppercase tracking-wider hover:bg-white hover:scale-105 transition-all shadow-[0_0_20px_rgba(0,202,248,0.3)] animate-pulse-slow">
+                            Continue to Next Module &rarr;
+                        </Link>
+                    )}
+
                     <button className="w-full py-4 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-primary/50 text-white rounded-xl font-bold flex items-center justify-center gap-3 transition-all group">
                         <svg className="w-6 h-6 text-gray-400 group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                         Download All Resources (.zip)

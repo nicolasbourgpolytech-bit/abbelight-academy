@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Chapter, Module } from "@/types/lms";
@@ -18,11 +18,28 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
     const [activeChapterId, setActiveChapterId] = useState(module.chapters[0].id);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isModuleCompleted, setIsModuleCompleted] = useState(false);
+    const [nextModuleId, setNextModuleId] = useState<string | number | undefined>(undefined);
+
+    useEffect(() => {
+        if (pathId) {
+            fetch(`/api/learning-paths/${pathId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.modules) {
+                        const currentIdx = data.modules.findIndex((m: any) => m.id.toString() === module.id.toString());
+                        if (currentIdx !== -1 && currentIdx < data.modules.length - 1) {
+                            setNextModuleId(data.modules[currentIdx + 1].id);
+                        }
+                    }
+                })
+                .catch(err => console.error("Failed to fetch path for navigation", err));
+        }
+    }, [pathId, module.id]);
     const { markChapterComplete, markModuleComplete } = useLmsProgress();
 
     // If module is completed, show completion screen
     if (isModuleCompleted) {
-        return <CompletionScreen module={module} />;
+        return <CompletionScreen module={module} nextModuleId={nextModuleId} pathId={pathId} />;
     }
 
     const activeChapter = module.chapters.find(c => c.id === activeChapterId) || module.chapters[0];

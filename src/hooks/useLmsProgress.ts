@@ -108,7 +108,7 @@ export const useLmsProgress = () => {
         const completedChaptersCount = progress.completedChapterIds.filter(id => id.startsWith(`${moduleId}-`)).length;
 
         // If module is marked explicitly complete, return 100
-        if (progress.completedModuleIds.includes(moduleId)) return 100;
+        if (progress.completedModuleIds.includes(moduleId.toString())) return 100;
 
         if (totalChapters === 0) return 0;
         return Math.round((completedChaptersCount / totalChapters) * 100);
