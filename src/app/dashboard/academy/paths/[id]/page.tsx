@@ -30,12 +30,6 @@ export default function LearningPathDetailsPage() {
                 setPath(data.path);
                 setPrerequisites(data.prerequisites || []);
 
-                // Enhance modules with progress and locking status
-                // Logic: A module in a sequence might be locked if previous is not done?
-                // For now, let's just list them. The "Strict Order" logic might be needed later.
-                // The user said "Il y aura des chemins à suivre avant de suivre des autres chemins" -> Path prerequisites (Handled in DB/API info).
-                // "Order of modules within path" -> Usually implies sequential access.
-
                 if (data.modules) {
                     const enrichedModules = data.modules.map((m: any) => ({
                         ...m,
@@ -55,54 +49,90 @@ export default function LearningPathDetailsPage() {
         fetchData();
     }, [id, user]);
 
-    // Check if path is locked by prerequisites
-    // This logic should ideally be server-side or checked against user completed paths
-    // But we are just viewing details here.
+    if (isLoading) return (
+        <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+    );
 
-    if (isLoading) return <div className="p-12 text-center text-gray-500">Loading Path...</div>;
-    if (!path) return <div className="p-12 text-center text-red-500">Path not found</div>;
+    if (!path) return (
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+            <h2 className="text-2xl font-bold text-white mb-2">Path not found</h2>
+            <Link href="/dashboard/academy" className="text-primary hover:underline">Return to Academy</Link>
+        </div>
+    );
 
     return (
-        <div className="space-y-8 animate-fade-in max-w-6xl mx-auto">
-            <Link href="/dashboard/academy" className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Academy
-            </Link>
-
-            <div className="bg-gradient-to-r from-primary/10 to-purple-900/10 border border-white/10 rounded-2xl p-8">
-                <h1 className="text-3xl font-bold text-white mb-2">{path.title}</h1>
-                <p className="text-gray-400 max-w-2xl">{path.description}</p>
-
-                {prerequisites.length > 0 && (
-                    <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-                        <h4 className="text-yellow-500 font-bold text-sm uppercase tracking-wider mb-2">Prerequisites</h4>
-                        <ul className="list-disc list-inside text-gray-300 space-y-1">
-                            {prerequisites.map(p => (
-                                <li key={p.id}>{p.title}</li>
-                            ))}
-                        </ul>
+        <div className="space-y-12 animate-fade-in max-w-7xl mx-auto pb-20">
+            {/* Navigation & Header Section */}
+            <div className="space-y-6">
+                <Link href="/dashboard/academy" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors group">
+                    <div className="p-1 rounded-full bg-white/5 group-hover:bg-primary/20 transition-colors">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
                     </div>
-                )}
+                    Back to Academy
+                </Link>
+
+                {/* Hero / Header Card */}
+                <div className="relative overflow-hidden rounded-3xl bg-black/40 backdrop-blur-xl border border-white/10 p-8 md:p-12">
+                    {/* Decorative Background Blob */}
+                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+
+                    <div className="relative z-10 space-y-6">
+                        <div className="space-y-4">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-gray-300 uppercase tracking-widest">
+                                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                Learning Path
+                            </div>
+
+                            <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight">
+                                {path.title}
+                            </h1>
+
+                            <p className="text-lg text-gray-400 max-w-3xl leading-relaxed">
+                                {path.description}
+                            </p>
+                        </div>
+
+                        {/* Modern Prerequisites Section */}
+                        {prerequisites.length > 0 && (
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-4 border-t border-white/5">
+                                <span className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Prerequisites:</span>
+                                <div className="flex flex-wrap gap-2">
+                                    {prerequisites.map(p => (
+                                        <div key={p.id} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-medium">
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                            </svg>
+                                            {p.title}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
-            <div className="space-y-6">
-                <h2 className="text-xl font-bold text-white">Path Modules ({modules.length})</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {modules.map((module, index) => {
-                        // Simple sequential lock logic for UI (Visual only, API enforces security)
-                        // If index > 0 and previous module not completed -> Locked?
-                        // For now, allow access to all in path if path is accessible.
+            {/* Path Flow Section */}
+            <div>
+                <div className="flex items-center gap-4 mb-8">
+                    <h2 className="text-2xl font-bold text-white">Your Journey</h2>
+                    <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                    <span className="text-sm text-gray-500 font-medium">{modules.length} Modules</span>
+                </div>
 
-                        // We need real progress data to do sequential locking. 
-                        // Assuming getModuleProgress works if module ID is valid.
+                <div className="flex flex-col gap-0 relative">
+                    {/* Connecting Line (Background) */}
+                    <div className="absolute left-8 md:left-[2.25rem] top-8 bottom-0 w-0.5 bg-gradient-to-b from-primary/50 via-white/10 to-transparent hidden md:block" />
+
+                    {modules.map((module, index) => {
                         const progress = getModuleProgress(module.id, module.chapters?.length || 0);
                         const isCompleted = progress === 100;
 
-                        // Sequential check: Previous module must be completed
                         let isLocked = false;
-                        // UNLESS path is fully completed/unlocked for review
                         if (path.status !== 'completed') {
                             if (index > 0) {
                                 const prevModule = modules[index - 1];
@@ -111,18 +141,60 @@ export default function LearningPathDetailsPage() {
                             }
                         }
 
+                        const isLast = index === modules.length - 1;
+
                         return (
-                            <div key={module.id} className="relative">
-                                {/* Number badge */}
-                                <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-black border border-white/10 flex items-center justify-center text-white font-bold z-10 shadow-xl">
-                                    {index + 1}
+                            <div key={module.id} className="relative md:pl-24 pb-12 last:pb-0 group">
+                                {/* Connector Node (Desktop) */}
+                                <div className={`absolute left-0 top-8 w-[4.5rem] flex justify-center hidden md:flex z-10`}>
+                                    <div className={`
+                                        w-12 h-12 rounded-full border-4 flex items-center justify-center text-lg font-bold shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all duration-500
+                                        ${isCompleted
+                                            ? 'bg-primary border-primary text-black scale-110'
+                                            : isLocked
+                                                ? 'bg-black border-white/10 text-gray-600'
+                                                : 'bg-black border-primary text-primary'
+                                        }
+                                   `}>
+                                        {isCompleted ? (
+                                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        ) : (
+                                            index + 1
+                                        )}
+                                    </div>
                                 </div>
-                                <ModuleCard
-                                    module={module}
-                                    progress={progress}
-                                    isLocked={isLocked}
-                                    pathId={id}
-                                />
+
+                                {/* Flow Arrow for Mobile (Between cards) */}
+                                {index > 0 && (
+                                    <div className="md:hidden flex justify-center py-4">
+                                        <svg className="w-6 h-6 text-white/20 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                        </svg>
+                                    </div>
+                                )}
+
+                                {/* Card Container */}
+                                <div className={`
+                                    relative transition-all duration-500
+                                    ${isLocked ? 'grayscale opacity-70' : 'opacity-100'}
+                                    ${!isLocked && !isCompleted ? 'translate-x-2' : ''}
+                                `}>
+                                    <ModuleCard
+                                        module={module}
+                                        progress={progress}
+                                        isLocked={isLocked}
+                                        pathId={id}
+                                    />
+
+                                    {/* Desktop Arrow to next module */}
+                                    {!isLast && (
+                                        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 md:hidden">
+                                            {/* Spacer for flow */}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         );
                     })}
