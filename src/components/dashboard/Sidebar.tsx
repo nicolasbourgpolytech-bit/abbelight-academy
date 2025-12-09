@@ -49,6 +49,8 @@ export function Sidebar() {
     const router = useRouter();
     const { user, logout } = useUser();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [isOnlineUsersOpen, setIsOnlineUsersOpen] = useState(true);
+    const [isAdminOpen, setIsAdminOpen] = useState(true);
 
     // Online Users State
     const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
@@ -162,13 +164,27 @@ export function Sidebar() {
                 {/* Online Users Section */}
                 {user?.roles.includes('abbelighter_admin') && (
                     <div className="mt-8 pt-6 border-t border-white/10">
-                        <div className="px-4 mb-3 flex items-center justify-between text-xs font-bold text-gray-500 uppercase tracking-widest">
-                            <span>Online Users</span>
-                            <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
-                                {onlineUsers.length}
-                            </span>
-                        </div>
-                        <div className="space-y-1">
+                        <button
+                            onClick={() => setIsOnlineUsersOpen(!isOnlineUsersOpen)}
+                            className="w-full px-4 mb-3 flex items-center justify-between text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-gray-300 transition-colors group"
+                        >
+                            <div className="flex items-center gap-2">
+                                <span>Online Users</span>
+                                <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
+                                    {onlineUsers.length}
+                                </span>
+                            </div>
+                            <svg
+                                className={`w-4 h-4 transition-transform duration-200 ${isOnlineUsersOpen ? 'rotate-180' : ''}`}
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <div className={`space-y-1 overflow-hidden transition-all duration-300 ${isOnlineUsersOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                             {onlineUsers.length === 0 ? (
                                 <p className="px-4 text-xs text-gray-600 italic">No one else online</p>
                             ) : (
@@ -208,10 +224,22 @@ export function Sidebar() {
                 {/* Admin Tools Section */}
                 {user?.roles.includes('abbelighter_admin') && (
                     <div className="mt-8 pt-6 border-t border-white/10">
-                        <div className="px-4 mb-3 text-xs font-bold text-gray-500 uppercase tracking-widest">
-                            Admin
-                        </div>
-                        <div className="space-y-1">
+                        <button
+                            onClick={() => setIsAdminOpen(!isAdminOpen)}
+                            className="w-full px-4 mb-3 flex items-center justify-between text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-gray-300 transition-colors group"
+                        >
+                            <span>Admin</span>
+                            <svg
+                                className={`w-4 h-4 transition-transform duration-200 ${isAdminOpen ? 'rotate-180' : ''}`}
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <div className={`space-y-1 overflow-hidden transition-all duration-300 ${isAdminOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                             <Link
                                 href="/dashboard/admin/learning-paths"
                                 className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 
