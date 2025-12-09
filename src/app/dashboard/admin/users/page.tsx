@@ -33,14 +33,28 @@ export default function UsersAdminPage() {
 
     const handleApproveUser = async (id: number) => {
         try {
-            const res = await fetch('/api/users', {
-                method: 'PUT',
+            const res = await fetch('/api/admin/users/approve', {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, status: 'approved' })
+                body: JSON.stringify({ userId: id })
             });
-            if (res.ok) fetchUsers();
-            else alert("Failed to approve user");
-        } catch (e) { alert("Error approving user"); }
+
+            const data = await res.json();
+
+            if (res.ok) {
+                if (data.tempPassword) {
+                    alert(`User Approved!\n\nTemporary Password: ${data.tempPassword}\n\nPlease share this with the user.`);
+                } else {
+                    alert("User approved, but no password was returned.");
+                }
+                fetchUsers();
+            } else {
+                alert(data.error || "Failed to approve user");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error approving user");
+        }
     };
 
     const handleRejectUser = async (id: number) => {
