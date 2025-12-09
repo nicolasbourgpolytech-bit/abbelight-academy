@@ -15,13 +15,13 @@ export function ResourceCard({ item }: ResourceCardProps) {
         if (!tags || tags.length === 0) return null;
         return (
             <div className="flex flex-col sm:flex-row sm:items-baseline gap-1.5">
-                <span className={`w-28 shrink-0 text-[10px] font-bold uppercase tracking-wider ${labelColor} opacity-80 pt-0.5 whitespace-nowrap`}>{label}</span>
+                <span className={`w-28 shrink-0 text-xs font-bold uppercase tracking-wider ${labelColor} opacity-80 pt-0.5 whitespace-nowrap`}>{label}</span>
                 <div className="flex flex-wrap gap-1">
                     {tags.map(tag => (
                         <span
                             key={tag}
                             // Reduced font size and padding for compactness
-                            className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${colorClass}`}
+                            className={`text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${colorClass}`}
                         >
                             {tag}
                         </span>
@@ -44,22 +44,22 @@ export function ResourceCard({ item }: ResourceCardProps) {
                     <div className="flex justify-between items-start mb-1">
                         <div className="flex flex-wrap gap-2 items-center">
                             {item.isNew && (
-                                <span className="bg-primary text-black text-[9px] font-bold px-1.5 py-0.5 rounded shadow animate-pulse">
+                                <span className="bg-primary text-black text-xs font-bold px-1.5 py-0.5 rounded shadow animate-pulse">
                                     NEW
                                 </span>
                             )}
-                            <span className="text-[10px] text-gray-500 font-mono">
+                            <span className="text-sm text-gray-500 font-mono">
                                 {new Date(item.date).toLocaleDateString()}
                             </span>
                         </div>
                     </div>
 
-                    <h3 className="text-base font-bold text-white mb-1 group-hover:text-primary transition-colors leading-tight">
+                    <h3 className="text-xl font-bold text-white mb-1 group-hover:text-primary transition-colors leading-tight">
                         {item.title}
                     </h3>
 
                     {/* Journal and Authors Line */}
-                    <div className="mb-2 text-xs text-gray-400 flex flex-wrap items-center gap-2 border-b border-white/5 pb-2">
+                    <div className="mb-2 text-sm text-gray-400 flex flex-wrap items-center gap-2 border-b border-white/5 pb-2">
                         {item.journal && (
                             <span className="font-semibold text-gray-300">{item.journal}</span>
                         )}
@@ -70,7 +70,7 @@ export function ResourceCard({ item }: ResourceCardProps) {
 
                         {item.firstAuthor && (
                             <span className="italic">
-                                <span className="text-[10px] uppercase tracking-wide text-gray-500 not-italic mr-1">First:</span>
+                                <span className="text-xs uppercase tracking-wide text-gray-500 not-italic mr-1">First:</span>
                                 {item.firstAuthor}
                             </span>
                         )}
@@ -81,7 +81,7 @@ export function ResourceCard({ item }: ResourceCardProps) {
 
                         {item.lastAuthor && (
                             <span className="italic">
-                                <span className="text-[10px] uppercase tracking-wide text-gray-500 not-italic mr-1">Last:</span>
+                                <span className="text-xs uppercase tracking-wide text-gray-500 not-italic mr-1">Last:</span>
                                 {item.lastAuthor}
                             </span>
                         )}

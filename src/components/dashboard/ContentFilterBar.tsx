@@ -19,7 +19,7 @@ export function ContentFilterBar({ onSearch, onSortChange }: ContentFilterBarPro
                 </div>
                 <input
                     type="text"
-                    className="block w-full pl-10 pr-3 py-3 bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-colors"
+                    className="block w-full pl-10 pr-3 py-3 bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-colors text-base"
                     placeholder="Search by title or keyword..."
                     onChange={(e) => onSearch(e.target.value)}
                 />
@@ -34,7 +34,7 @@ export function ContentFilterBar({ onSearch, onSortChange }: ContentFilterBarPro
                         </svg>
                     </div>
                     <select
-                        className="block w-full pl-10 pr-10 py-3 bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-colors appearance-none cursor-pointer"
+                        className="block w-full pl-10 pr-10 py-3 bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-colors appearance-none cursor-pointer text-base"
                         onChange={(e) => onSortChange(e.target.value as any)}
                         defaultValue="date-desc"
                     >

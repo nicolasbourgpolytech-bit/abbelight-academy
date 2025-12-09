@@ -47,8 +47,8 @@ export function StatsHistograms({ articles }: StatsHistogramsProps) {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-black/80 border border-white/10 p-2 rounded shadow-xl backdrop-blur-md">
-                    <p className="text-xs font-bold text-white mb-1">{label}</p>
-                    <p className="text-xs text-primary">{`${payload[0].value} Articles`}</p>
+                    <p className="text-sm font-bold text-white mb-1">{label}</p>
+                    <p className="text-sm text-primary">{`${payload[0].value} Articles`}</p>
                 </div>
             );
         }
@@ -59,7 +59,7 @@ export function StatsHistograms({ articles }: StatsHistogramsProps) {
         <div className="flex gap-8 items-center">
             {/* Articles by Year */}
             <div className="w-80">
-                <p className="text-xs uppercase tracking-widest mb-2 text-right text-cyan-500 font-semibold">By Year</p>
+                <p className="text-sm uppercase tracking-widest mb-2 text-right text-cyan-500 font-semibold">By Year</p>
                 <div className="h-40">
                     <ResponsiveContainer width="100%" height="100%" className="[&_.recharts-surface]:outline-none [&_*]:outline-none [&_*]:focus:outline-none">
                         <BarChart data={data.years} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
@@ -67,10 +67,10 @@ export function StatsHistograms({ articles }: StatsHistogramsProps) {
                             <YAxis
                                 dataKey="name"
                                 type="category"
-                                width={40}
+                                width={50}
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
+                                tick={{ fill: '#9ca3af', fontSize: 13, fontWeight: 500 }}
                                 interval={0}
                             />
                             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
@@ -86,7 +86,7 @@ export function StatsHistograms({ articles }: StatsHistogramsProps) {
 
             {/* Articles by Domain */}
             <div className="w-[28rem]">
-                <p className="text-xs uppercase tracking-widest mb-2 text-right text-fuchsia-500 font-semibold">By Domain</p>
+                <p className="text-sm uppercase tracking-widest mb-2 text-right text-fuchsia-500 font-semibold">By Domain</p>
                 <div className="h-40">
                     <ResponsiveContainer width="100%" height="100%" className="[&_.recharts-surface]:outline-none [&_*]:outline-none [&_*]:focus:outline-none">
                         <BarChart data={data.domains} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
@@ -94,10 +94,10 @@ export function StatsHistograms({ articles }: StatsHistogramsProps) {
                             <YAxis
                                 dataKey="name"
                                 type="category"
-                                width={140}
+                                width={180}
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#9ca3af', fontSize: 11, fontWeight: 500 }}
+                                tick={{ fill: '#9ca3af', fontSize: 13, fontWeight: 500 }}
                                 interval={0}
                             />
                             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />

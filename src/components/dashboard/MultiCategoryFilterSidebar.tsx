@@ -32,10 +32,10 @@ export function MultiCategoryFilterSidebar({ categories, selectedFilters, counts
             {hasActiveFilters && (
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10 animate-fade-in shadow-sm">
                     <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-xs font-bold text-brand-cyan uppercase tracking-wider">Active Filters</h4>
+                        <h4 className="text-sm font-bold text-brand-cyan uppercase tracking-wider">Active Filters</h4>
                         <button
                             onClick={onClearAll}
-                            className="text-[10px] text-gray-400 hover:text-white transition-colors underline hover:no-underline"
+                            className="text-xs text-gray-400 hover:text-white transition-colors underline hover:no-underline"
                         >
                             Clear All
                         </button>
@@ -58,7 +58,7 @@ export function MultiCategoryFilterSidebar({ categories, selectedFilters, counts
                                 <button
                                     key={`${catId}-${option}`}
                                     onClick={() => onToggleFilter(catId, option)}
-                                    className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-colors border group ${colorClass}`}
+                                    className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-sm font-medium transition-colors border group ${colorClass}`}
                                 >
                                     <span>{option}</span>
                                     <svg className="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -95,7 +95,7 @@ export function MultiCategoryFilterSidebar({ categories, selectedFilters, counts
                                 <div className="flex items-center gap-2">
                                     {activeCount > 0 && (
                                         // Use Brand Cyan for the count badge
-                                        <span className="bg-brand-cyan text-black text-[10px] font-bold px-1.5 rounded-full min-w-[1.25rem] h-5 flex items-center justify-center">
+                                        <span className="bg-brand-cyan text-black text-xs font-bold px-1.5 rounded-full min-w-[1.25rem] h-5 flex items-center justify-center">
                                             {activeCount}
                                         </span>
                                     )}
@@ -146,7 +146,7 @@ export function MultiCategoryFilterSidebar({ categories, selectedFilters, counts
                                                 </div>
                                                 <div className="flex-1 flex justify-between gap-2">
                                                     <span className="text-sm break-words leading-tight">{option}</span>
-                                                    <span className="text-xs text-gray-600 font-mono group-hover:text-gray-500 transition-colors">({count})</span>
+                                                    <span className="text-sm text-gray-600 font-mono group-hover:text-gray-500 transition-colors">({count})</span>
                                                 </div>
                                             </label>
                                         );
