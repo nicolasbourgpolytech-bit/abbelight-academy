@@ -282,28 +282,33 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                     )}
 
                     {activeChapter.type === 'gif' && (
-                        <div className="w-full h-full flex flex-col items-center justify-start p-8 overflow-y-auto">
-                            <div className="max-w-5xl w-full space-y-6">
-                                {activeChapter.contentUrl && (
-                                    <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black/40 backdrop-blur-sm">
-                                        <img
-                                            src={activeChapter.contentUrl}
-                                            alt={activeChapter.title}
-                                            className="w-full h-auto max-h-[70vh] object-contain mx-auto"
-                                            onLoad={handleContentCompleted}
+                        <div className="w-full h-full flex flex-col relative bg-black">
+                            {/* GIF Area - Takes max space */}
+                            {activeChapter.contentUrl && (
+                                <div className="flex-1 min-h-0 relative flex items-center justify-center p-0">
+                                    <img
+                                        src={activeChapter.contentUrl}
+                                        alt={activeChapter.title}
+                                        className="w-full h-full object-contain"
+                                        onLoad={handleContentCompleted}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Description Area - Overlay bottom or fixed block */}
+                            {activeChapter.description && (
+                                <div className="bg-black/90 backdrop-blur-md border-t border-white/10 p-6 max-h-[35%] overflow-y-auto w-full shrink-0 z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+                                    <div className="max-w-6xl mx-auto w-full">
+                                        <h1 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+                                            {activeChapter.title}
+                                        </h1>
+                                        <div
+                                            className="text-gray-300 text-base leading-relaxed prose prose-invert prose-p:my-2 prose-headings:text-white prose-a:text-primary max-w-none"
+                                            dangerouslySetInnerHTML={{ __html: activeChapter.description }}
                                         />
                                     </div>
-                                )}
-
-                                <div className="bg-white/5 border border-white/10 rounded-xl p-6 backdrop-blur-sm">
-                                    <h1 className="text-2xl font-bold text-white mb-4">{activeChapter.title}</h1>
-                                    {activeChapter.description && (
-                                        <div className="text-gray-300 text-lg leading-relaxed whitespace-pre-wrap font-light">
-                                            {activeChapter.description}
-                                        </div>
-                                    )}
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
                 </div>
