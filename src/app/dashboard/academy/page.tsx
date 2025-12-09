@@ -152,12 +152,27 @@ export default function AcademyPage() {
                         <button
                             onClick={async () => {
                                 if (confirm('Are you sure you want to reset your entire learning journey? All progress will be lost.')) {
-                                    await fetch('/api/users/reset-xp', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ userId: user?.id, email: user?.email })
-                                    });
-                                    window.location.reload();
+                                    try {
+                                        await fetch('/api/users/reset-xp', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ userId: user?.id, email: user?.email })
+                                        });
+
+                                        // 1. Force refresh user data from server
+                                        // This updates the context immediately
+                                        if (user) {
+                                            const updatedUser = { ...user, xp: 0, level: 1, badges: [] };
+                                            localStorage.setItem('abbelight_session_v2', JSON.stringify(updatedUser));
+                                        }
+
+                                        // 2. Reload to reset local component states
+                                        // We use href assignment to force a full browser navigation rather than just a re-render
+                                        window.location.href = '/dashboard/academy';
+                                    } catch (e) {
+                                        console.error("Reset failed", e);
+                                        alert("Failed to reset journey. Please try again.");
+                                    }
                                 }
                             }}
                             className="bg-warning/10 hover:bg-warning/20 text-warning text-xs px-3 py-1.5 rounded-lg border border-warning/20 transition-all font-bold uppercase tracking-wider"
