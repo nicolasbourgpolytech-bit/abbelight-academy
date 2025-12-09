@@ -237,7 +237,7 @@ export default function ArticlesPage() {
             {/* Banner Header with Overlay */}
             <div className="relative w-full aspect-[32/9] min-h-[300px] rounded-2xl overflow-hidden mb-8 border border-white/10 shadow-2xl group">
                 <Image
-                    src="/smlm_banner.png"
+                    src="/articles_banner.jpg"
                     alt="SMLM Scientific Articles"
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
