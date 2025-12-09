@@ -64,8 +64,6 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
 
     // Simple navigation handlers
     const router = useRouter();
-    // Need to import useRouter at top level first! 
-    // I will do that in a separate edit or assume I can do it here if I check imports.
 
     const nextChapter = async () => {
         if (!isRequirementsMet) return;
@@ -86,8 +84,6 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                 // Result contains pathCompleted, bonusXp etc.
                 if (result.pathCompleted) {
                     // Path Completed!
-                    // Maybe show confetti or alert before redirect?
-                    // For now, let CompletionScreen handle it or redirect after short delay.
                 } else {
                     // Fetch Path Details to find NEXT module
                     try {
@@ -113,10 +109,27 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
     };
 
     return (
-        <div className="flex h-[calc(100vh-theme(spacing.24))] overflow-hidden bg-black border border-white/10 rounded-2xl relative shadow-2xl">
+        <div className="flex h-[calc(100vh-theme(spacing.24))] overflow-hidden bg-[#02040a] border border-white/10 rounded-2xl relative shadow-2xl group/player isolate">
+
+            {/* SMLM Ambient Background Effects */}
+            <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+                {/* Deep atmospheric glow (Blue/Purple/Cyan) */}
+                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-900/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-cyan-900/10 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow delay-1000" />
+
+                {/* Simulated "Molecules" (Stochastic blinking points) */}
+                <div className="absolute inset-0 opacity-20"
+                    style={{
+                        backgroundImage: 'radial-gradient(circle at center, white 1px, transparent 1px)',
+                        backgroundSize: '40px 40px',
+                        maskImage: 'radial-gradient(circle at center, black 40%, transparent 100%)'
+                    }}
+                />
+            </div>
+
             {/* Sidebar (Chapter List) */}
-            <div className={`w-80 bg-black/50 backdrop-blur border-r border-white/10 flex flex-col transition-all duration-300 absolute md:static z-20 h-full ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:w-0 md:opacity-0 md:overflow-hidden'}`}>
-                <div className="p-4 border-b border-white/10 bg-black/40">
+            <div className={`w-80 bg-black/60 backdrop-blur-xl border-r border-white/10 flex flex-col transition-all duration-300 absolute md:static z-20 h-full ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:w-0 md:opacity-0 md:overflow-hidden'}`}>
+                <div className="p-4 border-b border-white/10 bg-black/20">
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Module Content</h3>
                     <h2 className="font-bold text-white line-clamp-1" title={module.title}>{module.title}</h2>
                 </div>
@@ -138,29 +151,29 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                                 key={chapter.id}
                                 onClick={() => !isLocked && setActiveChapterId(chapter.id)}
                                 disabled={isLocked}
-                                className={`w-full text-left p-3 rounded-lg flex items-start gap-3 transition-colors ${isActive
-                                    ? 'bg-primary/20 border border-primary/20'
-                                    : isLocked
-                                        ? 'cursor-not-allowed opacity-50 border border-transparent'
-                                        : 'hover:bg-white/5 border border-transparent cursor-pointer'
+                                className={`w-full text-left p-3 rounded-lg flex items-start gap-3 transition-all duration-300 group/item ${isActive
+                                        ? 'bg-primary/20 border border-primary/20 shadow-[0_0_15px_rgba(0,202,248,0.15)]'
+                                        : isLocked
+                                            ? 'cursor-not-allowed opacity-40 border border-transparent'
+                                            : 'hover:bg-white/5 border border-transparent cursor-pointer hover:border-white/10'
                                     }`}
                             >
-                                <div className={`mt-1 w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center border ${isActive ? 'border-primary text-primary' :
-                                    isCompleted ? 'bg-green-500 border-green-500 text-black' :
-                                        isLocked ? 'border-gray-800 text-gray-800' : 'border-gray-600'
+                                <div className={`mt-1 w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center border transition-colors ${isActive ? 'border-primary text-primary shadow-[0_0_10px_currentColor]' :
+                                        isCompleted ? 'bg-green-500 border-green-500 text-black shadow-[0_0_10px_rgba(34,197,94,0.4)]' :
+                                            isLocked ? 'border-gray-800 text-gray-800' : 'border-gray-600 group-hover/item:border-gray-400'
                                     }`}>
                                     {isCompleted && !isActive && <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                                     {isActive && <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />}
                                     {isLocked && !isCompleted && !isActive && <span className="block w-1 h-1 bg-gray-800 rounded-full" />}
                                 </div>
                                 <div>
-                                    <div className={`text-sm font-medium ${isActive ? 'text-white' :
-                                        isLocked ? 'text-gray-600' : 'text-gray-400'
+                                    <div className={`text-sm font-medium transition-colors ${isActive ? 'text-white' :
+                                            isLocked ? 'text-gray-600' : 'text-gray-400 group-hover/item:text-gray-300'
                                         }`}>
                                         {index + 1}. {chapter.title}
                                     </div>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <span className={`text-[10px] uppercase font-bold px-1 rounded border ${isLocked ? 'text-gray-700 border-gray-800' : 'text-gray-600 border-gray-700'
+                                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${isLocked ? 'text-gray-700 border-gray-800' : 'text-gray-500 border-gray-700 group-hover/item:border-gray-600'
                                             }`}>
                                             {chapter.type}
                                         </span>
@@ -172,7 +185,7 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                     })}
                 </div>
 
-                <div className="p-4 border-t border-white/10">
+                <div className="p-4 border-t border-white/10 bg-black/20">
                     <Link href="/dashboard/academy" className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-white transition-colors">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7 7-7" /></svg>
                         Back to Catalog
@@ -181,7 +194,7 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col bg-gray-900/50 relative">
+            <div className="flex-1 flex flex-col bg-transparent relative z-10">
 
                 {/* Mobile Toggle */}
                 <button
@@ -208,17 +221,17 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                                     Please ensure you watch the entire video before proceeding to the quiz.
                                 </p>
 
-                                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-6 backdrop-blur-sm">
                                     <h3 className="font-bold text-white mb-4 flex items-center gap-2">
                                         <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                         Lesson Resources
                                     </h3>
                                     <div className="flex flex-col gap-2">
-                                        <button className="flex items-center justify-between p-3 bg-black/20 hover:bg-black/40 rounded-lg transition-colors group text-left">
+                                        <button className="flex items-center justify-between p-3 bg-black/40 hover:bg-black/60 rounded-lg transition-colors group text-left border border-white/5 hover:border-primary/30">
                                             <span className="text-sm text-gray-300 group-hover:text-primary transition-colors">📄 Lecture Notes.pdf</span>
                                             <span className="text-xs text-gray-600">2.4 MB</span>
                                         </button>
-                                        <button className="flex items-center justify-between p-3 bg-black/20 hover:bg-black/40 rounded-lg transition-colors group text-left">
+                                        <button className="flex items-center justify-between p-3 bg-black/40 hover:bg-black/60 rounded-lg transition-colors group text-left border border-white/5 hover:border-primary/30">
                                             <span className="text-sm text-gray-300 group-hover:text-primary transition-colors">📊 Dataset_Sample_01.zip</span>
                                             <span className="text-xs text-gray-600">145 MB</span>
                                         </button>
@@ -265,7 +278,7 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                 </div>
 
                 {/* Player Footer (Navigation) */}
-                <div className="h-20 border-t border-white/10 bg-black flex items-center justify-between px-8">
+                <div className="h-20 border-t border-white/10 bg-black/40 backdrop-blur-md flex items-center justify-between px-8">
                     <button
                         onClick={prevChapter}
                         disabled={activeIndex === 0}
@@ -280,8 +293,9 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                         <span className="text-xs text-gray-500 font-mono hidden md:block">
                             Progress: {Math.round(((activeIndex) / module.chapters.length) * 100)}%
                         </span>
-                        <div className="w-32 h-1 bg-white/10 rounded-full hidden md:block">
-                            <div className="h-full bg-primary" style={{ width: `${((activeIndex) / module.chapters.length) * 100}%` }}></div>
+                        <div className="w-32 h-1 bg-white/10 rounded-full hidden md:block overflow-hidden relative">
+                            <div className="absolute inset-0 bg-white/5" />
+                            <div className="h-full bg-primary shadow-[0_0_10px_rgba(0,202,248,0.5)] transition-all duration-500" style={{ width: `${((activeIndex) / module.chapters.length) * 100}%` }}></div>
                         </div>
                     </div>
 
@@ -290,8 +304,8 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                             onClick={nextChapter}
                             disabled={!isRequirementsMet}
                             className={`px-8 py-3 rounded-lg font-bold uppercase text-xs flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,0,0,0.3)] ${isRequirementsMet
-                                    ? 'bg-primary text-black hover:bg-white cursor-pointer shadow-[0_0_20px_rgba(0,202,248,0.3)]'
-                                    : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-70'
+                                ? 'bg-primary text-black hover:bg-white cursor-pointer shadow-[0_0_20px_rgba(0,202,248,0.3)]'
+                                : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-70'
                                 }`}
                         >
                             {activeIndex === module.chapters.length - 1 ? 'Finish Module' : 'Next Lesson'}
