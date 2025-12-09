@@ -125,7 +125,7 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                                 </div>
                             )}
 
-                            <ErrorBoundary>
+                            <ErrorBoundary maxRetries={3}>
                                 <Document
                                     file={pdfUrl}
                                     onLoadSuccess={onDocumentLoadSuccess}
