@@ -3,6 +3,115 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 
+// --- Internal Components ---
+
+interface QuizBuilderProps {
+    data: any;
+    onChange: (data: any) => void;
+}
+
+function QuizBuilder({ data, onChange }: QuizBuilderProps) {
+    // Ensure data is array
+    const questions = Array.isArray(data) ? data : [];
+
+    const addQuestion = () => {
+        onChange([
+            ...questions,
+            {
+                id: `q${Date.now()}`,
+                question: "",
+                options: ["", "", "", ""],
+                correctAnswer: 0,
+                explanation: ""
+            }
+        ]);
+    };
+
+    const updateQuestion = (index: number, field: string, value: any) => {
+        const newQuestions = [...questions];
+        newQuestions[index] = { ...newQuestions[index], [field]: value };
+        onChange(newQuestions);
+    };
+
+    const updateOption = (qIndex: number, oIndex: number, value: string) => {
+        const newQuestions = [...questions];
+        const newOptions = [...newQuestions[qIndex].options];
+        newOptions[oIndex] = value;
+        newQuestions[qIndex].options = newOptions;
+        onChange(newQuestions);
+    };
+
+    const removeQuestion = (index: number) => {
+        onChange(questions.filter((_, i) => i !== index));
+    };
+
+    return (
+        <div className="space-y-6">
+            {questions.map((q: any, qIndex: number) => (
+                <div key={q.id || qIndex} className="bg-black/30 border border-white/10 p-4 rounded-xl">
+                    <div className="flex justify-between items-start mb-4">
+                        <span className="text-xs font-bold text-gray-500 uppercase">Question {qIndex + 1}</span>
+                        <button type="button" onClick={() => removeQuestion(qIndex)} className="text-red-500 hover:text-red-400 text-xs">Remove</button>
+                    </div>
+
+                    <div className="mb-4">
+                        <input
+                            type="text"
+                            placeholder="Enter question here..."
+                            className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-bold"
+                            value={q.question}
+                            onChange={(e) => updateQuestion(qIndex, 'question', e.target.value)}
+                        />
+                    </div>
+
+                    <div className="space-y-2 mb-4">
+                        <label className="text-xs text-gray-500 block">Options (Click circle to select correct answer)</label>
+                        {q.options.map((opt: string, oIndex: number) => (
+                            <div key={oIndex} className="flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => updateQuestion(qIndex, 'correctAnswer', oIndex)}
+                                    className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${q.correctAnswer === oIndex ? 'bg-green-500 border-green-500' : 'border-gray-600 hover:border-gray-400'}`}
+                                >
+                                    {q.correctAnswer === oIndex && <div className="w-2 h-2 bg-black rounded-full" />}
+                                </button>
+                                <input
+                                    type="text"
+                                    placeholder={`Option ${oIndex + 1}`}
+                                    className={`flex-1 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm ${q.correctAnswer === oIndex ? 'border-green-500/50' : ''}`}
+                                    value={opt}
+                                    onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    <div>
+                        <label className="text-xs text-gray-500 block mb-1">Explanation (Optional)</label>
+                        <textarea
+                            rows={2}
+                            placeholder="Why is this answer correct?"
+                            className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm"
+                            value={q.explanation || ""}
+                            onChange={(e) => updateQuestion(qIndex, 'explanation', e.target.value)}
+                        />
+                    </div>
+                </div>
+            ))}
+
+            <button
+                type="button"
+                onClick={addQuestion}
+                className="w-full py-3 border-2 border-dashed border-white/10 rounded-xl text-gray-400 hover:text-white hover:border-white/30 transition-colors flex items-center justify-center gap-2 font-bold text-sm"
+            >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                Add Question
+            </button>
+        </div>
+    );
+}
+
+
 export default function ModulesAdminPage() {
     const { user } = useUser();
     const [modules, setModules] = useState<any[]>([]);
@@ -422,16 +531,26 @@ export default function ModulesAdminPage() {
                                 {(newChapter.type === 'quiz' || newChapter.type === 'slides') && (
                                     <div className="mb-4">
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
-                                            {newChapter.type === 'quiz' ? 'Quiz Configuration (JSON)' : 'Slides Configuration (JSON)'}
+                                            {newChapter.type === 'quiz' ? 'Quiz Configuration' : 'Slides Configuration (JSON)'}
                                         </label>
-                                        <textarea
-                                            rows={6}
-                                            className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-mono"
-                                            placeholder='[{"question": "...", "options": [...], "correctAnswer": 0}]'
-                                            value={typeof newChapter.data === 'string' ? newChapter.data : JSON.stringify(newChapter.data, null, 2)}
-                                            onChange={e => setNewChapter({ ...newChapter, data: e.target.value })}
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">Paste your JSON configuration here.</p>
+
+                                        {newChapter.type === 'quiz' ? (
+                                            <QuizBuilder
+                                                data={typeof newChapter.data === 'string' ? [] : newChapter.data}
+                                                onChange={(newData) => setNewChapter({ ...newChapter, data: newData })}
+                                            />
+                                        ) : (
+                                            <>
+                                                <textarea
+                                                    rows={6}
+                                                    className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-mono"
+                                                    placeholder='[{"question": "...", "options": [...], "correctAnswer": 0}]'
+                                                    value={typeof newChapter.data === 'string' ? newChapter.data : JSON.stringify(newChapter.data, null, 2)}
+                                                    onChange={e => setNewChapter({ ...newChapter, data: e.target.value })}
+                                                />
+                                                <p className="text-xs text-gray-500 mt-1">Paste your JSON configuration here.</p>
+                                            </>
+                                        )}
                                     </div>
                                 )}
                                 <div className="flex gap-4">
