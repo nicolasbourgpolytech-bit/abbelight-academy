@@ -34,8 +34,9 @@ export function ResourceCard({ item }: ResourceCardProps) {
     return (
         <Link
             href={item.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={item.url}
+            target={isWebinar ? "_self" : "_blank"}
+            rel={isWebinar ? undefined : "noopener noreferrer"}
             className="block group w-full"
         >
             <div className="glass-card p-0 h-full flex flex-col overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1">

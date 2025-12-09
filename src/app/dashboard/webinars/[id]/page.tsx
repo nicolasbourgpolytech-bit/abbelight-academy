@@ -44,6 +44,16 @@ export default function WebinarDetailPage({ params }: { params: Promise<{ id: st
 
     return (
         <div className="animate-fade-in max-w-7xl mx-auto">
+            {/* Back Button */}
+            <div className="mb-6">
+                <a href="/dashboard/webinars" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors group">
+                    <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Webinars
+                </a>
+            </div>
+
             <div className="flex flex-col lg:flex-row gap-8">
 
                 {/* Main Content (Video Player) */}
