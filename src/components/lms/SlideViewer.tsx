@@ -44,6 +44,13 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
     // Calculate progress percentage
     const progress = totalSlides > 0 ? Math.round(((currentIndex + 1) / totalSlides) * 100) : 0;
 
+    // Configure PDF options suitable for standard builds
+    const options = {
+        cMapUrl: `//unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+        cMapPacked: true,
+        standardFontDataUrl: `//unpkg.com/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
+    };
+
     return (
         <div className="w-full h-full flex flex-col items-center justify-center p-4 md:p-8 animate-fade-in relative bg-gray-900">
 
@@ -67,8 +74,11 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                             <Document
                                 file={pdfUrl}
                                 onLoadSuccess={onDocumentLoadSuccess}
+                                onLoadError={(error) => console.error("PDF Document Load Error:", error)}
                                 className="flex items-center justify-center"
                                 loading={<div className="text-primary animate-pulse">Loading PDF...</div>}
+                                error={<div className="text-red-500 font-bold p-4">Failed to load PDF document.</div>}
+                                options={options}
                             >
                                 <Page
                                     pageNumber={currentIndex + 1}
@@ -76,6 +86,8 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                                     width={window.innerWidth > 768 ? 800 : window.innerWidth * 0.9}
                                     renderTextLayer={false}
                                     renderAnnotationLayer={false}
+                                    onLoadError={(error) => console.error("PDF Page Load Error:", error)}
+                                    error={<div className="text-red-500 p-4 bg-red-100 rounded">Error loading page {currentIndex + 1}.</div>}
                                 />
                             </Document>
                         </div>
