@@ -29,9 +29,13 @@ export async function POST(request: Request) {
         const { rows: current } = await sql`SELECT MAX(position) as max_pos FROM chapters WHERE module_id = ${module_id}`;
         const nextPos = (current[0]?.max_pos || 0) + 1;
 
+        // Ensure data is stringified for JSONB column if it's an object/array
+        // The pg driver can sometimes confuse arrays for Postgres Arrays instead of JSON
+        const dataJson = typeof data === 'object' ? JSON.stringify(data) : data;
+
         const { rows } = await sql`
       INSERT INTO chapters (module_id, title, type, content_url, data, duration, position)
-      VALUES (${module_id}, ${title}, ${type}, ${content_url}, ${data}, ${duration}, ${nextPos})
+      VALUES (${module_id}, ${title}, ${type}, ${content_url}, ${dataJson}, ${duration}, ${nextPos})
       RETURNING *;
     `;
 
@@ -50,10 +54,12 @@ export async function PUT(request: Request) {
             return NextResponse.json({ error: 'ID and Title are required' }, { status: 400 });
         }
 
+        const dataJson = typeof data === 'object' ? JSON.stringify(data) : data;
+
         const { rows } = await sql`
             UPDATE chapters 
             SET title = ${title}, type = ${type}, content_url = ${content_url}, 
-                data = ${data}, duration = ${duration}, position = ${position}
+                data = ${dataJson}, duration = ${duration}, position = ${position}
             WHERE id = ${id}
             RETURNING *;
         `;

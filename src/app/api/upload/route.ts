@@ -1,31 +1,37 @@
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse> {
+    const body = (await request.json()) as HandleUploadBody;
+
     try {
-        const { searchParams } = new URL(request.url);
-        const filename = searchParams.get('filename') || 'file';
+        const jsonResponse = await handleUpload({
+            body,
+            request,
+            onBeforeGenerateToken: async (pathname, clientPayload) => {
+                // You can check user authentication here
+                // const user = await auth(request);
+                // if (!user) throw new Error('Unauthorized');
 
-        // Check if we are checking database/token or environment
-        if (!process.env.BLOB_READ_WRITE_TOKEN) {
-            return NextResponse.json({ error: 'BLOB_READ_WRITE_TOKEN is not defined in environment variables.' }, { status: 500 });
-        }
-
-        const formData = await request.formData();
-        const file = formData.get('file') as File;
-
-        if (!file) {
-            return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
-        }
-
-        // Upload to Vercel Blob
-        const blob = await put(file.name, file, {
-            access: 'public',
+                return {
+                    allowedContentTypes: ['application/pdf', 'video/mp4', 'image/jpeg', 'image/png'],
+                    tokenPayload: JSON.stringify({
+                        // optional, sent to your server on upload completion
+                        // userId: user.id,
+                    }),
+                };
+            },
+            onUploadCompleted: async ({ blob, tokenPayload }) => {
+                // Optional, run after upload
+                console.log('blob uploaded', blob.url);
+            },
         });
 
-        return NextResponse.json({ url: blob.url });
+        return NextResponse.json(jsonResponse);
     } catch (error) {
-        console.error('Upload error:', error);
-        return NextResponse.json({ error: `Upload failed: ${(error as any).message}` }, { status: 500 });
+        return NextResponse.json(
+            { error: (error as Error).message },
+            { status: 400 }, // The webhook will retry 5 times if you return 400
+        );
     }
 }

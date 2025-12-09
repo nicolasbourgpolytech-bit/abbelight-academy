@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
+import { upload } from '@vercel/blob/client';
 
 // --- Internal Components ---
 
@@ -194,20 +195,13 @@ export default function ModulesAdminPage() {
         if (!file) return;
 
         setUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
-
+        // Remove manual FormData fetch
         try {
-            const res = await fetch('/api/upload', {
-                method: 'POST',
-                body: formData,
+            const newBlob = await upload(file.name, file, {
+                access: 'public',
+                handleUploadUrl: '/api/upload',
             });
-            const data = await res.json();
-            if (res.ok) {
-                setNewChapter({ ...newChapter, content_url: data.url });
-            } else {
-                alert("Upload failed: " + (typeof data.error === 'object' ? JSON.stringify(data.error) : data.error));
-            }
+            setNewChapter({ ...newChapter, content_url: newBlob.url });
         } catch (error) {
             alert("Upload error: " + (error as any).message);
         } finally {
