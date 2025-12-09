@@ -122,7 +122,7 @@ export default function ModulesAdminPage() {
     // Chapters State
     const [selectedModuleForChapters, setSelectedModuleForChapters] = useState<any>(null);
     const [chapters, setChapters] = useState<any[]>([]);
-    const [newChapter, setNewChapter] = useState({ title: "", type: "video", content_url: "", duration: "5 min", data: {} as any });
+    const [newChapter, setNewChapter] = useState({ title: "", type: "video", content_url: "", duration: "5 min", description: "", data: {} as any });
     const [uploading, setUploading] = useState(false); // New upload state
 
     // Fetch Modules
@@ -229,7 +229,7 @@ export default function ModulesAdminPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...newChapter,
-                    data: parsedData,
+                    data: { ...parsedData, description: (newChapter as any).description },
                     module_id: selectedModuleForChapters.id
                 }),
             });
@@ -240,7 +240,7 @@ export default function ModulesAdminPage() {
                 } else {
                     setChapters([...chapters, data.chapter]);
                 }
-                setNewChapter({ title: "", type: "video", content_url: "", duration: "5 min", data: {} });
+                setNewChapter({ title: "", type: "video", content_url: "", duration: "5 min", description: "", data: {} });
             } else {
                 alert(data.error);
             }
@@ -453,7 +453,7 @@ export default function ModulesAdminPage() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button
-                                                onClick={() => setNewChapter(chapter)}
+                                                onClick={() => setNewChapter({ ...chapter, description: chapter.data?.description || "" })}
                                                 className="text-gray-400 hover:text-white px-2 transition-colors"
                                             >
                                                 Edit
@@ -492,6 +492,7 @@ export default function ModulesAdminPage() {
                                         <option value="slides">Slides</option>
                                         <option value="quiz">Quiz</option>
                                         <option value="pdf">PDF Document</option>
+                                        <option value="gif">GIF Animation</option>
                                     </select>
                                 </div>
 
@@ -523,9 +524,23 @@ export default function ModulesAdminPage() {
                                     <p className="text-xs text-gray-500 mt-1">
                                         {newChapter.type === 'video' ? "Paste a direct link or upload an MP4." :
                                             (newChapter.type === 'pdf' || newChapter.type === 'slides') ? "Upload a PDF to create a lecture/carousel." :
-                                                "URL for external content (optional)."}
+                                                newChapter.type === 'gif' ? "Upload a GIF image." :
+                                                    "URL for external content (optional)."}
                                     </p>
                                 </div>
+
+                                {newChapter.type === 'gif' && (
+                                    <div className="mb-4">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Description</label>
+                                        <textarea
+                                            rows={4}
+                                            className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm"
+                                            placeholder="Describe the animation..."
+                                            value={(newChapter as any).description || ""}
+                                            onChange={e => setNewChapter({ ...newChapter, description: e.target.value } as any)}
+                                        />
+                                    </div>
+                                )}
 
                                 {(newChapter.type === 'quiz' || newChapter.type === 'slides') && (
                                     <div className="mb-4">
@@ -558,7 +573,7 @@ export default function ModulesAdminPage() {
                                     </button>
                                     {(newChapter as any).id && (
                                         <button
-                                            onClick={() => setNewChapter({ title: "", type: "video", content_url: "", duration: "5 min", data: {} })}
+                                            onClick={() => setNewChapter({ title: "", type: "video", content_url: "", duration: "5 min", description: "", data: {} })}
                                             className="px-4 py-2 border border-white/10 rounded-lg text-sm text-gray-400 hover:text-white transition-colors"
                                         >
                                             Cancel Edit

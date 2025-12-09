@@ -55,6 +55,7 @@ export default function ModulePage({ params }: { params: Promise<{ moduleId: str
                         chapters: chaptersData.chapters?.map((c: any) => ({
                             ...c,
                             contentUrl: c.content_url || c.contentUrl, // Map DB snake_case to Frontend camelCase
+                            description: c.description || c.data?.description, // Pass description from column or JSON data
                             quizData: c.type === 'quiz' ? c.data : undefined, // Map generic JSONB 'data' to typed props
                             slidesData: c.type === 'slides' ? c.data : undefined,
                         })) || [],

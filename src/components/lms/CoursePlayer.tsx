@@ -280,6 +280,32 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                             />
                         </div>
                     )}
+
+                    {activeChapter.type === 'gif' && (
+                        <div className="w-full h-full flex flex-col items-center justify-start p-8 overflow-y-auto">
+                            <div className="max-w-5xl w-full space-y-6">
+                                {activeChapter.contentUrl && (
+                                    <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black/40 backdrop-blur-sm">
+                                        <img
+                                            src={activeChapter.contentUrl}
+                                            alt={activeChapter.title}
+                                            className="w-full h-auto max-h-[70vh] object-contain mx-auto"
+                                            onLoad={handleContentCompleted}
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-6 backdrop-blur-sm">
+                                    <h1 className="text-2xl font-bold text-white mb-4">{activeChapter.title}</h1>
+                                    {activeChapter.description && (
+                                        <div className="text-gray-300 text-lg leading-relaxed whitespace-pre-wrap font-light">
+                                            {activeChapter.description}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Player Footer (Navigation) */}

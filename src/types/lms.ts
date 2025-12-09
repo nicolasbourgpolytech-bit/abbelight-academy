@@ -1,6 +1,6 @@
 import { UserRole } from "./user";
 
-export type ChapterType = 'video' | 'slides' | 'quiz' | 'pdf';
+export type ChapterType = 'video' | 'slides' | 'quiz' | 'pdf' | 'gif';
 
 export interface QuizQuestion {
     id: string;
@@ -31,6 +31,7 @@ export interface Chapter {
     type: ChapterType;
     duration: string; // e.g., "10 min"
     contentUrl?: string; // Video URL or Slides JSON/Images URL
+    description?: string; // Description for gif or other types
     quizData?: QuizQuestion[];
     slidesData?: Slide[]; // Array of slides for 'slides' type
     attachments?: Attachment[]; // Resources downloadable for this separate chapter

@@ -12,6 +12,14 @@ export const MOCK_MODULES: Module[] = [
         chapters: [
             { id: "c1", title: "What is Super-Resolution?", type: "video", duration: "10 min" },
             {
+                id: "c1-gif",
+                title: "Visualizing SMLM",
+                type: "gif",
+                duration: "2 min",
+                contentUrl: "https://upload.wikimedia.org/wikipedia/commons/2/2c/Rotating_earth_%28large%29.gif",
+                description: "This is a demonstration of how a full page GIF is rendered. \n\nIn a real scenario, this would show the blinking of fluorophores or a 3D reconstruction process."
+            },
+            {
                 id: "c2",
                 title: "Fluorophore Physics",
                 type: "slides",
