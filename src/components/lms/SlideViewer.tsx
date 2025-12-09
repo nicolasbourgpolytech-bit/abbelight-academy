@@ -18,17 +18,21 @@ interface SlideViewerProps {
 export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [numPages, setNumPages] = useState<number>(0);
+    const [pageError, setPageError] = useState<Error | null>(null);
 
     const isPdfMode = !!pdfUrl;
     const totalSlides = isPdfMode ? numPages : (slides?.length || 0);
 
-    const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-        setNumPages(numPages);
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    const onDocumentLoadSuccess = (document: any) => {
+        setNumPages(document.numPages);
+        setPageError(null);
     };
 
     const nextSlide = () => {
         if (currentIndex < totalSlides - 1) {
             setCurrentIndex(prev => prev + 1);
+            setPageError(null); // Reset error on slide change
         } else {
             // Reached the end
             onComplete();
@@ -38,6 +42,7 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
     const prevSlide = () => {
         if (currentIndex > 0) {
             setCurrentIndex(prev => prev - 1);
+            setPageError(null); // Reset error on slide change
         }
     };
 
@@ -46,9 +51,8 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
 
     // Configure PDF options suitable for standard builds
     const options = {
-        cMapUrl: `//unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+        cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
         cMapPacked: true,
-        standardFontDataUrl: `//unpkg.com/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
     };
 
     return (
@@ -62,22 +66,38 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                     <h3 className="font-bold text-gray-700">
                         {isPdfMode ? 'Presentation Slides' : slides?.[currentIndex]?.title}
                     </h3>
-                    <span className="text-xs font-mono text-gray-500">
-                        {currentIndex + 1} / {totalSlides}
-                    </span>
+                    <div className="flex flex-col items-end">
+                        <span className="text-xs font-mono text-gray-500">
+                            {currentIndex + 1} / {totalSlides}
+                        </span>
+                        {isPdfMode && <span className="text-[10px] text-gray-400">v{pdfjs.version}</span>}
+                    </div>
                 </div>
 
                 {/* Main Content Area */}
                 <div className="flex-1 relative flex items-center justify-center bg-gray-50 overflow-hidden">
                     {isPdfMode ? (
-                        <div className="h-full w-full flex items-center justify-center overflow-auto">
+                        <div className="h-full w-full flex items-center justify-center overflow-auto relative">
+                            {/* Show explicit error if exists */}
+                            {pageError && (
+                                <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm p-4">
+                                    <div className="bg-red-50 border border-red-200 p-6 rounded-xl max-w-lg shadow-xl">
+                                        <h3 className="text-red-600 font-bold text-lg mb-2">Rendering Error</h3>
+                                        <p className="text-gray-800 font-mono text-sm break-words mb-4">{pageError.message}</p>
+                                        <p className="text-gray-500 text-xs">
+                                            Rendering via PDF.js worker.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             <Document
                                 file={pdfUrl}
                                 onLoadSuccess={onDocumentLoadSuccess}
-                                onLoadError={(error) => console.error("PDF Document Load Error:", error)}
+                                onLoadError={(error) => setPageError(error)}
                                 className="flex items-center justify-center"
                                 loading={<div className="text-primary animate-pulse">Loading PDF...</div>}
-                                error={<div className="text-red-500 font-bold p-4">Failed to load PDF document.</div>}
+                                error={null} // Handled by pageError state above
                                 options={options}
                             >
                                 <Page
@@ -86,8 +106,9 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                                     width={window.innerWidth > 768 ? 800 : window.innerWidth * 0.9}
                                     renderTextLayer={false}
                                     renderAnnotationLayer={false}
-                                    onLoadError={(error) => console.error("PDF Page Load Error:", error)}
-                                    error={<div className="text-red-500 p-4 bg-red-100 rounded">Error loading page {currentIndex + 1}.</div>}
+                                    onLoadError={(error) => setPageError(error)}
+                                    // Remove default error UI to use our custom one
+                                    error={null}
                                 />
                             </Document>
                         </div>
