@@ -92,7 +92,7 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                                 </div>
                             )}
 
-                            <ErrorBoundary fallback={<div className="text-red-500 font-bold p-10">Critical PDF Viewer Error. Please refresh.</div>}>
+                            <ErrorBoundary>
                                 <Document
                                     file={pdfUrl}
                                     onLoadSuccess={onDocumentLoadSuccess}
