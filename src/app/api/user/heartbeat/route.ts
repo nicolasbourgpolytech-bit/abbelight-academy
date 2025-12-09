@@ -12,7 +12,8 @@ export async function POST(request: Request) {
         // Update last_seen
         await sql`
             UPDATE users 
-            SET last_seen = NOW() 
+            SET last_seen = NOW(),
+                total_time_spent = COALESCE(total_time_spent, 0) + 20
             WHERE email = ${email}
         `;
 

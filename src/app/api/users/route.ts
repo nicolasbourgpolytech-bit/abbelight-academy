@@ -14,14 +14,14 @@ export async function GET(request: Request) {
             result = await sql`SELECT * FROM users WHERE email = ${email}`;
         } else if (status && status !== 'all') {
             result = await sql`
-        SELECT id, first_name, last_name, email, company, status, roles, created_at, xp 
+        SELECT id, first_name, last_name, email, company, status, roles, created_at, xp, level, last_seen, total_time_spent
         FROM users 
         WHERE status = ${status} 
         ORDER BY created_at DESC
       `;
         } else {
             result = await sql`
-        SELECT id, first_name, last_name, email, company, status, roles, created_at, xp 
+        SELECT id, first_name, last_name, email, company, status, roles, created_at, xp, level, last_seen, total_time_spent
         FROM users 
         ORDER BY created_at DESC
       `;
