@@ -111,18 +111,23 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
     return (
         <div className="flex h-[calc(100vh-theme(spacing.24))] overflow-hidden bg-[#02040a] border border-white/10 rounded-2xl relative shadow-2xl group/player isolate">
 
-            {/* SMLM Ambient Background Effects */}
+            {/* SMLM Abbelight Brand Background Effects */}
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                {/* Deep atmospheric glow (Blue/Purple/Cyan) */}
-                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-900/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow" />
-                <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-cyan-900/10 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow delay-1000" />
+                {/* Abbelight Magenta Glow (Top Left) */}
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[50%] bg-[#FF73FF]/10 rounded-full blur-[100px] mix-blend-screen animate-pulse-slow" />
+
+                {/* Abbelight Cyan Glow (Bottom Right) */}
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[50%] bg-[#00CAF8]/10 rounded-full blur-[100px] mix-blend-screen animate-pulse-slow delay-1000" />
+
+                {/* Abbelight Green Glow (Center/Top) */}
+                <div className="absolute top-[-20%] left-[40%] w-[40%] h-[40%] bg-[#00D296]/5 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow delay-2000" />
 
                 {/* Simulated "Molecules" (Stochastic blinking points) */}
-                <div className="absolute inset-0 opacity-20"
+                <div className="absolute inset-0 opacity-30"
                     style={{
-                        backgroundImage: 'radial-gradient(circle at center, white 1px, transparent 1px)',
-                        backgroundSize: '40px 40px',
-                        maskImage: 'radial-gradient(circle at center, black 40%, transparent 100%)'
+                        backgroundImage: 'radial-gradient(circle at center, rgba(255,255,255,0.8) 1px, transparent 1px)',
+                        backgroundSize: '50px 50px',
+                        maskImage: 'radial-gradient(circle at center, black 50%, transparent 100%)'
                     }}
                 />
             </div>
@@ -152,15 +157,15 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                                 onClick={() => !isLocked && setActiveChapterId(chapter.id)}
                                 disabled={isLocked}
                                 className={`w-full text-left p-3 rounded-lg flex items-start gap-3 transition-all duration-300 group/item ${isActive
-                                        ? 'bg-primary/20 border border-primary/20 shadow-[0_0_15px_rgba(0,202,248,0.15)]'
-                                        : isLocked
-                                            ? 'cursor-not-allowed opacity-40 border border-transparent'
-                                            : 'hover:bg-white/5 border border-transparent cursor-pointer hover:border-white/10'
+                                    ? 'bg-primary/20 border border-primary/20 shadow-[0_0_15px_rgba(0,202,248,0.15)]'
+                                    : isLocked
+                                        ? 'cursor-not-allowed opacity-40 border border-transparent'
+                                        : 'hover:bg-white/5 border border-transparent cursor-pointer hover:border-white/10'
                                     }`}
                             >
                                 <div className={`mt-1 w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center border transition-colors ${isActive ? 'border-primary text-primary shadow-[0_0_10px_currentColor]' :
-                                        isCompleted ? 'bg-green-500 border-green-500 text-black shadow-[0_0_10px_rgba(34,197,94,0.4)]' :
-                                            isLocked ? 'border-gray-800 text-gray-800' : 'border-gray-600 group-hover/item:border-gray-400'
+                                    isCompleted ? 'bg-green-500 border-green-500 text-black shadow-[0_0_10px_rgba(34,197,94,0.4)]' :
+                                        isLocked ? 'border-gray-800 text-gray-800' : 'border-gray-600 group-hover/item:border-gray-400'
                                     }`}>
                                     {isCompleted && !isActive && <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                                     {isActive && <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />}
@@ -168,7 +173,7 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                                 </div>
                                 <div>
                                     <div className={`text-sm font-medium transition-colors ${isActive ? 'text-white' :
-                                            isLocked ? 'text-gray-600' : 'text-gray-400 group-hover/item:text-gray-300'
+                                        isLocked ? 'text-gray-600' : 'text-gray-400 group-hover/item:text-gray-300'
                                         }`}>
                                         {index + 1}. {chapter.title}
                                     </div>

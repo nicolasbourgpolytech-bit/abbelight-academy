@@ -192,10 +192,10 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
 
                     <button
                         onClick={nextSlide}
-                        className="pointer-events-auto p-4 rounded-full bg-primary/20 border border-primary/20 hover:bg-primary/40 hover:border-primary/50 text-white backdrop-blur-lg transition-all transform hover:scale-110 shadow-[0_0_15px_rgba(0,202,248,0.2)] hover:shadow-[0_0_25px_rgba(0,202,248,0.4)]"
+                        className="pointer-events-auto p-4 rounded-full bg-[#00CAF8]/20 border border-[#00CAF8]/20 hover:bg-[#00CAF8]/40 hover:border-[#00CAF8]/50 text-white backdrop-blur-lg transition-all transform hover:scale-110 shadow-[0_0_15px_rgba(0,202,248,0.2)] hover:shadow-[0_0_25px_rgba(0,202,248,0.4)]"
                     >
                         {currentIndex === totalSlides - 1 ? (
-                            <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                            <svg className="w-6 h-6 text-[#00D296]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                         ) : (
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                         )}
@@ -204,7 +204,7 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
 
                 {/* Bottom Progress Bar */}
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-10">
-                    <div className="h-full bg-primary shadow-[0_0_10px_rgba(0,202,248,0.8)] transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                    <div className="h-full bg-[#00CAF8] shadow-[0_0_10px_rgba(0,202,248,0.8)] transition-all duration-300" style={{ width: `${progress}%` }}></div>
                 </div>
 
             </div>

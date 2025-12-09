@@ -97,26 +97,26 @@ export function QuizPlayer({ chapter, onComplete }: QuizPlayerProps) {
                                         let indicatorInner = null;
 
                                         if (isSelected) {
-                                            containerClass = "border-primary/50 bg-primary/10 shadow-[0_0_20px_rgba(0,202,248,0.1)]";
+                                            containerClass = "border-[#00CAF8]/50 bg-[#00CAF8]/10 shadow-[0_0_20px_rgba(0,202,248,0.1)]";
                                             textClass = "text-white font-medium";
-                                            indicatorBorder = "border-primary";
-                                            indicatorBg = "bg-primary";
+                                            indicatorBorder = "border-[#00CAF8]";
+                                            indicatorBg = "bg-[#00CAF8]";
                                             indicatorInner = <div className="w-2 h-2 bg-black rounded-full" />;
                                         }
 
                                         if (isSubmitted) {
                                             if (isCorrect) {
-                                                containerClass = "border-green-500/50 bg-green-500/10 shadow-[0_0_20px_rgba(34,197,94,0.1)]";
-                                                textClass = "text-green-300 font-bold";
-                                                indicatorBorder = "border-green-500";
-                                                indicatorBg = "bg-green-500";
+                                                containerClass = "border-[#00D296]/50 bg-[#00D296]/10 shadow-[0_0_20px_rgba(0,210,150,0.1)]";
+                                                textClass = "text-[#00D296] font-bold";
+                                                indicatorBorder = "border-[#00D296]";
+                                                indicatorBg = "bg-[#00D296]";
                                                 indicatorInner = <svg className="w-3.5 h-3.5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>;
                                             } else if (isWrong) {
-                                                containerClass = "border-red-500/50 bg-red-500/5 opacity-80";
-                                                textClass = "text-red-300";
-                                                indicatorBorder = "border-red-500";
-                                                indicatorBg = "bg-red-500";
-                                                indicatorInner = <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>;
+                                                containerClass = "border-[#FF73FF]/50 bg-[#FF73FF]/5 opacity-80 shadow-[0_0_20px_rgba(255,115,255,0.1)]";
+                                                textClass = "text-[#FF73FF]";
+                                                indicatorBorder = "border-[#FF73FF]";
+                                                indicatorBg = "bg-[#FF73FF]";
+                                                indicatorInner = <svg className="w-3.5 h-3.5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>;
                                             } else {
                                                 containerClass = "opacity-40 border-transparent bg-transparent grayscale";
                                             }
@@ -141,11 +141,11 @@ export function QuizPlayer({ chapter, onComplete }: QuizPlayerProps) {
                                 {/* Explanation Block */}
                                 {isSubmitted && (
                                     <div className={`mt-6 rounded-xl overflow-hidden animate-fade-in-up ${selectedAnswers[q.id] === q.correctAnswer
-                                            ? 'bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20'
-                                            : 'bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/20'
+                                            ? 'bg-gradient-to-br from-[#00D296]/10 to-transparent border border-[#00D296]/20'
+                                            : 'bg-gradient-to-br from-[#FF73FF]/10 to-transparent border border-[#FF73FF]/20'
                                         }`}>
                                         <div className="p-5 flex gap-4">
-                                            <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${selectedAnswers[q.id] === q.correctAnswer ? 'bg-green-500 text-black' : 'bg-orange-500 text-white'
+                                            <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${selectedAnswers[q.id] === q.correctAnswer ? 'bg-[#00D296] text-black' : 'bg-[#FF73FF] text-black'
                                                 }`}>
                                                 {selectedAnswers[q.id] === q.correctAnswer
                                                     ? <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
@@ -153,7 +153,7 @@ export function QuizPlayer({ chapter, onComplete }: QuizPlayerProps) {
                                                 }
                                             </div>
                                             <div>
-                                                <h4 className={`text-sm font-bold uppercase tracking-wide mb-1 ${selectedAnswers[q.id] === q.correctAnswer ? 'text-green-400' : 'text-orange-400'
+                                                <h4 className={`text-sm font-bold uppercase tracking-wide mb-1 ${selectedAnswers[q.id] === q.correctAnswer ? 'text-[#00D296]' : 'text-[#FF73FF]'
                                                     }`}>
                                                     {selectedAnswers[q.id] === q.correctAnswer ? 'Correct' : 'Explanation'}
                                                 </h4>
@@ -176,8 +176,8 @@ export function QuizPlayer({ chapter, onComplete }: QuizPlayerProps) {
                         onClick={handleSubmit}
                         disabled={!allAnswered}
                         className={`group relative px-8 py-4 rounded-xl font-bold uppercase tracking-wider overflow-hidden transition-all shadow-xl ${!allAnswered
-                                ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                                : 'bg-white text-black hover:scale-105 shadow-primary/25'
+                            ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                            : 'bg-white text-black hover:scale-105 shadow-primary/25'
                             }`}
                     >
                         <div className={`absolute inset-0 bg-primary transition-transform duration-300 origin-left ${!allAnswered ? 'translate-x-[-100%]' : 'group-hover:translate-x-full opacity-20'}`} />
