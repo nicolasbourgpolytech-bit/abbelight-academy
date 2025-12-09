@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Slide } from "@/types/lms";
 import { Document, Page, pdfjs } from 'react-pdf';
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
@@ -91,26 +92,28 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                                 </div>
                             )}
 
-                            <Document
-                                file={pdfUrl}
-                                onLoadSuccess={onDocumentLoadSuccess}
-                                onLoadError={(error) => setPageError(error)}
-                                className="flex items-center justify-center"
-                                loading={<div className="text-primary animate-pulse">Loading PDF...</div>}
-                                error={null} // Handled by pageError state above
-                                options={options}
-                            >
-                                <Page
-                                    pageNumber={currentIndex + 1}
-                                    className="max-w-full max-h-full shadow-lg"
-                                    width={window.innerWidth > 768 ? 800 : window.innerWidth * 0.9}
-                                    renderTextLayer={false}
-                                    renderAnnotationLayer={false}
+                            <ErrorBoundary fallback={<div className="text-red-500 font-bold p-10">Critical PDF Viewer Error. Please refresh.</div>}>
+                                <Document
+                                    file={pdfUrl}
+                                    onLoadSuccess={onDocumentLoadSuccess}
                                     onLoadError={(error) => setPageError(error)}
-                                    // Remove default error UI to use our custom one
-                                    error={null}
-                                />
-                            </Document>
+                                    className="flex items-center justify-center"
+                                    loading={<div className="text-primary animate-pulse">Loading PDF...</div>}
+                                    error={null} // Handled by pageError state above
+                                    options={options}
+                                >
+                                    <Page
+                                        pageNumber={currentIndex + 1}
+                                        className="max-w-full max-h-full shadow-lg"
+                                        width={window.innerWidth > 768 ? 800 : window.innerWidth * 0.9}
+                                        renderTextLayer={false}
+                                        renderAnnotationLayer={false}
+                                        onLoadError={(error) => setPageError(error)}
+                                        // Remove default error UI to use our custom one
+                                        error={null}
+                                    />
+                                </Document>
+                            </ErrorBoundary>
                         </div>
                     ) : (
                         slides && slides[currentIndex] ? (
