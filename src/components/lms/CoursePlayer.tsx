@@ -38,7 +38,7 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                 .catch(err => console.error("Failed to fetch path for navigation", err));
         }
     }, [pathId, module.id]);
-    const { markChapterComplete, markModuleComplete } = useLmsProgress();
+    const { markChapterComplete, markModuleComplete, progress } = useLmsProgress();
 
     // If module is completed, show completion screen
     if (isModuleCompleted) {
@@ -107,35 +107,48 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
 
                 <div className="flex-1 overflow-y-auto p-2 space-y-1">
                     {module.chapters.map((chapter, index) => {
-                        const isActive = chapter.id === activeChapter.id;
-                        // Mock status logic needs to check against current active index for simplicity in this demo, 
-                        // or ideally use 'completedChapterIds' from useLmsProgress to show checkmarks.
-                        const isCompleted = index < activeIndex;
+                        const isActive = chapter.id === activeChapterId;
+
+                        // Check precise completion status from global progress
+                        const chapterKey = `${module.id}-${chapter.id}`;
+                        const isCompleted = progress.completedChapterIds.includes(chapterKey);
+
+                        // A chapter is locked if it's not the first one AND the previous one hasn't been completed
+                        // This enforces sequential progression
+                        const isLocked = index > 0 && !progress.completedChapterIds.includes(`${module.id}-${module.chapters[index - 1].id}`);
 
                         return (
                             <button
                                 key={chapter.id}
-                                onClick={() => setActiveChapterId(chapter.id)}
+                                onClick={() => !isLocked && setActiveChapterId(chapter.id)}
+                                disabled={isLocked}
                                 className={`w-full text-left p-3 rounded-lg flex items-start gap-3 transition-colors ${isActive
                                     ? 'bg-primary/20 border border-primary/20'
-                                    : 'hover:bg-white/5 border border-transparent'
+                                    : isLocked
+                                        ? 'cursor-not-allowed opacity-50 border border-transparent'
+                                        : 'hover:bg-white/5 border border-transparent cursor-pointer'
                                     }`}
                             >
                                 <div className={`mt-1 w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center border ${isActive ? 'border-primary text-primary' :
-                                    isCompleted ? 'bg-green-500 border-green-500 text-black' : 'border-gray-600'
+                                    isCompleted ? 'bg-green-500 border-green-500 text-black' :
+                                        isLocked ? 'border-gray-800 text-gray-800' : 'border-gray-600'
                                     }`}>
-                                    {isCompleted && <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                                    {isCompleted && !isActive && <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                                     {isActive && <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />}
+                                    {isLocked && !isCompleted && !isActive && <span className="block w-1 h-1 bg-gray-800 rounded-full" />}
                                 </div>
                                 <div>
-                                    <div className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-400'}`}>
+                                    <div className={`text-sm font-medium ${isActive ? 'text-white' :
+                                        isLocked ? 'text-gray-600' : 'text-gray-400'
+                                        }`}>
                                         {index + 1}. {chapter.title}
                                     </div>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-[10px] uppercase font-bold text-gray-600 border border-gray-700 px-1 rounded">
+                                        <span className={`text-[10px] uppercase font-bold px-1 rounded border ${isLocked ? 'text-gray-700 border-gray-800' : 'text-gray-600 border-gray-700'
+                                            }`}>
                                             {chapter.type}
                                         </span>
-                                        <span className="text-xs text-gray-600">{chapter.duration}</span>
+                                        <span className={`text-xs ${isLocked ? 'text-gray-700' : 'text-gray-600'}`}>{chapter.duration}</span>
                                     </div>
                                 </div>
                             </button>
