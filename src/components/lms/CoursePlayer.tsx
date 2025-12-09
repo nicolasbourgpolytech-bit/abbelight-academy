@@ -228,7 +228,13 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
 
                     {activeChapter.type === 'slides' && (
                         <div className="w-full h-full">
-                            {activeChapter.slidesData ? (
+                            {activeChapter.contentUrl?.endsWith('.pdf') ? (
+                                <SlideViewer
+                                    slides={undefined}
+                                    pdfUrl={activeChapter.contentUrl}
+                                    onComplete={() => nextChapter()}
+                                />
+                            ) : activeChapter.slidesData ? (
                                 <SlideViewer slides={activeChapter.slidesData} onComplete={() => nextChapter()} />
                             ) : (
                                 <div className="flex items-center justify-center h-full text-gray-500">

@@ -512,12 +512,17 @@ export default function ModulesAdminPage() {
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                                             )}
                                             Upload
-                                            <input type="file" className="hidden" onChange={handleFileUpload} accept={newChapter.type === 'pdf' ? '.pdf' : 'video/*,image/*'} />
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                onChange={handleFileUpload}
+                                                accept={(newChapter.type === 'pdf' || newChapter.type === 'slides') ? '.pdf' : 'video/*,image/*'}
+                                            />
                                         </label>
                                     </div>
                                     <p className="text-xs text-gray-500 mt-1">
                                         {newChapter.type === 'video' ? "Paste a direct link or upload an MP4." :
-                                            newChapter.type === 'pdf' ? "Paste a generic PDF link or upload a PDF file." :
+                                            (newChapter.type === 'pdf' || newChapter.type === 'slides') ? "Upload a PDF to create a lecture/carousel." :
                                                 "URL for external content (optional)."}
                                     </p>
                                 </div>
