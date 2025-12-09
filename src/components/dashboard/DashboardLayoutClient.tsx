@@ -83,8 +83,8 @@ export default function DashboardLayoutClient({
                 {/* Top ambient glow */}
                 <div className="absolute top-0 left-0 w-full h-[500px] bg-primary/5 blur-[100px] pointer-events-none" />
 
+                <DashboardHeader />
                 <main className="flex-1 p-4 md:p-8 z-10 animate-fade-in">
-                    <DashboardHeader />
                     {children}
                 </main>
             </div>
