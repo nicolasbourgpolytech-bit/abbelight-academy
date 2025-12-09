@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { upload } from '@vercel/blob/client';
-import RichTextEditor from "@/components/ui/RichTextEditor";
+// import RichTextEditor from "@/components/ui/RichTextEditor"; // Disabled due to React 19 crash
 
 // --- Internal Components ---
 
@@ -533,10 +533,12 @@ export default function ModulesAdminPage() {
                                 {newChapter.type === 'gif' && (
                                     <div className="mb-4">
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Description</label>
-                                        <RichTextEditor
+                                        <textarea
+                                            rows={6}
+                                            className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm"
+                                            placeholder="Describe the animation (HTML tags allowed for formatting)..."
                                             value={(newChapter as any).description || ""}
-                                            onChange={val => setNewChapter({ ...newChapter, description: val } as any)}
-                                            placeholder="Describe the animation (colors, styles allowed)..."
+                                            onChange={e => setNewChapter({ ...newChapter, description: e.target.value } as any)}
                                         />
                                     </div>
                                 )}

@@ -16,10 +16,23 @@ interface CoursePlayerProps {
     module: Module;
     pathId?: string;
 }
+// Helper to auto-complete GIF after mounting
+function RequireGifCompletion({ children, onComplete }: { children: React.ReactNode, onComplete: () => void }) {
+    useEffect(() => {
+        // Auto-complete immediately or after a short delay
+        const timer = setTimeout(() => {
+            onComplete();
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, [onComplete]);
+    return <>{children}</>;
+}
 
 export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
     const { refreshUser } = useUser();
     const [activeChapterId, setActiveChapterId] = useState(module.chapters[0].id);
+    // ... rest of component
+
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isModuleCompleted, setIsModuleCompleted] = useState(false);
     const [nextModuleId, setNextModuleId] = useState<string | number | undefined>(undefined);
@@ -286,12 +299,13 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                             {/* GIF Area - Takes max space */}
                             {activeChapter.contentUrl && (
                                 <div className="flex-1 min-h-0 relative flex items-center justify-center p-0">
-                                    <img
-                                        src={activeChapter.contentUrl}
-                                        alt={activeChapter.title}
-                                        className="w-full h-full object-contain"
-                                        onLoad={handleContentCompleted}
-                                    />
+                                    <RequireGifCompletion onComplete={handleContentCompleted}>
+                                        <img
+                                            src={activeChapter.contentUrl}
+                                            alt={activeChapter.title}
+                                            className="w-full h-full object-contain"
+                                        />
+                                    </RequireGifCompletion>
                                 </div>
                             )}
 
