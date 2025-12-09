@@ -125,7 +125,7 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                                 </div>
                             )}
 
-                            <ErrorBoundary fallback={<div className="text-red-500 font-bold p-10">Critical PDF Viewer Error. Please refresh.</div>}>
+                            <ErrorBoundary>
                                 <Document
                                     file={pdfUrl}
                                     onLoadSuccess={onDocumentLoadSuccess}
@@ -138,6 +138,7 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                                     {/* Responsive Page */}
                                     {containerDimensions.height > 0 && (
                                         <Page
+                                            key={`page_${currentIndex + 1}`}
                                             pageNumber={currentIndex + 1}
                                             // Prioritize height to fit the screen (slide deck style), fallback to width if needed
                                             height={containerDimensions.height}
