@@ -83,41 +83,44 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
     };
 
     return (
-        <div className="w-full h-full flex flex-col items-center justify-center p-4 md:p-8 animate-fade-in relative bg-gray-900">
+        <div className="w-full h-full flex flex-col items-center justify-center p-4 md:p-8 animate-fade-in relative z-10">
 
-            {/* Slide Container */}
-            <div className="w-full max-w-[95%] h-[85vh] bg-white text-black rounded-xl overflow-hidden shadow-2xl relative flex flex-col">
+            {/* Slide Container - Glassmorphism Card */}
+            <div className="w-full max-w-[95%] h-[85vh] bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col group/container hover:border-white/20 transition-colors">
 
                 {/* Header */}
-                <div className="bg-gray-100 p-4 border-b border-gray-200 flex justify-between items-center z-10 shrink-0">
-                    <h3 className="font-bold text-gray-700">
+                <div className="bg-black/60 p-4 border-b border-white/10 flex justify-between items-center z-10 shrink-0">
+                    <h3 className="font-bold text-gray-200 tracking-wide">
                         {isPdfMode ? 'Presentation Slides' : slides?.[currentIndex]?.title}
                     </h3>
                     <div className="flex flex-col items-end">
-                        <span className="text-xs font-mono text-gray-500">
-                            {currentIndex + 1} / {totalSlides}
+                        <span className="text-xs font-mono text-primary font-bold">
+                            SLIDE {currentIndex + 1} / {totalSlides}
                         </span>
-                        {isPdfMode && <span className="text-[10px] text-gray-400">v{pdfjs.version}</span>}
+                        {isPdfMode && <span className="text-[10px] text-gray-600">PDF RENDERER v{pdfjs.version}</span>}
                     </div>
                 </div>
 
                 {/* Main Content Area */}
-                <div className="flex-1 relative flex items-center justify-center bg-gray-50 overflow-hidden" ref={containerRef}>
+                <div className="flex-1 relative flex items-center justify-center bg-black/20 overflow-hidden" ref={containerRef}>
                     {isPdfMode ? (
-                        <div className="h-full w-full flex items-center justify-center overflow-auto relative">
+                        <div className="h-full w-full flex items-center justify-center overflow-auto relative scrollbar-hide">
                             {/* Show explicit error if exists */}
                             {pageError && (
-                                <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm p-4">
-                                    <div className="bg-red-50 border border-red-200 p-6 rounded-xl max-w-lg shadow-xl">
-                                        <h3 className="text-red-600 font-bold text-lg mb-2">Rendering Error</h3>
-                                        <p className="text-gray-800 font-mono text-sm break-words mb-4">{pageError.message}</p>
+                                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                                    <div className="bg-red-900/20 border border-red-500/50 p-6 rounded-xl max-w-lg shadow-xl">
+                                        <h3 className="text-red-400 font-bold text-lg mb-2 flex items-center gap-2">
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                            Rendering Error
+                                        </h3>
+                                        <p className="text-gray-300 font-mono text-sm break-words mb-4">{pageError.message}</p>
                                         <p className="text-gray-500 text-xs text-center">
                                             Rendering via PDF.js worker.<br />
                                             If this persists, the file may be corrupted or incompatible with web rendering.
                                         </p>
                                         <button
                                             onClick={() => window.location.reload()}
-                                            className="mt-4 px-4 py-2 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700"
+                                            className="mt-4 px-4 py-2 bg-red-600/20 text-red-400 border border-red-500/50 text-xs font-bold rounded hover:bg-red-600/40 transition-colors"
                                         >
                                             Force Reload Page
                                         </button>
@@ -130,8 +133,8 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                                     file={pdfUrl}
                                     onLoadSuccess={onDocumentLoadSuccess}
                                     onLoadError={(error) => setPageError(error)}
-                                    className="flex items-center justify-center"
-                                    loading={<div className="text-primary animate-pulse">Loading PDF...</div>}
+                                    className="flex items-center justify-center opacity-90 hover:opacity-100 transition-opacity"
+                                    loading={<div className="text-primary animate-pulse font-mono flex items-center gap-2"><div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" /> Loading PDF...</div>}
                                     error={null} // Handled by pageError state above
                                     options={options}
                                 >
@@ -142,7 +145,7 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                                             pageNumber={currentIndex + 1}
                                             // Prioritize height to fit the screen (slide deck style), fallback to width if needed
                                             height={containerDimensions.height}
-                                            className="shadow-lg max-w-full"
+                                            className="shadow-2xl shadow-black max-w-full"
                                             renderTextLayer={false}
                                             renderAnnotationLayer={false}
                                             onLoadError={(error) => setPageError(error)}
@@ -159,20 +162,20 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                                 <img
                                     src={slides[currentIndex].imageUrl}
                                     alt={slides[currentIndex].title}
-                                    className="w-full h-full object-contain"
+                                    className="w-full h-full object-contain drop-shadow-2xl"
                                 />
                             ) : (
-                                <div className="p-12 text-center max-w-2xl">
-                                    <h2 className="text-4xl font-bold mb-6 text-primary">{slides[currentIndex].title}</h2>
+                                <div className="p-12 text-center max-w-2xl bg-black/40 backdrop-blur-md rounded-2xl border border-white/5">
+                                    <h2 className="text-4xl font-bold mb-6 text-primary tracking-tight">{slides[currentIndex].title}</h2>
                                     {slides[currentIndex].content && (
-                                        <div className="text-xl text-gray-600 leading-relaxed whitespace-pre-wrap text-left">
+                                        <div className="text-xl text-gray-300 leading-relaxed whitespace-pre-wrap text-left font-light">
                                             {slides[currentIndex].content}
                                         </div>
                                     )}
                                 </div>
                             )
                         ) : (
-                            <div className="text-gray-500">No content available</div>
+                            <div className="text-gray-500 font-mono">No content available</div>
                         )
                     )}
                 </div>
@@ -182,17 +185,17 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                     <button
                         onClick={prevSlide}
                         disabled={currentIndex === 0}
-                        className={`pointer-events-auto p-3 rounded-full bg-black/10 hover:bg-black/30 text-black backdrop-blur transition-all ${currentIndex === 0 ? 'opacity-0 cursor-default' : 'opacity-100'}`}
+                        className={`pointer-events-auto p-4 rounded-full bg-black/40 border border-white/10 hover:bg-primary/20 hover:border-primary/50 text-white backdrop-blur-lg transition-all transform hover:scale-110 shadow-lg ${currentIndex === 0 ? 'opacity-0 cursor-default translate-x-[-20px]' : 'opacity-100'}`}
                     >
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                     </button>
 
                     <button
                         onClick={nextSlide}
-                        className="pointer-events-auto p-3 rounded-full bg-primary/20 hover:bg-primary/40 text-black backdrop-blur transition-all"
+                        className="pointer-events-auto p-4 rounded-full bg-primary/20 border border-primary/20 hover:bg-primary/40 hover:border-primary/50 text-white backdrop-blur-lg transition-all transform hover:scale-110 shadow-[0_0_15px_rgba(0,202,248,0.2)] hover:shadow-[0_0_25px_rgba(0,202,248,0.4)]"
                     >
                         {currentIndex === totalSlides - 1 ? (
-                            <svg className="w-6 h-6 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                            <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                         ) : (
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                         )}
@@ -200,15 +203,15 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                 </div>
 
                 {/* Bottom Progress Bar */}
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 z-10">
-                    <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-10">
+                    <div className="h-full bg-primary shadow-[0_0_10px_rgba(0,202,248,0.8)] transition-all duration-300" style={{ width: `${progress}%` }}></div>
                 </div>
 
             </div>
 
             {/* Helper Text */}
-            <p className="text-gray-500 mt-4 text-sm z-0">
-                Use arrows to navigate. Complete all slides to finish the chapter.
+            <p className="text-gray-500 mt-4 text-xs font-mono tracking-widest uppercase z-0 opacity-60">
+                Use arrows to navigate • Complete to finish
             </p>
         </div>
     );
