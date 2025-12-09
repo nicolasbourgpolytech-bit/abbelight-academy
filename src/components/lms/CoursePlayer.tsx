@@ -9,6 +9,7 @@ import { CompletionScreen } from "./CompletionScreen";
 import { SlideViewer } from "./SlideViewer";
 import { useLmsProgress } from "@/hooks/useLmsProgress";
 
+import { VideoPlayer } from "./VideoPlayer";
 import { useUser } from "@/context/UserContext";
 
 interface CoursePlayerProps {
@@ -22,6 +23,7 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isModuleCompleted, setIsModuleCompleted] = useState(false);
     const [nextModuleId, setNextModuleId] = useState<string | number | undefined>(undefined);
+    const [isRequirementsMet, setIsRequirementsMet] = useState(false);
 
     useEffect(() => {
         if (pathId) {
@@ -40,6 +42,18 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
     }, [pathId, module.id]);
     const { markChapterComplete, markModuleComplete, progress } = useLmsProgress();
 
+    // Reset requirement state when changing chapters
+    useEffect(() => {
+        // Check if ALREADY completed in backend
+        const chapterKey = `${module.id}-${activeChapterId}`;
+        const isAlreadyDone = progress.completedChapterIds.includes(chapterKey);
+        setIsRequirementsMet(isAlreadyDone);
+    }, [activeChapterId, progress.completedChapterIds, module.id]);
+
+    const handleContentCompleted = () => {
+        setIsRequirementsMet(true);
+    };
+
     // If module is completed, show completion screen
     if (isModuleCompleted) {
         return <CompletionScreen module={module} nextModuleId={nextModuleId} pathId={pathId} />;
@@ -54,6 +68,8 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
     // I will do that in a separate edit or assume I can do it here if I check imports.
 
     const nextChapter = async () => {
+        if (!isRequirementsMet) return;
+
         // Mark current chapter as complete
         markChapterComplete(module.id, activeChapter.id);
 
@@ -181,33 +197,10 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                     {activeChapter.type === 'video' && (
                         <div className="w-full h-full flex flex-col">
                             {/* Video Embed */}
-                            <div className="w-full aspect-video bg-black relative shadow-lg">
-                                {activeChapter.contentUrl?.includes('youtube') || activeChapter.contentUrl?.includes('youtu.be') ? (
-                                    <iframe
-                                        src={(() => {
-                                            try {
-                                                const url = activeChapter.contentUrl || "";
-                                                let videoId = "";
-                                                if (url.includes('youtube.com/watch')) {
-                                                    videoId = new URL(url).searchParams.get("v") || "";
-                                                } else if (url.includes('youtu.be')) {
-                                                    videoId = url.split('youtu.be/')[1]?.split('?')[0] || "";
-                                                }
-                                                return `https://www.youtube.com/embed/${videoId}?autoplay=0`;
-                                            } catch (e) { return ""; }
-                                        })()}
-                                        className="absolute inset-0 w-full h-full"
-                                        allowFullScreen
-                                        title="Course Video"
-                                    />
-                                ) : (
-                                    <video
-                                        src={activeChapter.contentUrl}
-                                        controls
-                                        className="absolute inset-0 w-full h-full"
-                                    />
-                                )}
-                            </div>
+                            <VideoPlayer
+                                url={activeChapter.contentUrl || ""}
+                                onComplete={handleContentCompleted}
+                            />
                             <div className="p-8 max-w-4xl mx-auto w-full">
                                 <h1 className="text-2xl font-bold text-white mb-4">{activeChapter.title}</h1>
                                 <p className="text-gray-300 leading-relaxed mb-6">
@@ -236,41 +229,37 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                     )}
 
 
-
-
-
                     {activeChapter.type === 'slides' && (
                         <div className="w-full h-full">
                             {activeChapter.contentUrl?.endsWith('.pdf') ? (
                                 <SlideViewer
                                     slides={undefined}
                                     pdfUrl={activeChapter.contentUrl}
-                                    onComplete={() => nextChapter()}
+                                    onComplete={handleContentCompleted}
                                 />
                             ) : activeChapter.slidesData ? (
-                                <SlideViewer slides={activeChapter.slidesData} onComplete={() => nextChapter()} />
+                                <SlideViewer slides={activeChapter.slidesData} onComplete={handleContentCompleted} />
                             ) : (
                                 <div className="flex items-center justify-center h-full text-gray-500">
                                     No slides available.
-                                    <button onClick={nextChapter} className="ml-4 underline text-white">Skip</button>
+                                    <button onClick={handleContentCompleted} className="ml-4 underline text-white">Skip (Debug)</button>
                                 </div>
                             )}
                         </div>
                     )}
 
                     {activeChapter.type === 'quiz' && (
-                        <QuizPlayer chapter={activeChapter} onComplete={() => nextChapter()} />
+                        <QuizPlayer chapter={activeChapter} onComplete={handleContentCompleted} />
                     )}
 
                     {activeChapter.type === 'pdf' && (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900">
-                            <div className="w-full h-full p-4 md:p-8">
-                                <iframe
-                                    src={activeChapter.contentUrl}
-                                    className="w-full h-full rounded-xl border border-white/10 bg-white"
-                                    title="PDF Viewer"
-                                />
-                            </div>
+                        <div className="w-full h-full">
+                            {/* Reuse SlideViewer for PDF type to ensure tracking of "parcouru tout le pdf" */}
+                            <SlideViewer
+                                slides={undefined}
+                                pdfUrl={activeChapter.contentUrl}
+                                onComplete={handleContentCompleted}
+                            />
                         </div>
                     )}
                 </div>
@@ -296,14 +285,26 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                         </div>
                     </div>
 
-                    <button
-                        onClick={nextChapter}
-                        // If last chapter, button should say "Finish Module"
-                        className="px-8 py-3 bg-primary text-black rounded-lg font-bold uppercase text-xs flex items-center gap-2 hover:bg-white transition-colors shadow-[0_0_20px_rgba(0,202,248,0.3)]"
-                    >
-                        {activeIndex === module.chapters.length - 1 ? 'Finish Module' : 'Next Lesson'}
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                    </button>
+                    <div className="relative group">
+                        <button
+                            onClick={nextChapter}
+                            disabled={!isRequirementsMet}
+                            className={`px-8 py-3 rounded-lg font-bold uppercase text-xs flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,0,0,0.3)] ${isRequirementsMet
+                                    ? 'bg-primary text-black hover:bg-white cursor-pointer shadow-[0_0_20px_rgba(0,202,248,0.3)]'
+                                    : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-70'
+                                }`}
+                        >
+                            {activeIndex === module.chapters.length - 1 ? 'Finish Module' : 'Next Lesson'}
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        </button>
+
+                        {/* Tooltip for disabled state */}
+                        {!isRequirementsMet && (
+                            <div className="absolute bottom-full right-0 mb-2 w-max px-3 py-2 bg-gray-900 text-white text-xs rounded border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                                Complete the content to unlock
+                            </div>
+                        )}
+                    </div>
                 </div>
 
             </div>
