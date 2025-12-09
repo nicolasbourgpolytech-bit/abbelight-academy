@@ -206,10 +206,10 @@ export default function ModulesAdminPage() {
             if (res.ok) {
                 setNewChapter({ ...newChapter, content_url: data.url });
             } else {
-                alert("Upload failed: " + data.error);
+                alert("Upload failed: " + (typeof data.error === 'object' ? JSON.stringify(data.error) : data.error));
             }
         } catch (error) {
-            alert("Upload error");
+            alert("Upload error: " + (error as any).message);
         } finally {
             setUploading(false);
         }

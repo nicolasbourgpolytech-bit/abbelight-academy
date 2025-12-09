@@ -12,7 +12,7 @@ export async function GET(request: Request) {
         }
         return NextResponse.json({ error: 'Module ID is required' }, { status: 400 });
     } catch (error) {
-        return NextResponse.json({ error }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
 
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ chapter: rows[0] }, { status: 201 });
     } catch (error) {
-        return NextResponse.json({ error }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
 
@@ -64,7 +64,7 @@ export async function PUT(request: Request) {
 
         return NextResponse.json({ chapter: rows[0] }, { status: 200 });
     } catch (error) {
-        return NextResponse.json({ error }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
 
@@ -78,6 +78,6 @@ export async function DELETE(request: Request) {
         await sql`DELETE FROM chapters WHERE id = ${id}`;
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
-        return NextResponse.json({ error }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
