@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { ContentFilterBar } from "@/components/dashboard/ContentFilterBar";
+import Image from "next/image";
 import { ResourceCard } from "@/components/dashboard/ResourceCard";
 import { TagFilterSidebar } from "@/components/dashboard/TagFilterSidebar";
 import { ContentItem } from "@/types/content";
@@ -95,9 +96,30 @@ export default function WebinarsPage() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <div className="border-b border-white/10 pb-6">
-                <h1 className="text-3xl font-bold text-white mb-2">Exclusive Webinars</h1>
-                <p className="text-gray-400">Watch replays of our technical sessions and scientific deep-dives.</p>
+            {/* Banner Header with Overlay */}
+            <div className="relative w-full aspect-[32/9] min-h-[300px] rounded-2xl overflow-hidden mb-8 border border-white/10 shadow-2xl group">
+                <Image
+                    src="/webinars_banner.png"
+                    alt="Exclusive Webinars"
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    priority
+                    quality={100}
+                    unoptimized
+                />
+
+                {/* Gradient Overlays */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent md:hidden" />
+
+                <div className="absolute inset-0 p-6 md:p-10 flex flex-col items-center justify-center z-10 text-center">
+                    <div className="max-w-2xl">
+                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 drop-shadow-2xl">Exclusive Webinars</h1>
+                        <p className="text-gray-100 text-lg drop-shadow-md font-medium text-balance">
+                            Watch replays of our technical sessions and scientific deep-dives.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <ContentFilterBar onSearch={setSearch} onSortChange={setSort} />
