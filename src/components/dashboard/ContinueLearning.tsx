@@ -75,7 +75,7 @@ export function ContinueLearning() {
 
                         <div className="flex items-center gap-4">
                             <Link
-                                href={`/academy/module/${nextModule.id}`}
+                                href={`/dashboard/academy/${nextModule.id}`}
                                 className="px-8 py-3 bg-primary text-black font-bold uppercase tracking-wider hover:bg-white transition-all transform hover:scale-105 shadow-lg shadow-primary/20"
                             >
                                 Resume Module
