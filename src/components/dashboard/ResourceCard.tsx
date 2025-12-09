@@ -34,7 +34,6 @@ export function ResourceCard({ item }: ResourceCardProps) {
     return (
         <Link
             href={item.url}
-            href={item.url}
             target={isWebinar ? "_self" : "_blank"}
             rel={isWebinar ? undefined : "noopener noreferrer"}
             className="block group w-full"
