@@ -1,14 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Slide } from "@/types/lms";
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
-
-// Setup PDF Worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface SlideViewerProps {
     slides: Slide[] | undefined;
@@ -21,8 +18,37 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
     const [numPages, setNumPages] = useState<number>(0);
     const [pageError, setPageError] = useState<Error | null>(null);
 
+    // Container dimensions for responsive PDF rendering
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
+
     const isPdfMode = !!pdfUrl;
     const totalSlides = isPdfMode ? numPages : (slides?.length || 0);
+
+    // Initialize Worker & Setup ResizeObserver
+    useEffect(() => {
+        // Ensure worker is set up only on client side
+        if (typeof window !== 'undefined' && !pdfjs.GlobalWorkerOptions.workerSrc) {
+            pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+        }
+
+        const observeTarget = containerRef.current;
+        if (!observeTarget) return;
+
+        const resizeObserver = new ResizeObserver((entries) => {
+            if (entries[0]) {
+                const { width, height } = entries[0].contentRect;
+                setContainerDimensions({ width, height });
+            }
+        });
+
+        resizeObserver.observe(observeTarget);
+
+        return () => {
+            if (observeTarget) resizeObserver.unobserve(observeTarget);
+        };
+    }, []);
+
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     const onDocumentLoadSuccess = (document: any) => {
@@ -60,10 +86,10 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
         <div className="w-full h-full flex flex-col items-center justify-center p-4 md:p-8 animate-fade-in relative bg-gray-900">
 
             {/* Slide Container */}
-            <div className="w-full max-w-[90%] md:h-[80vh] bg-white text-black rounded-xl overflow-hidden shadow-2xl relative flex flex-col">
+            <div className="w-full max-w-[95%] h-[85vh] bg-white text-black rounded-xl overflow-hidden shadow-2xl relative flex flex-col">
 
                 {/* Header */}
-                <div className="bg-gray-100 p-4 border-b border-gray-200 flex justify-between items-center z-10">
+                <div className="bg-gray-100 p-4 border-b border-gray-200 flex justify-between items-center z-10 shrink-0">
                     <h3 className="font-bold text-gray-700">
                         {isPdfMode ? 'Presentation Slides' : slides?.[currentIndex]?.title}
                     </h3>
@@ -76,7 +102,7 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                 </div>
 
                 {/* Main Content Area */}
-                <div className="flex-1 relative flex items-center justify-center bg-gray-50 overflow-hidden">
+                <div className="flex-1 relative flex items-center justify-center bg-gray-50 overflow-hidden" ref={containerRef}>
                     {isPdfMode ? (
                         <div className="h-full w-full flex items-center justify-center overflow-auto relative">
                             {/* Show explicit error if exists */}
@@ -85,14 +111,21 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                                     <div className="bg-red-50 border border-red-200 p-6 rounded-xl max-w-lg shadow-xl">
                                         <h3 className="text-red-600 font-bold text-lg mb-2">Rendering Error</h3>
                                         <p className="text-gray-800 font-mono text-sm break-words mb-4">{pageError.message}</p>
-                                        <p className="text-gray-500 text-xs">
-                                            Rendering via PDF.js worker.
+                                        <p className="text-gray-500 text-xs text-center">
+                                            Rendering via PDF.js worker.<br />
+                                            If this persists, the file may be corrupted or incompatible with web rendering.
                                         </p>
+                                        <button
+                                            onClick={() => window.location.reload()}
+                                            className="mt-4 px-4 py-2 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700"
+                                        >
+                                            Force Reload Page
+                                        </button>
                                     </div>
                                 </div>
                             )}
 
-                            <ErrorBoundary>
+                            <ErrorBoundary fallback={<div className="text-red-500 font-bold p-10">Critical PDF Viewer Error. Please refresh.</div>}>
                                 <Document
                                     file={pdfUrl}
                                     onLoadSuccess={onDocumentLoadSuccess}
@@ -102,16 +135,19 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                                     error={null} // Handled by pageError state above
                                     options={options}
                                 >
-                                    <Page
-                                        pageNumber={currentIndex + 1}
-                                        className="max-w-full max-h-full shadow-lg"
-                                        width={window.innerWidth > 768 ? 800 : window.innerWidth * 0.9}
-                                        renderTextLayer={false}
-                                        renderAnnotationLayer={false}
-                                        onLoadError={(error) => setPageError(error)}
-                                        // Remove default error UI to use our custom one
-                                        error={null}
-                                    />
+                                    {/* Responsive Page */}
+                                    {containerDimensions.height > 0 && (
+                                        <Page
+                                            pageNumber={currentIndex + 1}
+                                            // Prioritize height to fit the screen (slide deck style), fallback to width if needed
+                                            height={containerDimensions.height}
+                                            className="shadow-lg max-w-full"
+                                            renderTextLayer={false}
+                                            renderAnnotationLayer={false}
+                                            onLoadError={(error) => setPageError(error)}
+                                            error={null}
+                                        />
+                                    )}
                                 </Document>
                             </ErrorBoundary>
                         </div>
@@ -140,7 +176,7 @@ export function SlideViewer({ slides, pdfUrl, onComplete }: SlideViewerProps) {
                     )}
                 </div>
 
-                {/* Overlay Controls (Hover) */}
+                {/* Overlay Controls (Hover) in Slide Container */}
                 <div className="absolute inset-0 flex items-center justify-between p-4 pointer-events-none z-20">
                     <button
                         onClick={prevSlide}
