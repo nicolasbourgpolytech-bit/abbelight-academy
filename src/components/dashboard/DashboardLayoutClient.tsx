@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
@@ -83,6 +84,7 @@ export default function DashboardLayoutClient({
                 <div className="absolute top-0 left-0 w-full h-[500px] bg-primary/5 blur-[100px] pointer-events-none" />
 
                 <main className="flex-1 p-4 md:p-8 z-10 animate-fade-in">
+                    <DashboardHeader />
                     {children}
                 </main>
             </div>
