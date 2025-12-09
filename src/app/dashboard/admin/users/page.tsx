@@ -166,7 +166,7 @@ export default function UsersAdminPage() {
                                                                     u.roles?.includes('reagent') ? 'Reagent' : 'General'}
                                                     </span>
                                                     <span className={`px-2 py-0.5 rounded border border-white/10 ${getRank(u.xp).color.replace('text-', 'bg-')}/10 ${getRank(u.xp).color}`}>
-                                                        Lvl {u.level} • {getRank(u.xp).name}
+                                                        Lvl {u.level} • {u.xp} XP • {getRank(u.xp).name}
                                                     </span>
                                                 </div>
                                                 <div className="flex gap-4 mt-1 text-xs text-gray-500">
