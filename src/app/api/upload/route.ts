@@ -15,6 +15,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
                 return {
                     allowedContentTypes: ['application/pdf', 'video/mp4', 'image/jpeg', 'image/png'],
+                    addRandomSuffix: true, // Generate unique filenames to avoid conflict
                     tokenPayload: JSON.stringify({
                         // optional, sent to your server on upload completion
                         // userId: user.id,
