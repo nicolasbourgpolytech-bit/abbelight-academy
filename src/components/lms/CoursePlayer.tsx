@@ -242,6 +242,18 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                     {activeChapter.type === 'quiz' && (
                         <QuizPlayer chapter={activeChapter} onComplete={() => nextChapter()} />
                     )}
+
+                    {activeChapter.type === 'pdf' && (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900">
+                            <div className="w-full h-full p-4 md:p-8">
+                                <iframe
+                                    src={activeChapter.contentUrl}
+                                    className="w-full h-full rounded-xl border border-white/10 bg-white"
+                                    title="PDF Viewer"
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Player Footer (Navigation) */}

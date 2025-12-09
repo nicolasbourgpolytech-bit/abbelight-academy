@@ -12,7 +12,8 @@ export default function ModulesAdminPage() {
     // Chapters State
     const [selectedModuleForChapters, setSelectedModuleForChapters] = useState<any>(null);
     const [chapters, setChapters] = useState<any[]>([]);
-    const [newChapter, setNewChapter] = useState({ title: "", type: "video", content_url: "", duration: "5 min", data: {} });
+    const [newChapter, setNewChapter] = useState({ title: "", type: "video", content_url: "", duration: "5 min", data: {} as any });
+    const [uploading, setUploading] = useState(false); // New upload state
 
     // Fetch Modules
     useEffect(() => {
@@ -79,9 +80,45 @@ export default function ModulesAdminPage() {
         }
     };
 
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setNewChapter({ ...newChapter, content_url: data.url });
+            } else {
+                alert("Upload failed: " + data.error);
+            }
+        } catch (error) {
+            alert("Upload error");
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleSaveChapter = async () => {
         if (!newChapter.title || !selectedModuleForChapters) return alert("Title required");
         try {
+            // Parse JSON data if it's a string (from textarea)
+            let parsedData = newChapter.data;
+            if (typeof newChapter.data === 'string') {
+                try {
+                    parsedData = JSON.parse(newChapter.data);
+                } catch (e) {
+                    return alert("Invalid JSON Format in Data field");
+                }
+            }
+
             const isUpdate = !!(newChapter as any).id;
             const method = isUpdate ? 'PUT' : 'POST';
             const res = await fetch('/api/chapters', {
@@ -89,6 +126,7 @@ export default function ModulesAdminPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...newChapter,
+                    data: parsedData,
                     module_id: selectedModuleForChapters.id
                 }),
             });
@@ -304,7 +342,8 @@ export default function ModulesAdminPage() {
                                                     {chapter.title}
                                                     <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded border ${chapter.type === 'video' ? 'border-blue-500 text-blue-500' :
                                                         chapter.type === 'quiz' ? 'border-purple-500 text-purple-500' :
-                                                            'border-yellow-500 text-yellow-500'
+                                                            chapter.type === 'pdf' ? 'border-red-500 text-red-500' :
+                                                                'border-yellow-500 text-yellow-500'
                                                         }`}>{chapter.type}</span>
                                                 </div>
                                             </div>
@@ -349,18 +388,52 @@ export default function ModulesAdminPage() {
                                         <option value="video">Video</option>
                                         <option value="slides">Slides</option>
                                         <option value="quiz">Quiz</option>
+                                        <option value="pdf">PDF Document</option>
                                     </select>
                                 </div>
+
                                 <div className="mb-4">
-                                    <input
-                                        type="text"
-                                        placeholder={newChapter.type === 'video' ? "Video URL (mp4 or youtube)" : "Content URL / JSON Data"}
-                                        className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-mono"
-                                        value={newChapter.content_url || ""}
-                                        onChange={e => setNewChapter({ ...newChapter, content_url: e.target.value })}
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">For MVP, paste a direct MP4 link here for videos.</p>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Content URL / File</label>
+                                    <div className="flex gap-2 mb-2">
+                                        <input
+                                            type="text"
+                                            placeholder={newChapter.type === 'video' ? "Video URL (mp4 or youtube)" : "Content URL"}
+                                            className="flex-1 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-mono"
+                                            value={newChapter.content_url || ""}
+                                            onChange={e => setNewChapter({ ...newChapter, content_url: e.target.value })}
+                                        />
+                                        <label className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg cursor-pointer transition-colors text-sm flex items-center gap-2">
+                                            {uploading ? (
+                                                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            ) : (
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                            )}
+                                            Upload
+                                            <input type="file" className="hidden" onChange={handleFileUpload} accept={newChapter.type === 'pdf' ? '.pdf' : 'video/*,image/*'} />
+                                        </label>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {newChapter.type === 'video' ? "Paste a direct link or upload an MP4." :
+                                            newChapter.type === 'pdf' ? "Paste a generic PDF link or upload a PDF file." :
+                                                "URL for external content (optional)."}
+                                    </p>
                                 </div>
+
+                                {(newChapter.type === 'quiz' || newChapter.type === 'slides') && (
+                                    <div className="mb-4">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
+                                            {newChapter.type === 'quiz' ? 'Quiz Configuration (JSON)' : 'Slides Configuration (JSON)'}
+                                        </label>
+                                        <textarea
+                                            rows={6}
+                                            className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-mono"
+                                            placeholder='[{"question": "...", "options": [...], "correctAnswer": 0}]'
+                                            value={typeof newChapter.data === 'string' ? newChapter.data : JSON.stringify(newChapter.data, null, 2)}
+                                            onChange={e => setNewChapter({ ...newChapter, data: e.target.value })}
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">Paste your JSON configuration here.</p>
+                                    </div>
+                                )}
                                 <div className="flex gap-4">
                                     <button onClick={handleSaveChapter} className="flex-1 bg-primary text-black font-bold text-sm py-2 rounded-lg hover:bg-white transition-colors">
                                         {(newChapter as any).id ? 'Save Changes' : 'Add Chapter'}

@@ -1,6 +1,6 @@
 import { UserRole } from "./user";
 
-export type ChapterType = 'video' | 'slides' | 'quiz';
+export type ChapterType = 'video' | 'slides' | 'quiz' | 'pdf';
 
 export interface QuizQuestion {
     id: string;
