@@ -535,11 +535,21 @@ export default function ModulesAdminPage() {
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Description</label>
                                         <textarea
                                             rows={6}
-                                            className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm"
+                                            className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm mb-2"
                                             placeholder="Describe the animation (HTML tags allowed for formatting)..."
                                             value={(newChapter as any).description || ""}
                                             onChange={e => setNewChapter({ ...newChapter, description: e.target.value } as any)}
                                         />
+                                        <div className="text-xs text-gray-500 bg-white/5 p-3 rounded border border-white/5">
+                                            <p className="font-bold mb-1">Formatting Tips (HTML):</p>
+                                            <ul className="list-disc pl-4 space-y-1 font-mono">
+                                                <li>&lt;b&gt;Bold Text&lt;/b&gt; → <b>Bold Text</b></li>
+                                                <li>&lt;i&gt;Italic Text&lt;/i&gt; → <i>Italic Text</i></li>
+                                                <li>&lt;br&gt; → New Line</li>
+                                                <li>&lt;span style="color: red"&gt;Red Text&lt;/span&gt; → <span className="text-red-500">Red Text</span></li>
+                                                <li>&lt;ul&gt;&lt;li&gt;List Item&lt;/li&gt;&lt;/ul&gt; → Bullet List</li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 )}
 
