@@ -5,6 +5,14 @@ import { useUser } from "@/context/UserContext";
 
 import { getRank } from "@/types/gamification";
 
+const ROLE_CONFIG: Record<string, { label: string; color: string }> = {
+    general: { label: 'General', color: 'text-gray-400 border-gray-500/30' },
+    reagent: { label: 'Reagent', color: 'text-cyan-400 border-cyan-500/30' },
+    safe: { label: 'SAFe', color: 'text-purple-400 border-purple-500/30' },
+    abbelighter: { label: 'Abbelighter', color: 'text-orange-400 border-orange-500/30' },
+    abbelighter_admin: { label: 'Admin', color: 'text-red-400 border-red-500/30' },
+};
+
 export default function UsersAdminPage() {
     const { user } = useUser();
     const [users, setUsers] = useState<any[]>([]);
@@ -98,19 +106,28 @@ export default function UsersAdminPage() {
             </div>
 
             <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
-                <div className="flex items-center gap-4 mb-6">
-                    {['all', 'pending', 'approved', 'rejected'].map(status => (
-                        <button
-                            key={status}
-                            onClick={() => setUserFilterStatus(status)}
-                            className={`px-4 py-2 rounded-lg text-sm font-bold capitalize transition-colors ${userFilterStatus === status
-                                ? 'bg-primary text-black'
-                                : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
-                                }`}
-                        >
-                            {status}
-                        </button>
-                    ))}
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                        {['all', 'pending', 'approved', 'rejected'].map(status => (
+                            <button
+                                key={status}
+                                onClick={() => setUserFilterStatus(status)}
+                                className={`px-4 py-2 rounded-lg text-sm font-bold capitalize transition-colors ${userFilterStatus === status
+                                    ? 'bg-primary text-black'
+                                    : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                                    }`}
+                            >
+                                {status}
+                            </button>
+                        ))}
+                    </div>
+                    <button
+                        onClick={fetchUsers}
+                        className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
+                        title="Refresh List"
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    </button>
                 </div>
 
                 {/* Sorting */}
@@ -159,12 +176,19 @@ export default function UsersAdminPage() {
                                                 <span>{u.email}</span>
                                                 <span className="text-xs text-gray-500">{u.company}</span>
                                                 <div className="flex gap-2 mt-2 text-xs">
-                                                    <div className="flex items-center gap-2 mt-2 text-xs">
+                                                    <div className="flex items-center gap-3 mt-2">
+                                                        {/* Role Badge */}
+                                                        <div className={`px-2 py-0.5 rounded border text-xs font-bold uppercase tracking-wider ${ROLE_CONFIG[u.roles?.[0] || 'general']?.color || 'text-gray-400 border-gray-500/30'}`}>
+                                                            {ROLE_CONFIG[u.roles?.[0] || 'general']?.label || 'General'}
+                                                        </div>
+
+                                                        {/* Role Selector */}
                                                         <select
                                                             value={u.roles?.[0] || 'general'}
                                                             onChange={async (e) => {
                                                                 const newRole = e.target.value;
-                                                                if (!confirm(`Change role for ${u.first_name} to ${newRole}?`)) return;
+                                                                const roleLabel = ROLE_CONFIG[newRole]?.label || newRole;
+                                                                if (!confirm(`Change role for ${u.first_name} to ${roleLabel}?`)) return;
                                                                 try {
                                                                     const res = await fetch('/api/admin/users', {
                                                                         method: 'PUT',
@@ -172,7 +196,7 @@ export default function UsersAdminPage() {
                                                                         body: JSON.stringify({ userId: u.id, roles: [newRole] })
                                                                     });
                                                                     if (res.ok) {
-                                                                        fetchUsers();
+                                                                        await fetchUsers(); // Await refresh
                                                                     } else {
                                                                         alert("Failed to update role");
                                                                     }
@@ -181,7 +205,7 @@ export default function UsersAdminPage() {
                                                                     alert("Error updating role");
                                                                 }
                                                             }}
-                                                            className="bg-black/40 border border-white/10 rounded px-2 py-0.5 text-gray-300 focus:outline-none focus:border-primary cursor-pointer"
+                                                            className="bg-black/40 border border-white/10 rounded px-2 py-0.5 text-xs text-gray-300 focus:outline-none focus:border-primary cursor-pointer w-[200px]"
                                                         >
                                                             <option value="general">General (Nanoscopy User)</option>
                                                             <option value="reagent">Abbelight Reagent Customer</option>
@@ -189,7 +213,8 @@ export default function UsersAdminPage() {
                                                             <option value="abbelighter">Abbelighter (Non-Admin)</option>
                                                             <option value="abbelighter_admin">Abbelighter Admin</option>
                                                         </select>
-                                                        <span className={`px-2 py-0.5 rounded border border-white/10 ${getRank(u.xp).color.replace('text-', 'bg-')}/10 ${getRank(u.xp).color}`}>
+
+                                                        <span className={`px-2 py-0.5 rounded border border-white/10 text-xs ${getRank(u.xp).color.replace('text-', 'bg-')}/10 ${getRank(u.xp).color}`}>
                                                             Lvl {u.level} • {u.xp} XP • {getRank(u.xp).name}
                                                         </span>
                                                     </div>
