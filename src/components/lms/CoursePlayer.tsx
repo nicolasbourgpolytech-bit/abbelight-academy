@@ -37,6 +37,19 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
     const [isModuleCompleted, setIsModuleCompleted] = useState(false);
     const [nextModuleId, setNextModuleId] = useState<string | number | undefined>(undefined);
     const [isRequirementsMet, setIsRequirementsMet] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
+
+    // Stop speaking when unmounting or changing chapters
+    useEffect(() => {
+        const stopSpeaking = () => {
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
+            setIsSpeaking(false);
+        };
+
+        return stopSpeaking;
+    }, [activeChapterId]);
 
     useEffect(() => {
         if (pathId) {
@@ -312,15 +325,58 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                             {/* Description Area - Overlay bottom or fixed block */}
                             {activeChapter.description && (
                                 <div className="bg-black/90 backdrop-blur-md border-t border-white/10 p-6 max-h-[35%] overflow-y-auto w-full shrink-0 z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
-                                    <div className="max-w-6xl mx-auto w-full">
-                                        <h1 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+                                    <div className="flex items-center justify-between gap-4 mb-3">
+                                        <h1 className="text-xl font-bold text-white flex items-center gap-2 m-0">
                                             {activeChapter.title}
                                         </h1>
-                                        <div
-                                            className="text-gray-300 text-base leading-relaxed prose prose-invert prose-p:my-2 prose-headings:text-white prose-a:text-primary max-w-none"
-                                            dangerouslySetInnerHTML={{ __html: activeChapter.description }}
-                                        />
+
+                                        {/* TTS Button */}
+                                        <button
+                                            onClick={() => {
+                                                if (isSpeaking) {
+                                                    window.speechSynthesis.cancel();
+                                                    setIsSpeaking(false);
+                                                } else {
+                                                    const tmp = document.createElement("DIV");
+                                                    tmp.innerHTML = activeChapter.description || "";
+                                                    const text = tmp.textContent || tmp.innerText || "";
+
+                                                    if (text.trim()) {
+                                                        const utterance = new SpeechSynthesisUtterance(text);
+                                                        // Attempt to detect language broadly, or rely on browser default (usually works well)
+                                                        // quote-unquote "feature sympa" implies French context, but let's stick to auto.
+
+                                                        utterance.onend = () => setIsSpeaking(false);
+                                                        utterance.onerror = () => setIsSpeaking(false);
+
+                                                        window.speechSynthesis.cancel(); // Cancel any previous
+                                                        window.speechSynthesis.speak(utterance);
+                                                        setIsSpeaking(true);
+                                                    }
+                                                }
+                                            }}
+                                            className={`p-2 rounded-full transition-all border ${isSpeaking
+                                                ? 'bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,202,248,0.5)] animate-pulse'
+                                                : 'bg-white/10 text-white border-white/10 hover:bg-white/20 hover:border-white/30'
+                                                }`}
+                                            title={isSpeaking ? "Arrêter la lecture" : "Lire le texte"}
+                                        >
+                                            {isSpeaking ? (
+                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1v-4z" />
+                                                </svg>
+                                            ) : (
+                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                                </svg>
+                                            )}
+                                        </button>
                                     </div>
+                                    <div
+                                        className="text-gray-300 text-base leading-relaxed prose prose-invert prose-p:my-2 prose-headings:text-white prose-a:text-primary max-w-none"
+                                        dangerouslySetInnerHTML={{ __html: activeChapter.description }}
+                                    />
                                 </div>
                             )}
                         </div>
