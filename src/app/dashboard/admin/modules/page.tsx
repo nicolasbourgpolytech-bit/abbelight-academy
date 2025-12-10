@@ -114,6 +114,23 @@ function QuizBuilder({ data, onChange }: QuizBuilderProps) {
 }
 
 
+
+// Helper Component for HTML Preview
+function HTMLPreview({ content, title = "Preview" }: { content: string, title?: string }) {
+    if (!content) return null;
+    return (
+        <div className="mt-4 border border-white/10 rounded-lg overflow-hidden">
+            <div className="bg-white/5 px-3 py-1 text-xs font-bold text-gray-400 uppercase border-b border-white/10">
+                {title}
+            </div>
+            <div
+                className="p-4 bg-black/30 text-white text-sm prose prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: content }}
+            />
+        </div>
+    );
+}
+
 export default function ModulesAdminPage() {
     const { user } = useUser();
     const [modules, setModules] = useState<any[]>([]);
@@ -383,6 +400,7 @@ export default function ModulesAdminPage() {
                                     className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
                                     placeholder="What will the user learn?"
                                 />
+                                <HTMLPreview content={editingModule?.description} title="Module Description Preview" />
                             </div>
 
                             <div>
@@ -540,7 +558,8 @@ export default function ModulesAdminPage() {
                                             value={(newChapter as any).description || ""}
                                             onChange={e => setNewChapter({ ...newChapter, description: e.target.value } as any)}
                                         />
-                                        <div className="text-xs text-gray-500 bg-white/5 p-3 rounded border border-white/5">
+                                        <HTMLPreview content={(newChapter as any).description} title="Live Preview" />
+                                        <div className="text-xs text-gray-500 bg-white/5 p-3 rounded border border-white/5 mt-2">
                                             <p className="font-bold mb-1">Formatting Tips (HTML):</p>
                                             <ul className="list-disc pl-4 space-y-1 font-mono">
                                                 <li>&lt;b&gt;Bold Text&lt;/b&gt; → <b>Bold Text</b></li>
