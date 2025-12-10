@@ -325,65 +325,87 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
                             {/* Description Area - Overlay bottom or fixed block */}
                             {activeChapter.description && (
                                 <div className="bg-black/90 backdrop-blur-md border-t border-white/10 p-6 max-h-[35%] overflow-y-auto w-full shrink-0 z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
-                                    <div className="flex items-center justify-between gap-4 mb-3">
+                                    <div className="mb-4">
                                         <h1 className="text-xl font-bold text-white flex items-center gap-2 m-0">
                                             {activeChapter.title}
                                         </h1>
-
-                                        {/* TTS Button */}
-                                        <button
-                                            onClick={() => {
-                                                if (isSpeaking) {
-                                                    window.speechSynthesis.cancel();
-                                                    setIsSpeaking(false);
-                                                } else {
-                                                    const tmp = document.createElement("DIV");
-                                                    tmp.innerHTML = activeChapter.description || "";
-                                                    const text = tmp.textContent || tmp.innerText || "";
-
-                                                    if (text.trim()) {
-                                                        const utterance = new SpeechSynthesisUtterance(text);
-                                                        // Force English language to avoid "French accent" on English text
-                                                        utterance.lang = 'en-US';
-
-                                                        // Optional: Try to find a premium English voice if available (e.g. Google US English, Microsoft Zira, etc.)
-                                                        const voices = window.speechSynthesis.getVoices();
-                                                        const englishVoice = voices.find(v => v.lang === 'en-US' && !v.name.includes("Zira")) || voices.find(v => v.lang.startsWith('en'));
-                                                        if (englishVoice) {
-                                                            utterance.voice = englishVoice;
-                                                        }
-
-                                                        utterance.onend = () => setIsSpeaking(false);
-                                                        utterance.onerror = () => setIsSpeaking(false);
-
-                                                        window.speechSynthesis.cancel(); // Cancel any previous
-                                                        window.speechSynthesis.speak(utterance);
-                                                        setIsSpeaking(true);
-                                                    }
-                                                }
-                                            }}
-                                            className={`p-2 rounded-full transition-all border ${isSpeaking
-                                                ? 'bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,202,248,0.5)] animate-pulse'
-                                                : 'bg-white/10 text-white border-white/10 hover:bg-white/20 hover:border-white/30'
-                                                }`}
-                                            title={isSpeaking ? "Arrêter la lecture" : "Lire le texte"}
-                                        >
-                                            {isSpeaking ? (
-                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1v-4z" />
-                                                </svg>
-                                            ) : (
-                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                                </svg>
-                                            )}
-                                        </button>
                                     </div>
-                                    <div
-                                        className="text-gray-300 text-base leading-relaxed prose prose-invert prose-p:my-2 prose-headings:text-white prose-a:text-primary max-w-none"
-                                        dangerouslySetInnerHTML={{ __html: activeChapter.description }}
-                                    />
+
+                                    <div className="flex gap-6 items-start">
+                                        {/* TTS Button - Distinct and Visible on the left */}
+                                        <div className="shrink-0 pt-1">
+                                            <button
+                                                onClick={() => {
+                                                    if (isSpeaking) {
+                                                        window.speechSynthesis.cancel();
+                                                        setIsSpeaking(false);
+                                                    } else {
+                                                        const tmp = document.createElement("DIV");
+                                                        tmp.innerHTML = activeChapter.description || "";
+                                                        let text = tmp.textContent || tmp.innerText || "";
+
+                                                        // Add explicit pauses (breathing times) by hacking punctuation
+                                                        // Replace periods with period + break. 
+                                                        // Note: SpeechSynthesis is quirky. Rate adjustment is usually safer.
+                                                        // Let's rely on rate primarily, and maybe add slight pauses if needed.
+
+                                                        if (text.trim()) {
+                                                            const utterance = new SpeechSynthesisUtterance(text);
+                                                            // Force English language
+                                                            utterance.lang = 'en-US';
+
+                                                            // Adjust speed (0.1 to 10, default 1). 0.9 is slightly slower.
+                                                            utterance.rate = 0.9;
+
+                                                            // Optional: Try to find a premium English voice
+                                                            const voices = window.speechSynthesis.getVoices();
+                                                            const englishVoice = voices.find(v => v.lang === 'en-US' && !v.name.includes("Zira")) || voices.find(v => v.lang.startsWith('en'));
+                                                            if (englishVoice) {
+                                                                utterance.voice = englishVoice;
+                                                            }
+
+                                                            utterance.onend = () => setIsSpeaking(false);
+                                                            utterance.onerror = () => setIsSpeaking(false);
+
+                                                            window.speechSynthesis.cancel();
+                                                            window.speechSynthesis.speak(utterance);
+                                                            setIsSpeaking(true);
+                                                        }
+                                                    }
+                                                }}
+                                                className={`flex flex-col items-center justify-center gap-2 w-24 h-24 rounded-2xl border-2 transition-all shadow-lg ${isSpeaking
+                                                        ? 'bg-primary text-black border-primary shadow-[0_0_20px_rgba(0,202,248,0.4)] animate-pulse'
+                                                        : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10 hover:border-white/30 hover:text-white hover:scale-105'
+                                                    }`}
+                                                title={isSpeaking ? "Stop Reading" : "Read Description"}
+                                            >
+                                                {isSpeaking ? (
+                                                    <>
+                                                        <div className="relative w-8 h-8 flex items-center justify-center">
+                                                            <span className="absolute inline-flex h-full w-full rounded-full bg-black/20 animate-ping"></span>
+                                                            <svg className="w-8 h-8 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1v-4z" />
+                                                            </svg>
+                                                        </div>
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider">Stop</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a4 4 0 010 7.424M6.75 15H4.5a2.25 2.25 0 01-2.25-2.25V11.25a2.25 2.25 0 012.25-2.25h2.25l4.5-4.5v15l-4.5-4.5z" />
+                                                        </svg>
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider">Listen</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+
+                                        <div
+                                            className="flex-1 text-gray-300 text-base leading-relaxed prose prose-invert prose-p:my-3 prose-headings:text-white prose-a:text-primary max-w-none"
+                                            dangerouslySetInnerHTML={{ __html: activeChapter.description }}
+                                        />
+                                    </div>
                                 </div>
                             )}
                         </div>
