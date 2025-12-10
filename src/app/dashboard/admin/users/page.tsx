@@ -193,96 +193,97 @@ export default function UsersAdminPage() {
                                                             Lvl {u.level} • {u.xp} XP • {getRank(u.xp).name}
                                                         </span>
                                                     </div>
-                                                    <div className="flex gap-4 mt-1 text-xs text-gray-500">
-                                                        <span>Last seen: {u.last_seen ? new Date(u.last_seen).toLocaleString() : 'Never'}</span>
-                                                        <span>Time: {(() => {
-                                                            const s = u.total_time_spent || 0;
-                                                            const h = Math.floor(s / 3600);
-                                                            const m = Math.floor((s % 3600) / 60);
-                                                            return h > 0 ? `${h}h ${m}m` : `${m}m`;
-                                                        })()}</span>
-                                                    </div>
+                                                </div>
+                                                <div className="flex gap-4 mt-1 text-xs text-gray-500">
+                                                    <span>Last seen: {u.last_seen ? new Date(u.last_seen).toLocaleString() : 'Never'}</span>
+                                                    <span>Time: {(() => {
+                                                        const s = u.total_time_spent || 0;
+                                                        const h = Math.floor(s / 3600);
+                                                        const m = Math.floor((s % 3600) / 60);
+                                                        return h > 0 ? `${h}h ${m}m` : `${m}m`;
+                                                    })()}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-                                            <button
-                                                onClick={async () => {
-                                                    if (!confirm(`Warning: This will reset XP to 0 AND delete all progress for ${u.first_name} ${u.last_name}.\n\nThe user will need to replay all modules to earn XP again.\n\nAre you sure?`)) return;
-                                                    try {
-                                                        await fetch('/api/users/reset-xp', {
-                                                            method: 'POST',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            body: JSON.stringify({ userId: u.id })
-                                                        });
-                                                        fetchUsers(); // Refresh
-                                                        alert("Reset complete. The user must refresh their page if logged in.");
-                                                    } catch (e) { alert("Failed to reset XP"); }
-                                                }}
-                                                className="p-2 text-yellow-500 hover:text-yellow-400"
-                                                title="Reset XP"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                                            </button>
-
-                                            <button
-                                                onClick={async () => {
-                                                    try {
-                                                        await fetch('/api/users/give-xp', {
-                                                            method: 'POST',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            body: JSON.stringify({ userId: u.id, amount: 100 })
-                                                        });
-                                                        fetchUsers();
-                                                        // If admin is updating themselves, refresh the global context to show new XP immediately
-                                                        if (user && user.id === u.id) {
-                                                            // We utilize the exposed refreshUser from context (we need to make sure we destructure it first)
-                                                            window.location.reload(); // Fallback if refreshUser isn't available or reliable yet, but actually let's try to do it cleaner.
-                                                        }
-                                                        alert("Added 100 XP!");
-                                                    } catch (e) { alert("Failed to add XP"); }
-                                                }}
-                                                className="p-2 text-blue-500 hover:text-blue-400"
-                                                title="Give 100 XP (Test)"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                                            </button>
-
-                                            {u.status === 'pending' && (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleApproveUser(u.id)}
-                                                        className="px-4 py-2 bg-green-500/20 text-green-500 border border-green-500/50 rounded-lg text-sm font-bold hover:bg-green-500 hover:text-black transition-colors"
-                                                    >
-                                                        Approve
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleRejectUser(u.id)}
-                                                        className="px-4 py-2 bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 rounded-lg text-sm font-bold hover:bg-yellow-500 hover:text-black transition-colors"
-                                                    >
-                                                        Reject
-                                                    </button>
-                                                </>
-                                            )}
-                                            <button
-                                                onClick={() => handleDeleteUser(u.id)}
-                                                className="p-2 text-gray-500 hover:text-red-500 transition-colors"
-                                                title="Delete User"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                            </button>
-                                        </div>
                                     </div>
+                                    <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+                                        <button
+                                            onClick={async () => {
+                                                if (!confirm(`Warning: This will reset XP to 0 AND delete all progress for ${u.first_name} ${u.last_name}.\n\nThe user will need to replay all modules to earn XP again.\n\nAre you sure?`)) return;
+                                                try {
+                                                    await fetch('/api/users/reset-xp', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ userId: u.id })
+                                                    });
+                                                    fetchUsers(); // Refresh
+                                                    alert("Reset complete. The user must refresh their page if logged in.");
+                                                } catch (e) { alert("Failed to reset XP"); }
+                                            }}
+                                            className="p-2 text-yellow-500 hover:text-yellow-400"
+                                            title="Reset XP"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                        </button>
+
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    await fetch('/api/users/give-xp', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ userId: u.id, amount: 100 })
+                                                    });
+                                                    fetchUsers();
+                                                    // If admin is updating themselves, refresh the global context to show new XP immediately
+                                                    if (user && user.id === u.id) {
+                                                        // We utilize the exposed refreshUser from context (we need to make sure we destructure it first)
+                                                        window.location.reload(); // Fallback if refreshUser isn't available or reliable yet, but actually let's try to do it cleaner.
+                                                    }
+                                                    alert("Added 100 XP!");
+                                                } catch (e) { alert("Failed to add XP"); }
+                                            }}
+                                            className="p-2 text-blue-500 hover:text-blue-400"
+                                            title="Give 100 XP (Test)"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                                        </button>
+
+                                        {u.status === 'pending' && (
+                                            <>
+                                                <button
+                                                    onClick={() => handleApproveUser(u.id)}
+                                                    className="px-4 py-2 bg-green-500/20 text-green-500 border border-green-500/50 rounded-lg text-sm font-bold hover:bg-green-500 hover:text-black transition-colors"
+                                                >
+                                                    Approve
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRejectUser(u.id)}
+                                                    className="px-4 py-2 bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 rounded-lg text-sm font-bold hover:bg-yellow-500 hover:text-black transition-colors"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </>
+                                        )}
+                                        <button
+                                            onClick={() => handleDeleteUser(u.id)}
+                                            className="p-2 text-gray-500 hover:text-red-500 transition-colors"
+                                            title="Delete User"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </div>
+                                </div>
                             ))}
-                                    {users.length === 0 && (
-                                        <div className="text-center py-10 text-gray-500">
-                                            No users found matching filter.
-                                        </div>
-                                    )}
-                                </>
+                            {users.length === 0 && (
+                                <div className="text-center py-10 text-gray-500">
+                                    No users found matching filter.
+                                </div>
                             )}
-                        </div>
+                        </>
+                    )}
                 </div>
             </div>
-            );
+        </div>
+    );
 }
