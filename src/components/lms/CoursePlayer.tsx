@@ -343,8 +343,15 @@ export default function CoursePlayer({ module, pathId }: CoursePlayerProps) {
 
                                                     if (text.trim()) {
                                                         const utterance = new SpeechSynthesisUtterance(text);
-                                                        // Attempt to detect language broadly, or rely on browser default (usually works well)
-                                                        // quote-unquote "feature sympa" implies French context, but let's stick to auto.
+                                                        // Force English language to avoid "French accent" on English text
+                                                        utterance.lang = 'en-US';
+
+                                                        // Optional: Try to find a premium English voice if available (e.g. Google US English, Microsoft Zira, etc.)
+                                                        const voices = window.speechSynthesis.getVoices();
+                                                        const englishVoice = voices.find(v => v.lang === 'en-US' && !v.name.includes("Zira")) || voices.find(v => v.lang.startsWith('en'));
+                                                        if (englishVoice) {
+                                                            utterance.voice = englishVoice;
+                                                        }
 
                                                         utterance.onend = () => setIsSpeaking(false);
                                                         utterance.onerror = () => setIsSpeaking(false);
