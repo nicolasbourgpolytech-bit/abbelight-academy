@@ -14,9 +14,10 @@ export function RegisterForm() {
     const [selectedRoles, setSelectedRoles] = useState<string[]>(["general"]);
 
     const roleOptions = [
-        { id: "reagent", label: "Reagent Customer" },
-        { id: "safe", label: "SAFe Instrument User" },
-        { id: "abbelighter", label: "Abbelighter" },
+        { id: "general", label: "General (Nanoscopy User)" },
+        { id: "reagent", label: "Abbelight Reagent Customer" },
+        { id: "safe", label: "Abbelight SAFe Customer" },
+        { id: "abbelighter", label: "Abbelighter (Non-Admin)" },
         { id: "abbelighter_admin", label: "Abbelighter Admin" },
     ];
 

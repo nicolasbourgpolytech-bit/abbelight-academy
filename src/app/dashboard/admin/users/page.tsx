@@ -183,11 +183,11 @@ export default function UsersAdminPage() {
                                                             }}
                                                             className="bg-black/40 border border-white/10 rounded px-2 py-0.5 text-gray-300 focus:outline-none focus:border-primary cursor-pointer"
                                                         >
-                                                            <option value="general">General</option>
-                                                            <option value="reagent">Reagent</option>
-                                                            <option value="safe">SAFe</option>
-                                                            <option value="abbelighter">Abbelighter</option>
-                                                            <option value="abbelighter_admin">Admin</option>
+                                                            <option value="general">General (Nanoscopy User)</option>
+                                                            <option value="reagent">Abbelight Reagent Customer</option>
+                                                            <option value="safe">Abbelight SAFe Customer</option>
+                                                            <option value="abbelighter">Abbelighter (Non-Admin)</option>
+                                                            <option value="abbelighter_admin">Abbelighter Admin</option>
                                                         </select>
                                                         <span className={`px-2 py-0.5 rounded border border-white/10 ${getRank(u.xp).color.replace('text-', 'bg-')}/10 ${getRank(u.xp).color}`}>
                                                             Lvl {u.level} • {u.xp} XP • {getRank(u.xp).name}
