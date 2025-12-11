@@ -57,11 +57,11 @@ const generateSpectrum = (peak: number, width: number, skew: number, range: numb
         return { wavelength: nm, value: val };
     });
 
-    // Normalize and filter low values to reduce noise/file size if needed
+    // Do not filter low values to maintain index alignment with WAVELENGTHS array (0..500)
     return rawPoints.map(p => ({
         wavelength: p.wavelength,
         value: p.value / maxVal
-    })).filter(p => p.value > 0.01);
+    }));
 };
 
 const RANGE = Array.from({ length: 501 }, (_, i) => 300 + i); // 300nm to 800nm
