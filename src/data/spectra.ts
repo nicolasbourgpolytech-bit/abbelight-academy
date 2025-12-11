@@ -12,6 +12,22 @@ export interface FluorophoreData {
     emission: SpectrumPoint[];
 }
 
+// Standalone Error Function approximation
+const erf = (x: number): number => {
+    // maximal error: 1.5e-7
+    const sign = x >= 0 ? 1 : -1;
+    x = Math.abs(x);
+    const a1 = 0.254829592;
+    const a2 = -0.284496736;
+    const a3 = 1.421413741;
+    const a4 = -1.453152027;
+    const a5 = 1.061405429;
+    const p = 0.3275911;
+    const t = 1.0 / (1.0 + p * x);
+    const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+    return sign * y;
+};
+
 // Helper: Asymmetric Gaussian (Skewed Normal Distribution) to mimic real spectra
 // x: wavelength
 // peak: peak wavelength
@@ -23,28 +39,12 @@ const asymmetricGaussian = (x: number, peak: number, width: number, skew: number
     const gauss = Math.exp(-0.5 * t * t);
     // Skew factor (Error function approximation)
     // This adds the "tail" characteristic of real spectra
-    const skewFactor = 1 + Math.erf(skew * t / Math.sqrt(2));
+    const skewFactor = 1 + erf(skew * t / Math.sqrt(2));
 
     return gauss * skewFactor;
 };
 
-// Polyfill for Math.erf if needed, or simple approximation
-if (!Math.erf) {
-    Math.erf = function (x: number) {
-        // maximal error: 1.5e-7
-        const sign = x >= 0 ? 1 : -1;
-        x = Math.abs(x);
-        const a1 = 0.254829592;
-        const a2 = -0.284496736;
-        const a3 = 1.421413741;
-        const a4 = -1.453152027;
-        const a5 = 1.061405429;
-        const p = 0.3275911;
-        const t = 1.0 / (1.0 + p * x);
-        const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
-        return sign * y;
-    };
-}
+
 
 
 // Generate full spectrum array
