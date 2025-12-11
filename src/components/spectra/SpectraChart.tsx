@@ -9,7 +9,7 @@ import {
     CartesianGrid,
     Tooltip,
 } from 'recharts';
-import { AVAILABLE_DYES, FLUOROPHORE_DATA } from '@/data/spectra';
+
 
 // --- Types & Data ---
 
@@ -18,9 +18,14 @@ type SpectrumDataPoint = {
     [key: string]: number; // dynamic keys for fluorophores e.g. "dapi_ex", "dapi_em"
 };
 
-type FluorophoreState = {
-    id: string;
+type Fluorophore = {
+    id: string; // UUID from DB
+    name: string;
+    category: string;
+    color: string;
     visible: boolean;
+    excitation_data: { wavelength: number; value: number }[];
+    emission_data: { wavelength: number; value: number }[];
 };
 
 // Generate range of wavelengths matching the data source
@@ -28,18 +33,35 @@ const WAVELENGTHS = Array.from({ length: 501 }, (_, i) => 300 + i); // 300nm to 
 
 export function SpectraChart() {
     const [isMounted, setIsMounted] = useState(false);
-
-    // Initialize state based on available dyes
-    const [fluorophores, setFluorophores] = useState<FluorophoreState[]>(() =>
-        AVAILABLE_DYES.map(dye => ({
-            id: dye.id,
-            visible: ['dapi', 'alexa488'].includes(dye.id) // Default visible
-        }))
-    );
+    const [fluorophores, setFluorophores] = useState<Fluorophore[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         setIsMounted(true);
+        fetchData();
     }, []);
+
+    const fetchData = async () => {
+        try {
+            const res = await fetch('/api/spectra');
+            if (res.ok) {
+                const data = await res.json();
+                // Ensure initial visibility logic (e.g. show DAPI by default)
+                // Actually the DB has a 'visible' column, but that's for "default visibility" or we manage local state?
+                // For the viewer, we likely want to toggle them locally.
+                // Let's assume we fetch them all and map them to local state.
+                const mapped = data.map((d: any) => ({
+                    ...d,
+                    visible: ['DAPI', 'Alexa Fluor 488'].includes(d.name) // Default visible logic
+                }));
+                setFluorophores(mapped);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const toggleFluorophore = (id: string) => {
         setFluorophores(prev => prev.map(f =>
@@ -47,53 +69,40 @@ export function SpectraChart() {
         ));
     };
 
-    // Calculate chart data based on visible fluorophores and static data source
+    // Calculate chart data based on visible fluorophores and their data arrays
     const chartData = useMemo(() => {
-        // Create the base array of objects
         return WAVELENGTHS.map((nm, index) => {
             const point: SpectrumDataPoint = { wavelength: nm };
 
-            fluorophores.forEach(fState => {
-                if (fState.visible) {
-                    const data = FLUOROPHORE_DATA[fState.id];
-                    if (data) {
-                        // Look up value at this index (assuming 1:1 mapping with WAVELENGTHS range 300-800)
-                        // Data source was generated with same range logic
-                        const exPoint = data.excitation[index];
-                        const emPoint = data.emission[index];
+            fluorophores.forEach(f => {
+                if (f.visible) {
+                    // Data from DB is in f.excitation_data (Array of {wavelength, value})
+                    // Assuming alignment or lookup
+                    const exPoint = f.excitation_data?.find((p: any) => p.wavelength === nm);
+                    const emPoint = f.emission_data?.find((p: any) => p.wavelength === nm);
 
-                        // Safety check if indices align, otherwise find by wavelength (slower but safer)
-                        // optimize for speed: direct index access if ranges match
-                        if (exPoint && exPoint.wavelength === nm) {
-                            point[`${fState.id}_ex`] = exPoint.value;
-                        }
-                        if (emPoint && emPoint.wavelength === nm) {
-                            point[`${fState.id}_em`] = emPoint.value;
-                        }
-                    }
+                    if (exPoint) point[`${f.id}_ex`] = exPoint.value;
+                    if (emPoint) point[`${f.id}_em`] = emPoint.value;
                 }
             });
             return point;
         });
     }, [fluorophores]);
 
-    if (!isMounted) return <div className="h-full flex items-center justify-center">Loading spectra...</div>;
+    if (!isMounted || isLoading) return <div className="h-full flex items-center justify-center text-white">Loading spectra...</div>;
 
     return (
         <div className="flex flex-col h-full space-y-6">
             {/* Control Panel */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
-                {fluorophores.map(fState => {
-                    const dye = FLUOROPHORE_DATA[fState.id];
-                    if (!dye) return null;
-
+                {fluorophores.map(dye => {
                     return (
                         <button
                             key={dye.id}
                             onClick={() => toggleFluorophore(dye.id)}
                             className={`
                                 flex items-center gap-3 px-4 py-3 rounded-lg border transition-all duration-200
-                                ${fState.visible
+                                ${dye.visible
                                     ? 'bg-white/10 border-white/20'
                                     : 'bg-transparent border-transparent opacity-50 hover:opacity-100'}
                             `}
@@ -102,9 +111,9 @@ export function SpectraChart() {
                                 className="w-3 h-3 rounded-full shadow-[0_0_10px_currentColor]"
                                 style={{ backgroundColor: dye.color, color: dye.color }}
                             />
-                            <span className="text-sm font-medium text-white">{dye.label}</span>
-                            {fState.visible && (
-                                <svg className="w-4 h-4 ml-auto text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <span className="text-sm font-medium text-white truncate">{dye.name}</span>
+                            {dye.visible && (
+                                <svg className="w-4 h-4 ml-auto text-green-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                             )}
@@ -168,13 +177,12 @@ export function SpectraChart() {
                         />
 
                         {/* Excitation Lines (Dashed) */}
-                        {fluorophores.map(fState => {
-                            if (!fState.visible) return null;
-                            const dye = FLUOROPHORE_DATA[fState.id];
+                        {fluorophores.map(dye => {
+                            if (!dye.visible) return null;
                             return (
                                 <Line
                                     key={`${dye.id}_ex`}
-                                    name={`${dye.label} Ex`}
+                                    name={`${dye.name} Ex`}
                                     type="monotone"
                                     dataKey={`${dye.id}_ex`}
                                     stroke={dye.color}
@@ -191,13 +199,12 @@ export function SpectraChart() {
                         })}
 
                         {/* Emission Lines (Solid) */}
-                        {fluorophores.map(fState => {
-                            if (!fState.visible) return null;
-                            const dye = FLUOROPHORE_DATA[fState.id];
+                        {fluorophores.map(dye => {
+                            if (!dye.visible) return null;
                             return (
                                 <Line
                                     key={`${dye.id}_em`}
-                                    name={`${dye.label} Em`}
+                                    name={`${dye.name} Em`}
                                     type="monotone"
                                     dataKey={`${dye.id}_em`}
                                     stroke={dye.color}
