@@ -64,6 +64,23 @@ const generateSpectrum = (peak: number, width: number, skew: number, range: numb
     }));
 };
 
+const generateMultiPeakSpectrum = (components: { peak: number, width: number, skew: number, weight: number }[], range: number[]): SpectrumPoint[] => {
+    let maxVal = 0;
+    const rawPoints = range.map(nm => {
+        let val = 0;
+        components.forEach(c => {
+            val += c.weight * asymmetricGaussian(nm, c.peak, c.width, c.skew);
+        });
+        if (val > maxVal) maxVal = val;
+        return { wavelength: nm, value: val };
+    });
+
+    return rawPoints.map(p => ({
+        wavelength: p.wavelength,
+        value: p.value / (maxVal || 1)
+    }));
+};
+
 const RANGE = Array.from({ length: 501 }, (_, i) => 300 + i); // 300nm to 800nm
 
 // --- DEFINITIONS ---
@@ -100,10 +117,16 @@ export const FLUOROPHORE_DATA: Record<string, FluorophoreData> = {
         id: 'af647',
         label: 'Alexa Fluor 647',
         color: '#FF73FF', // Magenta/Far Red
-        // Ex: 650nm. Deep red.
-        excitation: generateSpectrum(650, 20, -0.5, RANGE),
-        // Em: 665nm
-        emission: generateSpectrum(670, 25, 3, RANGE)
+        // Ex: 650nm Main peak, 610nm Shoulder. Matches user image.
+        excitation: generateMultiPeakSpectrum([
+            { peak: 651, width: 18, skew: -0.8, weight: 1.0 }, // Main peak
+            { peak: 610, width: 25, skew: 0, weight: 0.35 }    // Shoulder
+        ], RANGE),
+        // Em: 670nm Main peak, consistent tail to right.
+        emission: generateMultiPeakSpectrum([
+            { peak: 670, width: 22, skew: 2.5, weight: 1.0 }, // Main peak with tail
+            // Slight boost to far red tail if needed, but skew 2.5 is usually good
+        ], RANGE)
     }
 };
 
