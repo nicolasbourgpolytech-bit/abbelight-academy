@@ -61,7 +61,7 @@ export function SpectraChart() {
     // Calculate chart data based on visible fluorophores
     const chartData = useMemo(() => {
         return WAVELENGTHS.map(nm => {
-            const point: SpectrumDataPoint = { wavelength: nm };
+            const point: SpectrumDataPoint = { wavelength: nm, test_val: 0.5 }; // Add test_val
 
             fluorophores.forEach(f => {
                 if (f.visible) {
@@ -156,6 +156,8 @@ export function SpectraChart() {
 
                         {/* Render Lines for each visible fluorophore */}
                         {/* Excitation Lines (Dashed) */}
+                        <Line type="monotone" dataKey="test_val" stroke="red" strokeWidth={3} dot={false} name="DEBUG TEST" />
+
                         {fluorophores.map(f => f.visible && (
                             <Line
                                 key={`${f.id}_ex`}
@@ -198,6 +200,14 @@ export function SpectraChart() {
                         <div className="w-6 h-0.5 bg-gray-500 rounded-full"></div>
                         <span>Emission</span>
                     </div>
+                </div>
+
+                {/* DEBUG OVERLAY */}
+                <div className="absolute bottom-4 left-4 p-2 bg-black/80 text-green-400 text-xs font-mono rounded border border-green-900 pointer-events-none z-50">
+                    <p>Points: {chartData.length}</p>
+                    <p>Keys[0]: {chartData[0] ? Object.keys(chartData[0]).join(', ') : 'N/A'}</p>
+                    <p>First Point Val: {chartData[0] ? JSON.stringify(chartData[0]) : 'N/A'}</p>
+                    <p>Visible: {fluorophores.filter(f => f.visible).map(f => f.id).join(', ')}</p>
                 </div>
             </div>
         </div>
