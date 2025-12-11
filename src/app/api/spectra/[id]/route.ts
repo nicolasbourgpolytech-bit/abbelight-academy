@@ -3,8 +3,9 @@ import { NextResponse } from 'next/server';
 
 export async function PUT(
     request: Request,
-    { params }: { params: { id: string } }
+    props: { params: Promise<{ id: string }> }
 ) {
+    const params = await props.params;
     try {
         const id = params.id;
         const body = await request.json();
@@ -37,8 +38,9 @@ export async function PUT(
 
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    props: { params: Promise<{ id: string }> }
 ) {
+    const params = await props.params;
     try {
         const id = params.id;
         const result = await sql`DELETE FROM fluorophores WHERE id = ${id} RETURNING *`;
