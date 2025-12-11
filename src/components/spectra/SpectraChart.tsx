@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
     LineChart,
     Line,
@@ -45,7 +45,12 @@ const DEFAULT_FLUOROPHORES: Fluorophore[] = [
 ];
 
 export function SpectraChart() {
+    const [isMounted, setIsMounted] = useState(false);
     const [fluorophores, setFluorophores] = useState<Fluorophore[]>(DEFAULT_FLUOROPHORES);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const toggleFluorophore = (id: string) => {
         setFluorophores(prev => prev.map(f =>
@@ -69,6 +74,8 @@ export function SpectraChart() {
             return point;
         });
     }, [fluorophores]);
+
+    if (!isMounted) return <div className="h-full flex items-center justify-center">Loading spectra...</div>;
 
     return (
         <div className="flex flex-col h-full space-y-6">
