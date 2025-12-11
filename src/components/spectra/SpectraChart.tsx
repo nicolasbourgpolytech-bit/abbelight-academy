@@ -155,36 +155,36 @@ export function SpectraChart() {
                         />
 
                         {/* Render Lines for each visible fluorophore */}
-                        {fluorophores.flatMap(f => {
-                            if (!f.visible) return [];
-                            return [
-                                /* Absorption (Dashed) */
-                                <Line
-                                    key={`${f.id}_ex`}
-                                    name={`${f.name} Ex`}
-                                    type="monotone"
-                                    dataKey={`${f.id}_ex`}
-                                    stroke={f.color}
-                                    strokeWidth={2}
-                                    strokeDasharray="4 4"
-                                    dot={false}
-                                    activeDot={{ r: 4, fill: f.color }}
-                                    className="opacity-60"
-                                />,
-                                /* Emission (Solid + Fill) */
-                                <Line
-                                    key={`${f.id}_em`}
-                                    name={`${f.name} Em`}
-                                    type="monotone"
-                                    dataKey={`${f.id}_em`}
-                                    stroke={f.color}
-                                    strokeWidth={3}
-                                    dot={false}
-                                    activeDot={{ r: 6, fill: f.color, stroke: '#fff', strokeWidth: 2 }}
-                                    className="drop-shadow-[0_0_8px_rgba(0,0,0,0.5)]"
-                                />
-                            ];
-                        })}
+                        {/* Excitation Lines (Dashed) */}
+                        {fluorophores.map(f => f.visible && (
+                            <Line
+                                key={`${f.id}_ex`}
+                                name={`${f.name} Ex`}
+                                type="monotone"
+                                dataKey={`${f.id}_ex`}
+                                stroke={f.color}
+                                strokeWidth={2}
+                                strokeDasharray="4 4"
+                                dot={false}
+                                activeDot={{ r: 4, fill: f.color }}
+                                className="opacity-60"
+                            />
+                        ))}
+
+                        {/* Emission Lines (Solid) */}
+                        {fluorophores.map(f => f.visible && (
+                            <Line
+                                key={`${f.id}_em`}
+                                name={`${f.name} Em`}
+                                type="monotone"
+                                dataKey={`${f.id}_em`}
+                                stroke={f.color}
+                                strokeWidth={3}
+                                dot={false}
+                                activeDot={{ r: 6, fill: f.color, stroke: '#fff', strokeWidth: 2 }}
+                                className="drop-shadow-[0_0_8px_rgba(0,0,0,0.5)]"
+                            />
+                        ))}
                     </LineChart>
                 </ResponsiveContainer>
 
