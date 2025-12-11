@@ -117,15 +117,18 @@ export const FLUOROPHORE_DATA: Record<string, FluorophoreData> = {
         id: 'af647',
         label: 'Alexa Fluor 647',
         color: '#FF73FF', // Magenta/Far Red
-        // Ex: 650nm Main peak, 610nm Shoulder. Matches user image.
+        // Deep red/NIR dye.
+        // Matches user requested "Sum of Gaussians" model.
         excitation: generateMultiPeakSpectrum([
-            { peak: 651, width: 18, skew: -0.8, weight: 1.0 }, // Main peak
-            { peak: 610, width: 25, skew: 0, weight: 0.35 }    // Shoulder
+            { peak: 650, width: 14, skew: 0, weight: 1.0 },   // Main sharp peak
+            { peak: 605, width: 20, skew: 0, weight: 0.25 },  // Approx 25% shoulder at 605nm
+            { peak: 560, width: 35, skew: 0, weight: 0.05 }   // Wide low tail
         ], RANGE),
-        // Em: 670nm Main peak, consistent tail to right.
+
         emission: generateMultiPeakSpectrum([
-            { peak: 670, width: 22, skew: 2.5, weight: 1.0 }, // Main peak with tail
-            // Slight boost to far red tail if needed, but skew 2.5 is usually good
+            { peak: 670, width: 16, skew: 0, weight: 1.0 },   // Main sharp peak
+            { peak: 710, width: 25, skew: 0, weight: 0.35 },  // Red-shifted shoulder at 710nm
+            { peak: 760, width: 40, skew: 0, weight: 0.1 }    // Far-red tail
         ], RANGE)
     }
 };
