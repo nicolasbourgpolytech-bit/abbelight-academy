@@ -126,9 +126,9 @@ export const FLUOROPHORE_DATA: Record<string, FluorophoreData> = {
         ], RANGE),
 
         emission: generateMultiPeakSpectrum([
-            { peak: 670, width: 16, skew: 0, weight: 1.0 },   // Main sharp peak
-            { peak: 710, width: 25, skew: 0, weight: 0.35 },  // Red-shifted shoulder at 710nm
-            { peak: 760, width: 40, skew: 0, weight: 0.1 }    // Far-red tail
+            { peak: 665, width: 15, skew: 0, weight: 1.0 },   // Main peak shifted to 665nm (standard)
+            { peak: 705, width: 28, skew: 0, weight: 0.32 },  // Shoulder shifted to 705nm
+            { peak: 750, width: 45, skew: 0, weight: 0.12 }   // Tail
         ], RANGE)
     }
 };
