@@ -2,7 +2,7 @@
 
 import { useUser } from "@/context/UserContext";
 import { UserRole } from "@/types/user";
-import { GamificationHub } from "@/components/dashboard/GamificationHub";
+
 import { UserStats } from "@/components/dashboard/UserStats";
 import { ContinueLearning } from "@/components/dashboard/ContinueLearning";
 import { UpcomingWebinars } from "@/components/dashboard/UpcomingWebinars";
@@ -40,8 +40,8 @@ export default function DashboardPage() {
             {/* Continue Learning (Priority 1) */}
             <ContinueLearning />
 
-            {/* Gamification Hub */}
-            <GamificationHub />
+            {/* Gamification Hub - REMOVED as per user request (redundant with header) */}
+
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* REAGENT SPECIFIC CONTENT */}
