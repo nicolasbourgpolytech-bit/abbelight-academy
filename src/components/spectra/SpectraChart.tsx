@@ -8,7 +8,6 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    ResponsiveContainer,
     ReferenceArea
 } from 'recharts';
 
@@ -61,7 +60,7 @@ export function SpectraChart() {
     // Calculate chart data based on visible fluorophores
     const chartData = useMemo(() => {
         return WAVELENGTHS.map(nm => {
-            const point: SpectrumDataPoint = { wavelength: nm, test_val: 0.5 }; // Add test_val
+            const point: SpectrumDataPoint = { wavelength: nm };
 
             fluorophores.forEach(f => {
                 if (f.visible) {
@@ -111,8 +110,8 @@ export function SpectraChart() {
                 {/* Background Grid Pattern */}
                 <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
 
-                <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+                <div className="w-full flex justify-center overflow-x-auto">
+                    <LineChart width={1000} height={500} data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                         <XAxis
                             dataKey="wavelength"
@@ -154,10 +153,7 @@ export function SpectraChart() {
                             }}
                         />
 
-                        {/* Render Lines for each visible fluorophore */}
                         {/* Excitation Lines (Dashed) */}
-                        <Line type="monotone" dataKey="test_val" stroke="red" strokeWidth={3} dot={false} name="DEBUG TEST" />
-
                         {fluorophores.map(f => f.visible && (
                             <Line
                                 key={`${f.id}_ex`}
@@ -188,7 +184,7 @@ export function SpectraChart() {
                             />
                         ))}
                     </LineChart>
-                </ResponsiveContainer>
+                </div>
 
                 {/* Legend/Info Overlay */}
                 <div className="absolute top-4 right-4 flex gap-4 text-xs text-gray-500">
@@ -200,14 +196,6 @@ export function SpectraChart() {
                         <div className="w-6 h-0.5 bg-gray-500 rounded-full"></div>
                         <span>Emission</span>
                     </div>
-                </div>
-
-                {/* DEBUG OVERLAY */}
-                <div className="absolute bottom-4 left-4 p-2 bg-black/80 text-green-400 text-xs font-mono rounded border border-green-900 pointer-events-none z-50">
-                    <p>Points: {chartData.length}</p>
-                    <p>Keys[0]: {chartData[0] ? Object.keys(chartData[0]).join(', ') : 'N/A'}</p>
-                    <p>First Point Val: {chartData[0] ? JSON.stringify(chartData[0]) : 'N/A'}</p>
-                    <p>Visible: {fluorophores.filter(f => f.visible).map(f => f.id).join(', ')}</p>
                 </div>
             </div>
         </div>
