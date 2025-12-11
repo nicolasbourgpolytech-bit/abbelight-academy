@@ -155,9 +155,10 @@ export function SpectraChart() {
                         />
 
                         {/* Render Lines for each visible fluorophore */}
-                        {fluorophores.map(f => f.visible && (
-                            <>
-                                {/* Absorption (Dashed) */}
+                        {fluorophores.flatMap(f => {
+                            if (!f.visible) return [];
+                            return [
+                                /* Absorption (Dashed) */
                                 <Line
                                     key={`${f.id}_ex`}
                                     name={`${f.name} Ex`}
@@ -169,8 +170,8 @@ export function SpectraChart() {
                                     dot={false}
                                     activeDot={{ r: 4, fill: f.color }}
                                     className="opacity-60"
-                                />
-                                {/* Emission (Solid + Fill) */}
+                                />,
+                                /* Emission (Solid + Fill) */
                                 <Line
                                     key={`${f.id}_em`}
                                     name={`${f.name} Em`}
@@ -182,11 +183,8 @@ export function SpectraChart() {
                                     activeDot={{ r: 6, fill: f.color, stroke: '#fff', strokeWidth: 2 }}
                                     className="drop-shadow-[0_0_8px_rgba(0,0,0,0.5)]"
                                 />
-                                {/* Area fill for emission to make it look nicer? Recharts Area could do this, but Line with Defs is complex. 
-                                    Sticking to lines for clarity as requested "Spectra viewer".
-                                */}
-                            </>
-                        ))}
+                            ];
+                        })}
                     </LineChart>
                 </ResponsiveContainer>
 
