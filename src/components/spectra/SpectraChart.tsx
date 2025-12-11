@@ -166,6 +166,9 @@ export function SpectraChart() {
                                 dot={false}
                                 activeDot={{ r: 4, fill: f.color }}
                                 className="opacity-60"
+                                isAnimationActive={true}
+                                animationDuration={1500}
+                                animationBegin={0}
                             />
                         ))}
 
@@ -181,6 +184,9 @@ export function SpectraChart() {
                                 dot={false}
                                 activeDot={{ r: 6, fill: f.color, stroke: '#fff', strokeWidth: 2 }}
                                 className="drop-shadow-[0_0_8px_rgba(0,0,0,0.5)]"
+                                isAnimationActive={true}
+                                animationDuration={1500}
+                                animationBegin={300} // Slight delay for emission to follow excitation
                             />
                         ))}
                     </LineChart>
