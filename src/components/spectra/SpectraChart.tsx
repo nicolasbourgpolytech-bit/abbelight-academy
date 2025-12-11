@@ -111,7 +111,13 @@ export function SpectraChart() {
                 <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
 
                 <div className="w-full flex justify-center overflow-x-auto">
-                    <LineChart width={1000} height={500} data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                    <LineChart
+                        key={fluorophores.filter(f => f.visible).map(f => f.id).join('-')} // Force remount on change to fix animation glitch
+                        width={1000}
+                        height={500}
+                        data={chartData}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    >
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                         <XAxis
                             dataKey="wavelength"
