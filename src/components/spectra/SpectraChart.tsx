@@ -8,44 +8,34 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    ReferenceArea
 } from 'recharts';
+import { AVAILABLE_DYES, FLUOROPHORE_DATA } from '@/data/spectra';
 
 // --- Types & Data ---
 
 type SpectrumDataPoint = {
     wavelength: number;
-    [key: string]: number; // dynamic keys for fluorophores e.g. "GFP_ex", "GFP_em"
+    [key: string]: number; // dynamic keys for fluorophores e.g. "dapi_ex", "dapi_em"
 };
 
-type Fluorophore = {
+type FluorophoreState = {
     id: string;
-    name: string;
-    exPeak: number;
-    emPeak: number;
-    color: string;
     visible: boolean;
 };
 
-// Simplified Gaussian function to generate spectral curves
-const gaussian = (x: number, peak: number, width: number) => {
-    return Math.exp(-Math.pow(x - peak, 2) / (2 * Math.pow(width, 2)));
-};
-
-// Generate range of wavelengths
+// Generate range of wavelengths matching the data source
 const WAVELENGTHS = Array.from({ length: 501 }, (_, i) => 300 + i); // 300nm to 800nm
-
-// Default Fluorophores
-const DEFAULT_FLUOROPHORES: Fluorophore[] = [
-    { id: 'dapi', name: 'DAPI', exPeak: 358, emPeak: 461, color: '#00CAF8', visible: true }, // Blue/Cyan
-    { id: 'gfp', name: 'GFP', exPeak: 488, emPeak: 507, color: '#00D296', visible: true },   // Green
-    { id: 'rfp', name: 'RFP', exPeak: 555, emPeak: 584, color: '#FF9B35', visible: false },  // Orange
-    { id: 'cy5', name: 'Cy5', exPeak: 649, emPeak: 666, color: '#FF73FF', visible: false },  // Magenta
-];
 
 export function SpectraChart() {
     const [isMounted, setIsMounted] = useState(false);
-    const [fluorophores, setFluorophores] = useState<Fluorophore[]>(DEFAULT_FLUOROPHORES);
+
+    // Initialize state based on available dyes
+    const [fluorophores, setFluorophores] = useState<FluorophoreState[]>(() =>
+        AVAILABLE_DYES.map(dye => ({
+            id: dye.id,
+            visible: ['dapi', 'alexa488'].includes(dye.id) // Default visible
+        }))
+    );
 
     useEffect(() => {
         setIsMounted(true);
@@ -57,17 +47,30 @@ export function SpectraChart() {
         ));
     };
 
-    // Calculate chart data based on visible fluorophores
+    // Calculate chart data based on visible fluorophores and static data source
     const chartData = useMemo(() => {
-        return WAVELENGTHS.map(nm => {
+        // Create the base array of objects
+        return WAVELENGTHS.map((nm, index) => {
             const point: SpectrumDataPoint = { wavelength: nm };
 
-            fluorophores.forEach(f => {
-                if (f.visible) {
-                    // Excitation (dashed or tailored) - usually narrower
-                    point[`${f.id}_ex`] = gaussian(nm, f.exPeak, 25);
-                    // Emission (solid) - usually slightly wider
-                    point[`${f.id}_em`] = gaussian(nm, f.emPeak, 35) * 0.8; // slightly lower intensity
+            fluorophores.forEach(fState => {
+                if (fState.visible) {
+                    const data = FLUOROPHORE_DATA[fState.id];
+                    if (data) {
+                        // Look up value at this index (assuming 1:1 mapping with WAVELENGTHS range 300-800)
+                        // Data source was generated with same range logic
+                        const exPoint = data.excitation[index];
+                        const emPoint = data.emission[index];
+
+                        // Safety check if indices align, otherwise find by wavelength (slower but safer)
+                        // optimize for speed: direct index access if ranges match
+                        if (exPoint && exPoint.wavelength === nm) {
+                            point[`${fState.id}_ex`] = exPoint.value;
+                        }
+                        if (emPoint && emPoint.wavelength === nm) {
+                            point[`${fState.id}_em`] = emPoint.value;
+                        }
+                    }
                 }
             });
             return point;
@@ -80,29 +83,34 @@ export function SpectraChart() {
         <div className="flex flex-col h-full space-y-6">
             {/* Control Panel */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
-                {fluorophores.map(f => (
-                    <button
-                        key={f.id}
-                        onClick={() => toggleFluorophore(f.id)}
-                        className={`
-                            flex items-center gap-3 px-4 py-3 rounded-lg border transition-all duration-200
-                            ${f.visible
-                                ? 'bg-white/10 border-white/20'
-                                : 'bg-transparent border-transparent opacity-50 hover:opacity-100'}
-                        `}
-                    >
-                        <div
-                            className="w-3 h-3 rounded-full shadow-[0_0_10px_currentColor]"
-                            style={{ backgroundColor: f.color, color: f.color }}
-                        />
-                        <span className="text-sm font-medium text-white">{f.name}</span>
-                        {f.visible && (
-                            <svg className="w-4 h-4 ml-auto text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                        )}
-                    </button>
-                ))}
+                {fluorophores.map(fState => {
+                    const dye = FLUOROPHORE_DATA[fState.id];
+                    if (!dye) return null;
+
+                    return (
+                        <button
+                            key={dye.id}
+                            onClick={() => toggleFluorophore(dye.id)}
+                            className={`
+                                flex items-center gap-3 px-4 py-3 rounded-lg border transition-all duration-200
+                                ${fState.visible
+                                    ? 'bg-white/10 border-white/20'
+                                    : 'bg-transparent border-transparent opacity-50 hover:opacity-100'}
+                            `}
+                        >
+                            <div
+                                className="w-3 h-3 rounded-full shadow-[0_0_10px_currentColor]"
+                                style={{ backgroundColor: dye.color, color: dye.color }}
+                            />
+                            <span className="text-sm font-medium text-white">{dye.label}</span>
+                            {fState.visible && (
+                                <svg className="w-4 h-4 ml-auto text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            )}
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Chart Area */}
@@ -160,41 +168,49 @@ export function SpectraChart() {
                         />
 
                         {/* Excitation Lines (Dashed) */}
-                        {fluorophores.map(f => f.visible && (
-                            <Line
-                                key={`${f.id}_ex`}
-                                name={`${f.name} Ex`}
-                                type="monotone"
-                                dataKey={`${f.id}_ex`}
-                                stroke={f.color}
-                                strokeWidth={2}
-                                strokeDasharray="4 4"
-                                strokeOpacity={0.6}
-                                dot={false}
-                                activeDot={{ r: 4, fill: f.color }}
-                                isAnimationActive={true}
-                                animationDuration={2000}
-                                animationEasing="ease-in-out"
-                            />
-                        ))}
+                        {fluorophores.map(fState => {
+                            if (!fState.visible) return null;
+                            const dye = FLUOROPHORE_DATA[fState.id];
+                            return (
+                                <Line
+                                    key={`${dye.id}_ex`}
+                                    name={`${dye.label} Ex`}
+                                    type="monotone"
+                                    dataKey={`${dye.id}_ex`}
+                                    stroke={dye.color}
+                                    strokeWidth={2}
+                                    strokeDasharray="4 4"
+                                    strokeOpacity={0.6}
+                                    dot={false}
+                                    activeDot={{ r: 4, fill: dye.color }}
+                                    isAnimationActive={true}
+                                    animationDuration={2000}
+                                    animationEasing="ease-in-out"
+                                />
+                            );
+                        })}
 
                         {/* Emission Lines (Solid) */}
-                        {fluorophores.map(f => f.visible && (
-                            <Line
-                                key={`${f.id}_em`}
-                                name={`${f.name} Em`}
-                                type="monotone"
-                                dataKey={`${f.id}_em`}
-                                stroke={f.color}
-                                strokeWidth={3}
-                                dot={false}
-                                activeDot={{ r: 6, fill: f.color, stroke: '#fff', strokeWidth: 2 }}
-                                isAnimationActive={true}
-                                animationDuration={2000}
-                                animationBegin={200}
-                                animationEasing="ease-in-out"
-                            />
-                        ))}
+                        {fluorophores.map(fState => {
+                            if (!fState.visible) return null;
+                            const dye = FLUOROPHORE_DATA[fState.id];
+                            return (
+                                <Line
+                                    key={`${dye.id}_em`}
+                                    name={`${dye.label} Em`}
+                                    type="monotone"
+                                    dataKey={`${dye.id}_em`}
+                                    stroke={dye.color}
+                                    strokeWidth={3}
+                                    dot={false}
+                                    activeDot={{ r: 6, fill: dye.color, stroke: '#fff', strokeWidth: 2 }}
+                                    isAnimationActive={true}
+                                    animationDuration={2000}
+                                    animationBegin={200}
+                                    animationEasing="ease-in-out"
+                                />
+                            );
+                        })}
                     </LineChart>
                 </div>
 
