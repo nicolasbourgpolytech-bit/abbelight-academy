@@ -35,6 +35,8 @@ export function SpectraChart() {
     const [isMounted, setIsMounted] = useState(false);
     const [fluorophores, setFluorophores] = useState<Fluorophore[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [showExcitation, setShowExcitation] = useState(true);
+    const [showEmission, setShowEmission] = useState(true);
 
     useEffect(() => {
         setIsMounted(true);
@@ -178,7 +180,7 @@ export function SpectraChart() {
 
                         {/* Excitation Lines (Dashed) */}
                         {fluorophores.map(dye => {
-                            if (!dye.visible) return null;
+                            if (!dye.visible || !showExcitation) return null;
                             return (
                                 <Line
                                     key={`${dye.id}_ex`}
@@ -200,7 +202,7 @@ export function SpectraChart() {
 
                         {/* Emission Lines (Solid) */}
                         {fluorophores.map(dye => {
-                            if (!dye.visible) return null;
+                            if (!dye.visible || !showEmission) return null;
                             return (
                                 <Line
                                     key={`${dye.id}_em`}
@@ -222,15 +224,23 @@ export function SpectraChart() {
                 </div>
 
                 {/* Legend/Info Overlay */}
-                <div className="absolute top-4 right-4 flex gap-4 text-xs text-gray-500">
-                    <div className="flex items-center gap-2">
-                        <div className="w-6 h-0.5 border-t-2 border-dashed border-gray-500"></div>
+                <div className="absolute top-4 right-4 flex gap-4 text-xs text-gray-500 z-10">
+                    <button
+                        onClick={() => setShowExcitation(!showExcitation)}
+                        className={`flex items-center gap-2 hover:text-white transition-colors ${!showExcitation ? 'opacity-50 grayscale' : ''}`}
+                        title="Toggle Excitation"
+                    >
+                        <div className="w-6 h-0.5 border-t-2 border-dashed border-current"></div>
                         <span>Excitation</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-6 h-0.5 bg-gray-500 rounded-full"></div>
+                    </button>
+                    <button
+                        onClick={() => setShowEmission(!showEmission)}
+                        className={`flex items-center gap-2 hover:text-white transition-colors ${!showEmission ? 'opacity-50 grayscale' : ''}`}
+                        title="Toggle Emission"
+                    >
+                        <div className="w-6 h-0.5 bg-current rounded-full"></div>
                         <span>Emission</span>
-                    </div>
+                    </button>
                 </div>
             </div>
         </div>
