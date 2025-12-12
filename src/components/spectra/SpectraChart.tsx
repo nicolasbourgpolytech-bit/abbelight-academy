@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import {
-    LineChart,
-    Line,
+    ComposedChart,
+    Area,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -130,7 +130,7 @@ export function SpectraChart() {
                 <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
 
                 <div className="w-full flex justify-center overflow-x-auto">
-                    <LineChart
+                    <ComposedChart
                         key={fluorophores.filter(f => f.visible).map(f => f.id).join('-')} // Force remount on change to fix animation glitch
                         width={1000}
                         height={500}
@@ -178,11 +178,20 @@ export function SpectraChart() {
                             }}
                         />
 
-                        {/* Excitation Lines (Dashed) */}
+                        <defs>
+                            {fluorophores.map(dye => (
+                                <linearGradient key={`grad_${dye.id}`} id={`grad_${dye.id}`} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={dye.color} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={dye.color} stopOpacity={0} />
+                                </linearGradient>
+                            ))}
+                        </defs>
+
+                        {/* Excitation Areas (Dashed line, very faint fill) */}
                         {fluorophores.map(dye => {
                             if (!dye.visible || !showExcitation) return null;
                             return (
-                                <Line
+                                <Area
                                     key={`${dye.id}_ex`}
                                     name={`${dye.name} Ex`}
                                     type="monotone"
@@ -190,7 +199,8 @@ export function SpectraChart() {
                                     stroke={dye.color}
                                     strokeWidth={2}
                                     strokeDasharray="4 4"
-                                    strokeOpacity={0.6}
+                                    fill={dye.color}
+                                    fillOpacity={0.1}
                                     dot={false}
                                     activeDot={{ r: 4, fill: dye.color }}
                                     isAnimationActive={true}
@@ -200,17 +210,19 @@ export function SpectraChart() {
                             );
                         })}
 
-                        {/* Emission Lines (Solid) */}
+                        {/* Emission Areas (Solid line, creating a "glow" fill) */}
                         {fluorophores.map(dye => {
                             if (!dye.visible || !showEmission) return null;
                             return (
-                                <Line
+                                <Area
                                     key={`${dye.id}_em`}
                                     name={`${dye.name} Em`}
                                     type="monotone"
                                     dataKey={`${dye.id}_em`}
                                     stroke={dye.color}
                                     strokeWidth={3}
+                                    fill={`url(#grad_${dye.id})`} // Use gradient for emission for better "colorée" effect
+                                    fillOpacity={0.4}
                                     dot={false}
                                     activeDot={{ r: 6, fill: dye.color, stroke: '#fff', strokeWidth: 2 }}
                                     isAnimationActive={true}
@@ -220,7 +232,7 @@ export function SpectraChart() {
                                 />
                             );
                         })}
-                    </LineChart>
+                    </ComposedChart>
                 </div>
 
                 {/* Legend/Info Overlay */}
