@@ -165,7 +165,7 @@ export function SpectraChart() {
             </div>
 
             {/* Chart Area */}
-            <div className="flex-1 min-h-[400px] w-full bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 p-4 relative group flex flex-col">
+            <div className="flex-1 min-h-[400px] w-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 relative group flex flex-col">
                 {/* Background Grid Pattern */}
                 <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
 
