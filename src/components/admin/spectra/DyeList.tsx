@@ -18,7 +18,13 @@ export function DyeList({ dyes, onEdit, onDelete }: DyeListProps) {
                         />
                         <div>
                             <h4 className="font-medium text-white">{dye.name}</h4>
-                            <p className="text-xs text-gray-500 uppercase tracking-wider">{dye.category}</p>
+                            <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{dye.category}</p>
+                            {(dye.excitation_peak || dye.emission_peak) && (
+                                <div className="flex gap-2 text-[10px] text-gray-400">
+                                    {dye.excitation_peak && <span>Ex: {dye.excitation_peak}nm</span>}
+                                    {dye.emission_peak && <span>Em: {dye.emission_peak}nm</span>}
+                                </div>
+                            )}
                         </div>
                     </div>
 
