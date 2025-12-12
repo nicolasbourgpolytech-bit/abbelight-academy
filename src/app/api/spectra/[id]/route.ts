@@ -9,7 +9,7 @@ export async function PUT(
     try {
         const id = params.id;
         const body = await request.json();
-        const { name, category, color, excitation_data, emission_data, visible } = body;
+        const { name, category, color, excitation_peak, emission_peak, excitation_data, emission_data, visible } = body;
 
         const result = await sql`
             UPDATE fluorophores
@@ -17,6 +17,8 @@ export async function PUT(
                 name = COALESCE(${name}, name),
                 category = COALESCE(${category}, category),
                 color = COALESCE(${color}, color),
+                excitation_peak = COALESCE(${excitation_peak}, excitation_peak),
+                emission_peak = COALESCE(${emission_peak}, emission_peak),
                 excitation_data = COALESCE(${JSON.stringify(excitation_data)}::jsonb, excitation_data),
                 emission_data = COALESCE(${JSON.stringify(emission_data)}::jsonb, emission_data),
                 visible = COALESCE(${visible}, visible),

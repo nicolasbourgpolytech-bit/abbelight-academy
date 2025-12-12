@@ -12,6 +12,8 @@ export async function GET(request: Request) {
                 name VARCHAR(255) NOT NULL,
                 category VARCHAR(50) NOT NULL, -- 'UV', 'Green', 'Red', 'Far-red'
                 color VARCHAR(50) NOT NULL,
+                excitation_peak INTEGER,
+                emission_peak INTEGER,
                 visible BOOLEAN DEFAULT true,
                 excitation_data JSONB DEFAULT '[]'::jsonb,
                 emission_data JSONB DEFAULT '[]'::jsonb,
@@ -20,6 +22,14 @@ export async function GET(request: Request) {
                 updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         `;
+
+        // Migration for existing tables (safe to run even if columns exist, will just fail silently or we use IF NOT EXISTS logic if capable, but straight SQL block is easiest try/catch per column)
+        try {
+            await sql`ALTER TABLE fluorophores ADD COLUMN IF NOT EXISTS excitation_peak INTEGER`;
+            await sql`ALTER TABLE fluorophores ADD COLUMN IF NOT EXISTS emission_peak INTEGER`;
+        } catch (e) {
+            console.log("Migration columns might already exist", e);
+        }
 
         // Seed Data Logic (simplified inline generation to avoid import issues)
         // Standalone ERF
@@ -64,20 +74,24 @@ export async function GET(request: Request) {
         const SEED_DATA = [
             {
                 name: 'DAPI', category: 'UV', color: '#00CAF8',
+                exPeak: 358, emPeak: 461,
                 ex: genSpectrum(358, 20, 0.5), em: genSpectrum(461, 35, 2)
             },
             {
                 name: 'Alexa Fluor 488', category: 'Green', color: '#00D296',
+                exPeak: 499, emPeak: 520,
                 ex: genSpectrum(499, 15, -1), em: genSpectrum(520, 20, 3)
             },
             {
                 name: 'CF568', category: 'Red', color: '#FF9B35',
+                exPeak: 562, emPeak: 583,
                 ex: genSpectrum(562, 18, -0.5), em: genSpectrum(583, 22, 2.5)
             },
             {
                 name: 'Alexa Fluor 647', category: 'Far-red', color: '#FF73FF',
+                exPeak: 650, emPeak: 665,
                 ex: genMulti([{ p: 650, wi: 14, s: 0, w: 1 }, { p: 605, wi: 20, s: 0, w: 0.25 }, { p: 560, wi: 35, s: 0, w: 0.05 }]),
-                em: genMulti([{ p: 670, wi: 16, s: 0, w: 1 }, { p: 710, wi: 25, s: 0, w: 0.25 }, { p: 760, wi: 50, s: 0, w: 0.1 }])
+                em: genMulti([{ p: 665, wi: 15, s: 0, w: 1 }, { p: 705, wi: 28, s: 0, w: 0.25 }, { p: 750, wi: 45, s: 0, w: 0.12 }])
             }
         ];
 
@@ -86,8 +100,8 @@ export async function GET(request: Request) {
         if (count.rows[0].count === '0') {
             for (const dye of SEED_DATA) {
                 await sql`
-                    INSERT INTO fluorophores (name, category, color, excitation_data, emission_data, visible)
-                    VALUES (${dye.name}, ${dye.category}, ${dye.color}, ${JSON.stringify(dye.ex)}::jsonb, ${JSON.stringify(dye.em)}::jsonb, true)
+                    INSERT INTO fluorophores (name, category, color, excitation_peak, emission_peak, excitation_data, emission_data, visible)
+                    VALUES (${dye.name}, ${dye.category}, ${dye.color}, ${dye.exPeak}, ${dye.emPeak}, ${JSON.stringify(dye.ex)}::jsonb, ${JSON.stringify(dye.em)}::jsonb, true)
                 `;
             }
             return NextResponse.json({ message: "DB Created and Seeded" }, { status: 200 });
