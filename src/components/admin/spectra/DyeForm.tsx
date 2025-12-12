@@ -26,43 +26,69 @@ export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
     const [emissionData, setEmissionData] = useState<any[]>(initialData?.emission_data || []);
 
     const wavelengthToColor = (wavelength: number): string => {
-        let r, g, b, alpha;
-        if (wavelength >= 380 && wavelength < 440) {
-            r = -(wavelength - 440) / (440 - 380); g = 0.0; b = 1.0;
-        } else if (wavelength >= 440 && wavelength < 490) {
-            r = 0.0; g = (wavelength - 440) / (490 - 440); b = 1.0;
-        } else if (wavelength >= 490 && wavelength < 510) {
-            r = 0.0; g = 1.0; b = -(wavelength - 510) / (510 - 490);
-        } else if (wavelength >= 510 && wavelength < 580) {
-            r = (wavelength - 510) / (580 - 510); g = 1.0; b = 0.0;
-        } else if (wavelength >= 580 && wavelength < 645) {
-            r = 1.0; g = -(wavelength - 645) / (645 - 580); b = 0.0;
-        } else if (wavelength >= 645 && wavelength <= 780) {
-            r = 1.0; g = 0.0; b = 0.0;
+        // HSL mapping for "Pleasant/Professional" Aesthetics
+        // Hue mapping: ~Violet(270) -> Blue(240) -> Cyan(180) -> Green(120) -> Yellow(60) -> Red(0)
+        let hue;
+        if (wavelength < 380) hue = 270;
+        else if (wavelength < 440) {
+            // 380-440: Violet to Blue (270 -> 240)
+            hue = 270 - (30 * (wavelength - 380) / (440 - 380));
+        } else if (wavelength < 490) {
+            // 440-490: Blue to Cyan (240 -> 180)
+            hue = 240 - (60 * (wavelength - 440) / (490 - 440));
+        } else if (wavelength < 510) {
+            // 490-510: Cyan to Green (180 -> 140)
+            hue = 180 - (40 * (wavelength - 490) / (510 - 490));
+        } else if (wavelength < 580) {
+            // 510-580: Green to Yellow (140 -> 60)
+            hue = 140 - (80 * (wavelength - 510) / (580 - 510));
+        } else if (wavelength < 645) {
+            // 580-645: Yellow to Red (60 -> 0)
+            hue = 60 - (60 * (wavelength - 580) / (645 - 580));
         } else {
-            return "#888888"; // Fallback/Invisible
+            // 645+: Red (0)
+            hue = 0;
         }
 
-        // Intensity correction (simple)
-        let factor;
-        if (wavelength >= 380 && wavelength < 420) factor = 0.3 + 0.7 * (wavelength - 380) / (420 - 380);
-        else if (wavelength >= 420 && wavelength < 645) factor = 1.0;
-        else if (wavelength >= 645 && wavelength <= 780) factor = 0.3 + 0.7 * (780 - wavelength) / (780 - 645);
-        else factor = 0.0;
+        // Use HSL for consistent "pleasing" saturation/lightness
+        // Saturation: 85% (Vibrant but not neon)
+        // Lightness: 60% (Clear visibility against dark backgrounds)
+        return `hsl(${hue.toFixed(1)}, 85%, 60%)`;
+    };
 
-        const toHex = (c: number) => {
-            const hex = Math.round(c * factor * 255).toString(16);
-            return hex.length === 1 ? "0" + hex : hex;
+    // Helper to convert HSL string to Hex for input[type=color] if needed, 
+    // but input[type=color] expects Hex.
+    // We need a proper HSL -> Hex converter.
+    const hslToHex = (h: number, s: number, l: number) => {
+        l /= 100;
+        const a = s * Math.min(l, 1 - l) / 100;
+        const f = (n: number) => {
+            const k = (n + h / 30) % 12;
+            const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+            return Math.round(255 * color).toString(16).padStart(2, '0');
         };
+        return `#${f(0)}${f(8)}${f(4)}`;
+    };
 
-        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    const wavelengthToHex = (wavelength: number): string => {
+        let hue;
+        if (wavelength < 380) hue = 270;
+        else if (wavelength < 440) hue = 270 - (30 * (wavelength - 380) / (440 - 380));
+        else if (wavelength < 490) hue = 240 - (60 * (wavelength - 440) / (490 - 440));
+        else if (wavelength < 510) hue = 180 - (40 * (wavelength - 490) / (510 - 490));
+        else if (wavelength < 580) hue = 140 - (80 * (wavelength - 510) / (580 - 510));
+        else if (wavelength < 645) hue = 60 - (60 * (wavelength - 580) / (645 - 580));
+        else hue = 0;
+
+        // Saturation 85%, Lightness 60%
+        return hslToHex(hue, 85, 60);
     };
 
     const handleEmissionChange = (val: string) => {
         setEmPeak(val);
         const wl = parseInt(val);
         if (!isNaN(wl) && wl > 300 && wl < 900) {
-            const newColor = wavelengthToColor(wl);
+            const newColor = wavelengthToHex(wl);
             setColor(newColor);
         }
     };
