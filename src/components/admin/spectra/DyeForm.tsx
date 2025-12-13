@@ -104,30 +104,62 @@ export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
         Papa.parse(file, {
             header: true,
             skipEmptyLines: true,
+            transformHeader: (h: string) => h.trim(), // Ensure headers are clean
             complete: (results: any) => {
                 // Expected columns: Wavelength, Excitation, Emission
                 const data = results.data;
                 const ex: any[] = [];
                 const em: any[] = [];
-                let maxEx = 0;
-                let maxEm = 0;
+
+                // Helper to safely parse values: "" -> 0, number -> number
+                const parseVal = (v: any) => {
+                    if (v === "" || v === null || v === undefined) return 0;
+                    const num = parseFloat(v);
+                    return isNaN(num) ? 0 : num;
+                };
+
+                let tempEx: { wavelength: number, value: number }[] = [];
+                let tempEm: { wavelength: number, value: number }[] = [];
 
                 data.forEach((row: any) => {
-                    const nm = parseFloat(row.Wavelength || row.wavelength);
-                    const exVal = parseFloat(row.Excitation || row.excitation || 0);
-                    const emVal = parseFloat(row.Emission || row.emission || 0);
+                    // Try to find columns (case insensitive standard already somewhat handled, but manual check best)
+                    const nmVal = row.Wavelength || row.wavelength;
+                    const exValRaw = row.Excitation || row.excitation;
+                    const emValRaw = row.Emission || row.emission;
 
-                    if (!isNaN(nm)) {
-                        ex.push({ wavelength: nm, value: exVal });
-                        em.push({ wavelength: nm, value: emVal });
-                        if (exVal > maxEx) maxEx = exVal;
-                        if (emVal > maxEm) maxEm = emVal;
+                    if (nmVal !== undefined) {
+                        const nm = parseFloat(nmVal);
+                        if (!isNaN(nm)) {
+                            // Apply explicit logic: empty string is 0
+                            const vEx = parseVal(exValRaw);
+                            const vEm = parseVal(emValRaw);
+
+                            tempEx.push({ wavelength: nm, value: vEx });
+                            tempEm.push({ wavelength: nm, value: vEm });
+                        }
                     }
                 });
 
-                // Normalize to 0-1
-                const normalizedEx = ex.map(p => ({ ...p, value: maxEx ? p.value / maxEx : 0 }));
-                const normalizedEm = em.map(p => ({ ...p, value: maxEm ? p.value / maxEm : 0 }));
+                // Detect if we need to scale up (e.g. if data is 0-1 instead of 0-100%)
+                // User requested: "multiplier par 100 pour les mettre en %" for specific format.
+                // Heuristic: If max value is <= 1.0, it's likely the ratio format, so we multiply by 100.
+                const maxExRaw = Math.max(...tempEx.map(p => p.value));
+                const maxEmRaw = Math.max(...tempEm.map(p => p.value));
+
+                // If the data is effectively normalized (<=1), treat it as ratio and convert to % (x100)
+                // This preserves the user's intent to "put in %".
+                const scaleFactor = (maxExRaw <= 1 && maxEmRaw <= 1 && maxExRaw > 0) ? 100 : 1;
+
+                tempEx = tempEx.map(p => ({ ...p, value: p.value * scaleFactor }));
+                tempEm = tempEm.map(p => ({ ...p, value: p.value * scaleFactor }));
+
+                // Re-calculate max for normalization
+                const finalMaxEx = Math.max(...tempEx.map(p => p.value));
+                const finalMaxEm = Math.max(...tempEm.map(p => p.value));
+
+                // Normalize to 0-1 for storage/display
+                const normalizedEx = tempEx.map(p => ({ ...p, value: finalMaxEx ? p.value / finalMaxEx : 0 }));
+                const normalizedEm = tempEm.map(p => ({ ...p, value: finalMaxEm ? p.value / finalMaxEm : 0 }));
 
                 setExcitationData(normalizedEx);
                 setEmissionData(normalizedEm);
