@@ -24,29 +24,25 @@ export default function SpectraPage() {
             </header>
 
             <main className="flex-1 flex flex-col min-h-0">
-                <div className="glass-card flex-1 mb-6 overflow-hidden">
-                    <SpectraChart />
+                {/* Introduction / Info Section */}
+                <div className="mb-4 bg-white/5 border border-white/10 rounded-2xl p-4 md:p-6 backdrop-blur-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h2 className="text-lg font-semibold text-white mb-2">Interactive Spectral Analysis</h2>
+                            <p className="text-sm text-gray-400 max-w-2xl leading-relaxed">
+                                Explore our comprehensive database of fluorophores, including Alexa Fluor dyes and fluorescent proteins.
+                                Compare excitation and emission spectra to check for overlap and crosstalk.
+                                <span className="text-primary/80 ml-1 font-medium">Optimized for Abbelight SAFe systems.</span>
+                            </p>
+                        </div>
+                        {/* Optional decorative or functional element could go here */}
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 shrink-0">
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/30 transition-colors">
-                        <h3 className="text-base font-semibold text-white mb-1">Reference Database</h3>
-                        <p className="text-xs text-gray-400">
-                            Includes commonly used Alexa Fluor dyes, fluorescent proteins, and nuclear stains.
-                        </p>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/30 transition-colors">
-                        <h3 className="text-base font-semibold text-white mb-1">Interactive Comparison</h3>
-                        <p className="text-xs text-gray-400">
-                            Check for spectral overlap (cross-talk) to optimize multicolor imaging.
-                        </p>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/30 transition-colors">
-                        <h3 className="text-base font-semibold text-white mb-1">Abbelight Optimized</h3>
-                        <p className="text-xs text-gray-400">
-                            Tailored optimal excitation lines for Abbelight SAFe systems.
-                        </p>
-                    </div>
+                <div className="glass-card flex-1 overflow-hidden relative border border-white/10 shadow-2xl">
+                    <SpectraChart />
                 </div>
             </main>
         </div>
