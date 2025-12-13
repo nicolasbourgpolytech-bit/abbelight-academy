@@ -102,96 +102,106 @@ export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
 
     const parseCSV = (file: File) => {
         Papa.parse(file, {
-            header: true,
+            header: false, // Parse as arrays [["Col1", "Col2"], ...]
             skipEmptyLines: true,
-            transformHeader: (h: string) => h.trim().replace(/^[\uFEFF\u200B]/, ''), // Ensure headers are clean and BOM removed
             complete: (results: any) => {
-                const data = results.data;
-                console.log("Parsed CSV Data Preview:", data.slice(0, 3));
+                const data = results.data as string[][]; // Array of arrays
+                console.log("Raw CSV Data Preview:", data.slice(0, 5));
 
-                // Helper to safely parse values: "" -> 0, number -> number
+                if (!data || data.length === 0) {
+                    setError("File appears empty.");
+                    return;
+                }
+
+                // 1. Find Header Row
+                let headerRowIndex = -1;
+                let colMap = { nm: -1, ex: -1, em: -1 };
+
+                // Scan first 20 rows for header
+                for (let i = 0; i < Math.min(data.length, 20); i++) {
+                    // Safe access and cleaning
+                    const row = (data[i] || []).map(cell => String(cell).toLowerCase().trim().replace(/^[\uFEFF\u200B]/, '').replace(/['"]/g, ''));
+
+                    // Look for wavelength
+                    const nmIdx = row.findIndex(c => c === "wavelength" || c === "nm" || c.includes("wavelength"));
+                    if (nmIdx !== -1) {
+                        headerRowIndex = i;
+                        colMap.nm = nmIdx;
+                        // Search for others in this row
+                        colMap.ex = row.findIndex(c => c.includes("excitation") || c.includes("ex"));
+                        colMap.em = row.findIndex(c => c.includes("emission") || c.includes("em"));
+                        break;
+                    }
+                }
+
+                if (headerRowIndex === -1 || colMap.nm === -1) {
+                    setError("Could not find 'Wavelength' column header. Please ensure columns are named Wavelength, Excitation, Emission.");
+                    return;
+                }
+
+                // 2. Parse Data
+                const tempEx: { wavelength: number, value: number }[] = [];
+                const tempEm: { wavelength: number, value: number }[] = [];
+
                 const parseVal = (v: any) => {
                     if (v === "" || v === null || v === undefined) return 0;
-
-                    if (typeof v === 'string') {
-                        // Manually strip quotes if CSV parser failure or manual quotes exist
-                        let clean = v.replace(/['"]/g, '').trim();
-                        if (clean === "") return 0;
-                        const num = parseFloat(clean);
-                        return isNaN(num) ? 0 : num;
-                    }
-
-                    const num = parseFloat(v);
+                    const str = String(v).replace(/['"“”]/g, '').trim(); // Remove standard and smart quotes
+                    if (str === "") return 0;
+                    const num = parseFloat(str);
                     return isNaN(num) ? 0 : num;
                 };
 
-                // Find column names dynamically (case-insensitive fuzzy match)
-                const keys = Object.keys(data[0] || {});
-                const findKey = (search: string) => keys.find(k => k.toLowerCase().includes(search.toLowerCase()));
+                // Iterate starting from next row
+                for (let i = headerRowIndex + 1; i < data.length; i++) {
+                    const row = data[i];
+                    if (!row || row.length <= colMap.nm) continue;
 
-                // Look for standard headers
-                const keyWavelength = findKey('wavelength');
-                const keyExcitation = findKey('excitation');
-                const keyEmission = findKey('emission');
+                    const nmStr = row[colMap.nm];
+                    const nm = parseFloat(String(nmStr).replace(/['"]/g, ''));
 
-                if (!keyWavelength) {
-                    // Try to be even more permissive if "Wavelength" is not found?
-                    // Maybe it's index 0?
-                    // For now, error out but with better message.
-                    setError(`Could not find 'Wavelength' column. Found keys: ${keys.join(', ')}`);
-                    return;
-                }
+                    if (!isNaN(nm)) {
+                        const valEx = colMap.ex !== -1 ? parseVal(row[colMap.ex]) : 0;
+                        const valEm = colMap.em !== -1 ? parseVal(row[colMap.em]) : 0;
 
-                let tempEx: { wavelength: number, value: number }[] = [];
-                let tempEm: { wavelength: number, value: number }[] = [];
-
-                data.forEach((row: any) => {
-                    const nmVal = row[keyWavelength!];
-                    // Uses found keys or fallback for safety (undefined)
-                    const exValRaw = keyExcitation ? row[keyExcitation] : undefined;
-                    const emValRaw = keyEmission ? row[keyEmission] : undefined;
-
-                    if (nmVal !== undefined) {
-                        const nm = parseFloat(String(nmVal).replace(/['"]/g, '').trim());
-                        if (!isNaN(nm)) {
-                            const vEx = parseVal(exValRaw);
-                            const vEm = parseVal(emValRaw);
-
-                            tempEx.push({ wavelength: nm, value: vEx });
-                            tempEm.push({ wavelength: nm, value: vEm });
-                        }
+                        tempEx.push({ wavelength: nm, value: valEx });
+                        tempEm.push({ wavelength: nm, value: valEm });
                     }
-                });
+                }
 
                 if (tempEx.length === 0) {
-                    setError("No valid data points found.");
+                    setError("Found headers but no valid data rows.");
                     return;
                 }
 
-                // Detect logic for scaling
+                // 3. Scaling Logic
                 const maxExRaw = Math.max(...tempEx.map(p => p.value));
                 const maxEmRaw = Math.max(...tempEm.map(p => p.value));
 
-                // If data is small (<= 2.0 to be safe), assume ratio format and convert to % (x100)
-                // This aligns with user request "multiplier par 100".
+                // Heuristic: If max <= 2, multiply by 100
                 const scaleFactor = (maxExRaw <= 2 && maxExRaw > 0) ? 100 : 1;
 
-                if (scaleFactor > 1) {
-                    console.log(`Detected ratio format (max: ${maxExRaw}), scaling by 100.`);
+                // Extra check: if ALL values are 0, maybe column detection failed or data is actually 0
+                if (maxExRaw === 0 && maxEmRaw === 0) {
+                    // Check logic for semicolon
+                    if (data[headerRowIndex + 1].length === 1 && String(data[headerRowIndex + 1][0]).includes(';')) {
+                        setError("It seems the file uses semicolons (;). Please save as standard CSV (comma) or try to split automatically.");
+                        return;
+                    }
                 }
 
-                tempEx = tempEx.map(p => ({ ...p, value: p.value * scaleFactor }));
-                tempEm = tempEm.map(p => ({ ...p, value: p.value * scaleFactor }));
+                const finalEx = tempEx.map(p => ({ ...p, value: p.value * scaleFactor }));
+                const finalEm = tempEm.map(p => ({ ...p, value: p.value * scaleFactor }));
 
-                // Normalization for final storage (0-1 relative to peak)
-                const finalMaxEx = Math.max(...tempEx.map(p => p.value));
-                const finalMaxEm = Math.max(...tempEm.map(p => p.value));
+                // 4. Normalize
+                const peakEx = Math.max(...finalEx.map(p => p.value));
+                const peakEm = Math.max(...finalEm.map(p => p.value));
 
-                const normalizedEx = tempEx.map(p => ({ ...p, value: finalMaxEx ? p.value / finalMaxEx : 0 }));
-                const normalizedEm = tempEm.map(p => ({ ...p, value: finalMaxEm ? p.value / finalMaxEm : 0 }));
+                const normEx = finalEx.map(p => ({ ...p, value: peakEx ? p.value / peakEx : 0 }));
+                const normEm = finalEm.map(p => ({ ...p, value: peakEm ? p.value / peakEm : 0 }));
 
-                setExcitationData(normalizedEx);
-                setEmissionData(normalizedEm);
+                setExcitationData(normEx);
+                setEmissionData(normEm);
+                setError(""); // Clear error on success
             },
             error: (err: any) => {
                 setError("Failed to parse CSV: " + err.message);
