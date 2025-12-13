@@ -28,7 +28,7 @@ type Fluorophore = {
 };
 
 // Generate range of wavelengths matching the data source
-const WAVELENGTHS = Array.from({ length: 501 }, (_, i) => 300 + i); // 300nm to 800nm
+const WAVELENGTHS = Array.from({ length: 701 }, (_, i) => 200 + i); // 200nm to 900nm
 
 export function SpectraChart() {
     const [isMounted, setIsMounted] = useState(false);
@@ -118,7 +118,7 @@ export function SpectraChart() {
                             value={minWavelength}
                             onChange={(e) => setMinWavelength(Number(e.target.value))}
                             className="w-12 bg-transparent text-white text-xs text-center focus:outline-none"
-                            min={300} max={maxWavelength - 10}
+                            min={200} max={maxWavelength - 10}
                         />
                         <span className="text-gray-500 text-xs">-</span>
                         <input
