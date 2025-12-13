@@ -366,7 +366,7 @@ export function SpectraChart() {
                                             type="monotone"
                                             dataKey={`${dye.id}_ex`}
                                             stroke={dye.color}
-                                            strokeWidth={2}
+                                            strokeWidth={1}
                                             strokeDasharray="4 4"
                                             fill={dye.color}
                                             fillOpacity={0.1}
@@ -389,7 +389,7 @@ export function SpectraChart() {
                                             type="monotone"
                                             dataKey={`${dye.id}_em`}
                                             stroke={dye.color}
-                                            strokeWidth={3}
+                                            strokeWidth={2}
                                             fill={`url(#grad_${dye.id})`} // Use gradient for emission for better "colorée" effect
                                             fillOpacity={0.4}
                                             dot={false}
@@ -412,7 +412,7 @@ export function SpectraChart() {
                                             type="monotone"
                                             dataKey={`${optic.id}_optic`}
                                             stroke={optic.color}
-                                            strokeWidth={2}
+                                            strokeWidth={1.5}
                                             strokeDasharray="6 4" // Distinct dash pattern for optics
                                             dot={false}
                                             activeDot={{ r: 4, fill: '#fff', stroke: '#fff' }}
