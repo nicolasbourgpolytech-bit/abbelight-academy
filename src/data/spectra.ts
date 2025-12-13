@@ -81,7 +81,7 @@ const generateMultiPeakSpectrum = (components: { peak: number, width: number, sk
     }));
 };
 
-const RANGE = Array.from({ length: 701 }, (_, i) => 200 + i); // 200nm to 900nm
+const RANGE = Array.from({ length: 501 }, (_, i) => 300 + i); // 300nm to 800nm
 
 // --- DEFINITIONS ---
 
