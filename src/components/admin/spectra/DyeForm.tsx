@@ -101,112 +101,121 @@ export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
     };
 
     const parseCSV = (file: File) => {
-        Papa.parse(file, {
-            header: false, // Parse as arrays [["Col1", "Col2"], ...]
-            skipEmptyLines: true,
-            complete: (results: any) => {
-                const data = results.data as string[][]; // Array of arrays
-                console.log("Raw CSV Data Preview:", data.slice(0, 5));
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const text = e.target?.result;
+            if (typeof text !== 'string') return;
 
-                if (!data || data.length === 0) {
-                    setError("File appears empty.");
-                    return;
+            // Manual lines split
+            const lines = text.split(/\r\n|\n/).map(l => l.trim()).filter(l => l);
+            if (lines.length === 0) {
+                setError("File is empty.");
+                return;
+            }
+
+            // 1. Find Header & Delimiter
+            let headerIdx = -1;
+            let delimiter = ','; // Default
+            let colMap = { nm: -1, ex: -1, em: -1 };
+
+            for (let i = 0; i < Math.min(lines.length, 20); i++) {
+                const lineLower = lines[i].toLowerCase();
+                // Check if this line looks like a header
+                if (lineLower.includes("wavelength") || lineLower.includes("nm")) {
+                    headerIdx = i;
+
+                    // Detect delimiter by counting
+                    const commaCount = (lines[i].match(/,/g) || []).length;
+                    const semiCount = (lines[i].match(/;/g) || []).length;
+                    const tabCount = (lines[i].match(/\t/g) || []).length;
+
+                    // Simple heuristic: majority wins, biased to comma
+                    if (semiCount > commaCount && semiCount > tabCount) delimiter = ';';
+                    else if (tabCount > commaCount && tabCount > semiCount) delimiter = '\t';
+
+                    // Map columns based on split
+                    // We remove quotes from headers just in case "Wavelength"
+                    const cells = lines[i].split(delimiter).map(c => c.toLowerCase().trim().replace(/['"]/g, ''));
+
+                    colMap.nm = cells.findIndex(c => c === "wavelength" || c === "nm" || c.includes("wavelength"));
+                    colMap.ex = cells.findIndex(c => c.includes("excitation") || c.includes("ex"));
+                    colMap.em = cells.findIndex(c => c.includes("emission") || c.includes("em"));
+
+                    console.log(`Detected Delimiter: '${delimiter === '\t' ? 'TAB' : delimiter}'`);
+                    console.log(`Column Mapping:`, colMap);
+
+                    break;
                 }
+            }
 
-                // 1. Find Header Row
-                let headerRowIndex = -1;
-                let colMap = { nm: -1, ex: -1, em: -1 };
+            if (headerIdx === -1 || colMap.nm === -1) {
+                setError("Could not find 'Wavelength' column header. Please ensure columns are named Wavelength, Excitation, Emission.");
+                return;
+            }
 
-                // Scan first 20 rows for header
-                for (let i = 0; i < Math.min(data.length, 20); i++) {
-                    // Safe access and cleaning
-                    const row = (data[i] || []).map(cell => String(cell).toLowerCase().trim().replace(/^[\uFEFF\u200B]/, '').replace(/['"]/g, ''));
+            // 2. Parse Data
+            const tempEx: { wavelength: number, value: number }[] = [];
+            const tempEm: { wavelength: number, value: number }[] = [];
 
-                    // Look for wavelength
-                    const nmIdx = row.findIndex(c => c === "wavelength" || c === "nm" || c.includes("wavelength"));
-                    if (nmIdx !== -1) {
-                        headerRowIndex = i;
-                        colMap.nm = nmIdx;
-                        // Search for others in this row
-                        colMap.ex = row.findIndex(c => c.includes("excitation") || c.includes("ex"));
-                        colMap.em = row.findIndex(c => c.includes("emission") || c.includes("em"));
-                        break;
-                    }
-                }
+            for (let i = headerIdx + 1; i < lines.length; i++) {
+                // Manual split
+                const cells = lines[i].split(delimiter);
+                if (cells.length <= colMap.nm) continue;
 
-                if (headerRowIndex === -1 || colMap.nm === -1) {
-                    setError("Could not find 'Wavelength' column header. Please ensure columns are named Wavelength, Excitation, Emission.");
-                    return;
-                }
-
-                // 2. Parse Data
-                const tempEx: { wavelength: number, value: number }[] = [];
-                const tempEm: { wavelength: number, value: number }[] = [];
-
-                const parseVal = (v: any) => {
-                    if (v === "" || v === null || v === undefined) return 0;
-                    const str = String(v).replace(/['"“”]/g, '').trim(); // Remove standard and smart quotes
-                    if (str === "") return 0;
-                    const num = parseFloat(str);
-                    return isNaN(num) ? 0 : num;
+                // Clean value function
+                const clean = (val: string) => {
+                    if (!val) return 0;
+                    // Remove quotes
+                    let s = val.replace(/['"“”]/g, '').trim();
+                    // Replace comma decimal if present (French format safety for values like "0,04")
+                    s = s.replace(',', '.');
+                    if (s === "") return 0;
+                    const n = parseFloat(s);
+                    return isNaN(n) ? 0 : n;
                 };
 
-                // Iterate starting from next row
-                for (let i = headerRowIndex + 1; i < data.length; i++) {
-                    const row = data[i];
-                    if (!row || row.length <= colMap.nm) continue;
+                const nmStr = cells[colMap.nm];
+                const nm = clean(nmStr); // Wavelength usually integer, but float ok
 
-                    const nmStr = row[colMap.nm];
-                    const nm = parseFloat(String(nmStr).replace(/['"]/g, ''));
+                if (!isNaN(nm) && nm > 0) {
+                    const vEx = colMap.ex !== -1 ? clean(cells[colMap.ex]) : 0;
+                    const vEm = colMap.em !== -1 ? clean(cells[colMap.em]) : 0;
 
-                    if (!isNaN(nm)) {
-                        const valEx = colMap.ex !== -1 ? parseVal(row[colMap.ex]) : 0;
-                        const valEm = colMap.em !== -1 ? parseVal(row[colMap.em]) : 0;
-
-                        tempEx.push({ wavelength: nm, value: valEx });
-                        tempEm.push({ wavelength: nm, value: valEm });
-                    }
+                    tempEx.push({ wavelength: nm, value: vEx });
+                    tempEm.push({ wavelength: nm, value: vEm });
                 }
-
-                if (tempEx.length === 0) {
-                    setError("Found headers but no valid data rows.");
-                    return;
-                }
-
-                // 3. Scaling Logic
-                const maxExRaw = Math.max(...tempEx.map(p => p.value));
-                const maxEmRaw = Math.max(...tempEm.map(p => p.value));
-
-                // Heuristic: If max <= 2, multiply by 100
-                const scaleFactor = (maxExRaw <= 2 && maxExRaw > 0) ? 100 : 1;
-
-                // Extra check: if ALL values are 0, maybe column detection failed or data is actually 0
-                if (maxExRaw === 0 && maxEmRaw === 0) {
-                    // Check logic for semicolon
-                    if (data[headerRowIndex + 1].length === 1 && String(data[headerRowIndex + 1][0]).includes(';')) {
-                        setError("It seems the file uses semicolons (;). Please save as standard CSV (comma) or try to split automatically.");
-                        return;
-                    }
-                }
-
-                const finalEx = tempEx.map(p => ({ ...p, value: p.value * scaleFactor }));
-                const finalEm = tempEm.map(p => ({ ...p, value: p.value * scaleFactor }));
-
-                // 4. Normalize
-                const peakEx = Math.max(...finalEx.map(p => p.value));
-                const peakEm = Math.max(...finalEm.map(p => p.value));
-
-                const normEx = finalEx.map(p => ({ ...p, value: peakEx ? p.value / peakEx : 0 }));
-                const normEm = finalEm.map(p => ({ ...p, value: peakEm ? p.value / peakEm : 0 }));
-
-                setExcitationData(normEx);
-                setEmissionData(normEm);
-                setError(""); // Clear error on success
-            },
-            error: (err: any) => {
-                setError("Failed to parse CSV: " + err.message);
             }
-        });
+
+            if (tempEx.length === 0) {
+                setError("No valid data rows found.");
+                return;
+            }
+
+            // 3. Scale & Normalize
+            const maxExRaw = Math.max(...tempEx.map(p => p.value));
+            const maxEmRaw = Math.max(...tempEm.map(p => p.value));
+
+            // Heuristic: If max <= 2, multiply by 100 (Ratio -> Percentage)
+            // But if max is 0, we can't do anything (it stays 0)
+            const scaleFactor = (maxExRaw <= 2 && maxExRaw > 0) ? 100 : 1;
+
+            const finalEx = tempEx.map(p => ({ ...p, value: p.value * scaleFactor }));
+            const finalEm = tempEm.map(p => ({ ...p, value: p.value * scaleFactor }));
+
+            const peakEx = Math.max(...finalEx.map(p => p.value));
+            const peakEm = Math.max(...finalEm.map(p => p.value));
+
+            const normEx = finalEx.map(p => ({ ...p, value: peakEx ? p.value / peakEx : 0 }));
+            const normEm = finalEm.map(p => ({ ...p, value: peakEm ? p.value / peakEm : 0 }));
+
+            console.log(`Parsed ${normEx.length} points. Max Ex raw: ${maxExRaw}. Scaled Max: ${peakEx}`);
+
+            setExcitationData(normEx);
+            setEmissionData(normEm);
+            setError("");
+        };
+        reader.onerror = () => setError("Failed to read file.");
+        reader.readAsText(file);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
