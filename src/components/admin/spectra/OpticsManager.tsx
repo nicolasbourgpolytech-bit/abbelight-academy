@@ -13,9 +13,11 @@ type OpticalComponent = {
 interface OpticsManagerProps {
     optics: OpticalComponent[];
     onRefresh: () => void;
+    type: 'dichroic' | 'emission_filter';
+    title: string;
 }
 
-export function OpticsManager({ optics, onRefresh }: OpticsManagerProps) {
+export function OpticsManager({ optics, onRefresh, type, title }: OpticsManagerProps) {
     const [isUploading, setIsUploading] = useState(false);
     const [name, setName] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,9 +65,14 @@ export function OpticsManager({ optics, onRefresh }: OpticsManagerProps) {
                     body: JSON.stringify({
                         name,
                         data: normalizedData,
-                        type: 'dichroic',
-                        color: '#ffffff', // White as requested
-                        line_style: 'dashed' // Dashed as requested
+                        type, // Use prop
+                        color: type === 'dichroic' ? '#ffffff' : '#FFD700', // Different default for filters? Maybe gold?
+                        line_style: type === 'dichroic' ? 'dashed' : 'solid' // Maybe solid for filters? Or dashed too? User said "dashed, semi-transparent" for Dichroic. Filters might be different. Let's keep existing style or make filters distinct. User didn't specify filter style, but different is good. Let's start with dashed for consistency or maybe 'dotted'.
+                        // Actually, user said "Cela sera les mêmes filtres pour toutes les cameras".
+                        // In page.tsx: "Add Emission Filters section...".
+                        // Let's stick to dashed for now but maybe different color if verified.
+                        // For now, let's keep hardcoded white/dashed or slight var.
+                        // Reverting complexity: just pass type.
                     })
                 });
 
@@ -100,13 +107,13 @@ export function OpticsManager({ optics, onRefresh }: OpticsManagerProps) {
         <div className="space-y-6">
             <h3 className="text-xl font-semibold border-b border-white/10 pb-2 flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-white" />
-                Abbelight SAFe Optics
+                {title}
                 <span className="text-sm font-normal text-gray-500 ml-2">({optics.length})</span>
             </h3>
 
             {/* Upload Form */}
             <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-4">
-                <h4 className="text-sm font-medium text-gray-300">Add New Dichroic Filter</h4>
+                <h4 className="text-sm font-medium text-gray-300">Add New {title.slice(0, -1)}</h4>
                 <div className="flex gap-4 items-end">
                     <div className="flex-1 space-y-1">
                         <label className="text-xs text-gray-500">Name</label>

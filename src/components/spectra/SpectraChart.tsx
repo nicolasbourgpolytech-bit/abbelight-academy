@@ -51,11 +51,21 @@ export function SpectraChart() {
 
     const [activeTab, setActiveTab] = useState<'raw' | 'detected'>('raw');
 
+    // Product Configuration
+    const [selectedProduct, setSelectedProduct] = useState<string>('MN180'); // Default to MN180
+    const [dichroics, setDichroics] = useState<OpticalComponent[]>([]);
+    const [emissionFilters, setEmissionFilters] = useState<OpticalComponent[]>([]);
+
+    // Filter Wheel State
+    const [cam1FilterId, setCam1FilterId] = useState<string>('');
+    const [cam2FilterId, setCam2FilterId] = useState<string>('');
+    const [activeCameraView, setActiveCameraView] = useState<'cam1' | 'cam2'>('cam1');
+
     // Wavelength Range Controls
     const [minWavelength, setMinWavelength] = useState<number>(400); // Default 400nm
     const [maxWavelength, setMaxWavelength] = useState<number>(800);
 
-    const [openCategories, setOpenCategories] = useState<string[]>(['UV', 'Green', 'Red', 'Far-red', 'Optics']);
+    const [openCategories, setOpenCategories] = useState<string[]>(['UV', 'Green', 'Red', 'Far-red', 'Optics']); // Optics here refers to Dichroics panel
 
     useEffect(() => {
         setIsMounted(true);
@@ -84,7 +94,23 @@ export function SpectraChart() {
                     ...d,
                     visible: false // Hidden by default
                 }));
-                setOptics(mapped);
+
+                setOptics(mapped); // Keep full list if needed, or remove. Let's keep for generic usage if needed, but better split.
+                // Actually `optics` state was used for rendering lines and panel list.
+                // We should assume `optics` state = Dichroics (SAFe Optics panel)
+                // And `emissionFilters` state = Filter Wheels.
+
+                const d = mapped.filter((o: any) => o.type === 'dichroic' || !o.type); // Default to dichroic
+                const f = mapped.filter((o: any) => o.type === 'emission_filter');
+
+                setDichroics(d);
+                setEmissionFilters(f);
+
+                // Set default filters if available
+                if (f.length > 0) {
+                    setCam1FilterId(f[0].id);
+                    setCam2FilterId(f[0].id);
+                }
             }
         } catch (e) {
             console.error(e);
@@ -100,7 +126,7 @@ export function SpectraChart() {
     };
 
     const toggleOptic = (id: string) => {
-        setOptics(prev => prev.map(o =>
+        setDichroics(prev => prev.map(o =>
             o.id === id ? { ...o, visible: !o.visible } : o
         ));
     };
@@ -131,27 +157,42 @@ export function SpectraChart() {
 
     // Calculate Detection Efficiency
     const calculateEfficiency = (dye: Fluorophore) => {
-        // 1. Get Combined Optics Transmission (Product of all visible optics)
-        // We assume 100% transmission if no optics are selected, or 0%?
-        // Usually "System Efficiency" implies *some* optics. If none selected, maybe we show N/A or raw.
-        // User requested: "spectres pondérés par les optiques"
-        const visibleOptics = optics.filter(o => o.visible);
-        if (visibleOptics.length === 0) return { ratio: 1, rawAUC: 0, detectedAUC: 0 }; // If no optics, assume 100% pass-through or N/A
+        // 1. Get Combined Optics Transmission (Dichroics + Active Filter)
+        const visibleDichroics = dichroics.filter(o => o.visible);
 
-        // Precompute optics map for faster lookup
+        // Active Filter
+        let activeFilter: OpticalComponent | undefined;
+        if (activeCameraView === 'cam1' && cam1FilterId) {
+            activeFilter = emissionFilters.find(f => f.id === cam1FilterId);
+        } else if (activeCameraView === 'cam2' && cam2FilterId) {
+            activeFilter = emissionFilters.find(f => f.id === cam2FilterId);
+        }
+
+        // If no optics (dichroics or filters) are selected, assume 100%? 
+        // Or if "Detected", we need at least something? 
+        // Let's assume: Base 100% * Dichroics * Filter.
+
+        // Precompute optics map
         const opticsMap = new Map<number, number>();
         WAVELENGTHS.forEach(nm => {
             if (nm < minWavelength || nm > maxWavelength) return;
 
-            let transmission = 1.0; // Start with 100%
-            visibleOptics.forEach(opt => {
+            let transmission = 1.0;
+
+            // Apply Dichroics
+            visibleDichroics.forEach(opt => {
                 const point = opt.data.find(p => p.wavelength === nm);
-                // Transmission in CSV is usually %, so normalize to 0-1 if > 1?
-                // Our parsing logic in OpticsManager already normalized to 0-1 if values were > 2.
-                // But let's be safe.
-                const val = point ? point.value : 0;
+                const val = point ? point.value : 0; // If data missing for this wavelength, assume 0 or 1? Usually 0 if outside range or interp. logic. We used 0 before.
                 transmission *= val;
             });
+
+            // Apply Active Filter
+            if (activeFilter) {
+                const point = activeFilter.data.find(p => p.wavelength === nm);
+                const val = point ? point.value : 0;
+                transmission *= val;
+            }
+
             opticsMap.set(nm, transmission);
         });
 
@@ -173,22 +214,45 @@ export function SpectraChart() {
 
     // --- Chart Data Calculation ---
     const chartData = useMemo(() => {
-        // Pre-calculate combined optics visibility if needed for 'detected' tab
-        const visibleOptics = optics.filter(o => o.visible);
+        const visibleDichroics = dichroics.filter(o => o.visible);
+
+        let activeFilter: OpticalComponent | undefined;
+        if (activeCameraView === 'cam1' && cam1FilterId) {
+            activeFilter = emissionFilters.find(f => f.id === cam1FilterId);
+        } else if (activeCameraView === 'cam2' && cam2FilterId) {
+            activeFilter = emissionFilters.find(f => f.id === cam2FilterId);
+        }
 
         return WAVELENGTHS.map((nm, index) => {
             const point: SpectrumDataPoint = { wavelength: nm };
 
-            // 1. Calculate Combined Optic Value for this wavelength
+            // 1. Calculate Combined Optic Value
             let combinedOpticTrans = 1.0;
-            if (visibleOptics.length > 0) {
-                visibleOptics.forEach(opt => {
-                    const opP = opt.data?.find((p: any) => p.wavelength === nm);
-                    combinedOpticTrans *= (opP ? opP.value : 0);
-                });
-            } else {
-                combinedOpticTrans = 1.0; // Pass through if no optics? Or 0? Let's assume 1 for visualisation comparison unless specified.
-                // Wait, if "Detected" tab, and no optics, it's effectively "Raw".
+
+            // Dichroics
+            visibleDichroics.forEach(opt => {
+                const opP = opt.data?.find((p: any) => p.wavelength === nm);
+                combinedOpticTrans *= (opP ? opP.value : 0);
+            });
+
+            // Filter
+            if (activeFilter) {
+                const fP = activeFilter.data?.find((p: any) => p.wavelength === nm);
+                combinedOpticTrans *= (fP ? fP.value : 0);
+
+                // Also add filter curve to chart for visualization reference?
+                // Maybe as a separate line?
+                // Depending on requirements. User wants "combined transmission".
+                // Let's add the combined transmission as a "System" curve?
+            }
+
+            // Add Combined Transmission Visualization (optional, but helpful)
+            // Or stick to showing just visible Dichroics lines as before + specific Filter line.
+
+            // Store active filter point for visualization
+            if (activeFilter) {
+                const fP = activeFilter.data?.find((p: any) => p.wavelength === nm);
+                point[`active_filter`] = fP ? fP.value : 0;
             }
 
             fluorophores.forEach(f => {
@@ -224,7 +288,8 @@ export function SpectraChart() {
             // Always show Optics curve as reference in both tabs (or maybe just Raw?)
             // If in Detected Tab, maybe show the *Combined* optic curve?
             // For now, let's keep showing individual optics as reference lines
-            optics.forEach(o => {
+            // 2. Render Dichroics lines (Reference)
+            dichroics.forEach(o => {
                 if (o.visible) {
                     const opPoint = o.data?.find((p: any) => p.wavelength === nm);
                     if (opPoint) point[`${o.id}_optic`] = opPoint.value;
@@ -233,7 +298,7 @@ export function SpectraChart() {
 
             return point;
         });
-    }, [fluorophores, optics, activeTab, showExcitation]);
+    }, [fluorophores, dichroics, emissionFilters, activeTab, showExcitation, activeCameraView, cam1FilterId, cam2FilterId]);
 
     const categories = ['UV', 'Green', 'Red', 'Far-red'];
 
@@ -241,6 +306,87 @@ export function SpectraChart() {
 
     return (
         <div className="flex flex-col space-y-6">
+            {/* Instrument Configuration */}
+            <div className="bg-white/5 border border-white/10 p-4 rounded-xl backdrop-blur-sm flex flex-wrap items-center gap-6">
+
+                {/* Product Selector */}
+                <div className="space-y-1">
+                    <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Product System</label>
+                    <select
+                        value={selectedProduct}
+                        onChange={(e) => setSelectedProduct(e.target.value)}
+                        className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[140px]"
+                    >
+                        <option value="M45">SAFe M45</option>
+                        <option value="MN180">SAFe MN180</option>
+                        <option value="M90">SAFe M90</option>
+                        <option value="MN360">SAFe MN360</option>
+                    </select>
+                </div>
+
+                <div className="w-px h-8 bg-white/10 hidden md:block"></div>
+
+                {/* Filter Configuration */}
+                <div className="flex flex-wrap items-center gap-6">
+                    {/* Camera 1 Filter */}
+                    <div className="space-y-1">
+                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">
+                            {['M90', 'MN360'].includes(selectedProduct) ? 'Camera 1 Filter' : 'Emission Filter'}
+                        </label>
+                        <select
+                            value={cam1FilterId}
+                            onChange={(e) => setCam1FilterId(e.target.value)}
+                            className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[200px]"
+                        >
+                            {emissionFilters.map(f => (
+                                <option key={f.id} value={f.id}>{f.name}</option>
+                            ))}
+                            {emissionFilters.length === 0 && <option value="">No filters available</option>}
+                        </select>
+                    </div>
+
+                    {/* Camera 2 Filter (Only for Dual Cam) */}
+                    {['M90', 'MN360'].includes(selectedProduct) && (
+                        <>
+                            <div className="space-y-1">
+                                <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Camera 2 Filter</label>
+                                <select
+                                    value={cam2FilterId}
+                                    onChange={(e) => setCam2FilterId(e.target.value)}
+                                    className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[200px]"
+                                >
+                                    {emissionFilters.map(f => (
+                                        <option key={f.id} value={f.id}>{f.name}</option>
+                                    ))}
+                                    {emissionFilters.length === 0 && <option value="">No filters available</option>}
+                                </select>
+                            </div>
+
+                            <div className="w-px h-8 bg-white/10 hidden md:block"></div>
+
+                            {/* View Toggle */}
+                            <div className="space-y-1">
+                                <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Active Camera</label>
+                                <div className="flex bg-black/20 rounded-lg border border-white/5 p-0.5">
+                                    <button
+                                        onClick={() => setActiveCameraView('cam1')}
+                                        className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeCameraView === 'cam1' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        Cam 1
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveCameraView('cam2')}
+                                        className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeCameraView === 'cam2' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        Cam 2
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+
             {/* Global Controls: Range & Toggles */}
             <div className="flex flex-wrap items-center justify-between gap-4 bg-white/5 border border-white/10 p-3 rounded-xl backdrop-blur-sm">
 
@@ -311,7 +457,7 @@ export function SpectraChart() {
                 {/* Categories Sidebar */}
                 <div className="w-full lg:w-72 flex flex-col gap-3 pr-1">
                     {/* SAFe Optics Section */}
-                    {optics.length > 0 && (
+                    {dichroics.length > 0 && (
                         <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
                             <button
                                 onClick={() => toggleCategory('Optics')}
@@ -320,7 +466,7 @@ export function SpectraChart() {
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full bg-white" />
                                     <span className="font-semibold text-sm">Abbelight SAFe</span>
-                                    <span className="text-xs text-gray-500">({optics.length})</span>
+                                    <span className="text-xs text-gray-500">({dichroics.length})</span>
                                 </div>
                                 <svg
                                     className={`w-4 h-4 text-gray-400 transition-transform ${openCategories.includes('Optics') ? 'rotate-180' : ''}`}
@@ -332,7 +478,7 @@ export function SpectraChart() {
 
                             {openCategories.includes('Optics') && (
                                 <div className="p-2 space-y-1">
-                                    {optics.map(optic => (
+                                    {dichroics.map(optic => (
                                         <button
                                             key={optic.id}
                                             onClick={() => toggleOptic(optic.id)}
@@ -521,8 +667,8 @@ export function SpectraChart() {
                                         );
                                     })}
 
-                                    {/* Optics Rendering */}
-                                    {optics.map(optic => {
+                                    {/* Optics Rendering (Dichroics) */}
+                                    {dichroics.map(optic => {
                                         if (!optic.visible) return null;
                                         return (
                                             <Line
@@ -532,13 +678,28 @@ export function SpectraChart() {
                                                 dataKey={`${optic.id}_optic`}
                                                 stroke={optic.color}
                                                 strokeWidth={1.5}
-                                                strokeDasharray="6 4" // Distinct dash pattern for optics
+                                                strokeDasharray="6 4"
                                                 dot={false}
                                                 activeDot={{ r: 4, fill: '#fff', stroke: '#fff' }}
                                                 isAnimationActive={true}
                                             />
                                         );
                                     })}
+
+                                    {/* Active Filter Rendering */}
+                                    {activeTab === 'detected' && (
+                                        <Line
+                                            name="Active Filter"
+                                            type="monotone"
+                                            dataKey="active_filter"
+                                            stroke="#FFD700"
+                                            strokeWidth={2}
+                                            strokeDasharray="2 2"
+                                            dot={false}
+                                            activeDot={{ r: 4, fill: '#FFD700', stroke: '#fff' }}
+                                            isAnimationActive={true}
+                                        />
+                                    )}
 
                                 </ComposedChart>
                             </ResponsiveContainer>

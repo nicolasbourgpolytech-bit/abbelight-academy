@@ -138,10 +138,20 @@ export default function SpectraAdminPage() {
                     </div>
 
                     {/* Optics Section */}
-                    <OpticsManager
-                        optics={optics}
-                        onRefresh={fetchData}
-                    />
+                    <div className="space-y-12">
+                        <OpticsManager
+                            optics={optics.filter(o => o.type === 'dichroic' || !o.type)}
+                            onRefresh={fetchData}
+                            type="dichroic"
+                            title="Abbelight SAFe Optics (Dichroics)"
+                        />
+                        <OpticsManager
+                            optics={optics.filter(o => o.type === 'emission_filter')}
+                            onRefresh={fetchData}
+                            type="emission_filter"
+                            title="Emission Filters"
+                        />
+                    </div>
                 </div>
             )}
         </div>
