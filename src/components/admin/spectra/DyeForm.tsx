@@ -15,6 +15,7 @@ export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
     const [color, setColor] = useState(initialData?.color || "#00D296");
     const [exPeak, setExPeak] = useState<number | string>(initialData?.excitation_peak || "");
     const [emPeak, setEmPeak] = useState<number | string>(initialData?.emission_peak || "");
+    const [isDefault, setIsDefault] = useState(initialData && 'is_default' in initialData ? (initialData as any).is_default : false);
 
     const [mode, setMode] = useState<'csv' | 'manual'>('csv');
     const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -231,7 +232,8 @@ export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
                 excitation_peak: exPeak ? Number(exPeak) : null,
                 emission_peak: emPeak ? Number(emPeak) : null,
                 excitation_data: excitationData,
-                emission_data: emissionData
+                emission_data: emissionData,
+                is_default: isDefault
             };
 
             const url = initialData ? `/api/spectra/${initialData.id}` : '/api/spectra';
@@ -324,6 +326,19 @@ export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
                             placeholder="#000000"
                         />
                     </div>
+                </div>
+
+                <div className="flex items-center gap-3 pt-4">
+                    <input
+                        type="checkbox"
+                        id="isDefault"
+                        checked={isDefault}
+                        onChange={e => setIsDefault(e.target.checked)}
+                        className="w-5 h-5 rounded border-white/10 bg-black/40 text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="isDefault" className="text-sm font-medium text-gray-300">
+                        Show by default in Spectra Viewer
+                    </label>
                 </div>
             </div>
 

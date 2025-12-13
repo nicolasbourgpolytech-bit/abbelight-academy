@@ -19,7 +19,7 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { name, category, color, excitation_peak, emission_peak, excitation_data, emission_data } = body;
+        const { name, category, color, excitation_peak, emission_peak, excitation_data, emission_data, is_default } = body;
 
         // Validation
         if (!name || !category || !color) {
@@ -27,8 +27,8 @@ export async function POST(request: Request) {
         }
 
         const result = await sql`
-            INSERT INTO fluorophores (name, category, color, excitation_peak, emission_peak, excitation_data, emission_data, visible)
-            VALUES (${name}, ${category}, ${color}, ${excitation_peak || null}, ${emission_peak || null}, ${JSON.stringify(excitation_data || [])}::jsonb, ${JSON.stringify(emission_data || [])}::jsonb, true)
+            INSERT INTO fluorophores (name, category, color, excitation_peak, emission_peak, excitation_data, emission_data, visible, is_default)
+            VALUES (${name}, ${category}, ${color}, ${excitation_peak || null}, ${emission_peak || null}, ${JSON.stringify(excitation_data || [])}::jsonb, ${JSON.stringify(emission_data || [])}::jsonb, true, ${is_default || false})
             RETURNING *
         `;
 

@@ -46,11 +46,11 @@ export function SpectraChart() {
     const [fluorophores, setFluorophores] = useState<Fluorophore[]>([]);
     const [optics, setOptics] = useState<OpticalComponent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [showExcitation, setShowExcitation] = useState(true);
+    const [showExcitation, setShowExcitation] = useState(false); // Default hidden as requested
     const [showEmission, setShowEmission] = useState(true);
 
     // Wavelength Range Controls
-    const [minWavelength, setMinWavelength] = useState<number>(300);
+    const [minWavelength, setMinWavelength] = useState<number>(400); // Default 400nm as requested
     const [maxWavelength, setMaxWavelength] = useState<number>(800);
 
     const [openCategories, setOpenCategories] = useState<string[]>(['UV', 'Green', 'Red', 'Far-red', 'Optics']);
@@ -71,7 +71,7 @@ export function SpectraChart() {
                 const data = await spectraRes.json();
                 const mapped = data.map((d: any) => ({
                     ...d,
-                    visible: ['DAPI', 'Alexa Fluor 488'].includes(d.name)
+                    visible: d.is_default !== undefined ? d.is_default : ['DAPI', 'Alexa Fluor 488'].includes(d.name)
                 }));
                 setFluorophores(mapped);
             }
