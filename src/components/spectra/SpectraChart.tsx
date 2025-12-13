@@ -554,28 +554,42 @@ export function SpectraChart() {
                                 </svg>
                                 Detection Efficiency Metrics
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {fluorophores.filter(f => f.visible).map(dye => {
-                                    const { ratio } = calculateEfficiency(dye);
-                                    const percentage = (ratio * 100).toFixed(1);
+                            <div className="space-y-6">
+                                {categories.map(category => {
+                                    const categoryDyes = fluorophores.filter(f => f.visible && f.category === category);
+                                    if (categoryDyes.length === 0) return null;
 
                                     return (
-                                        <div key={dye.id} className="bg-black/20 rounded-lg p-3 flex items-center justify-between border border-white/5">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: dye.color }}></div>
-                                                <span className="text-sm font-medium text-gray-200">{dye.name}</span>
-                                            </div>
-                                            <div className="flex items-end flex-col">
-                                                <span className={`text-lg font-bold ${Number(percentage) > 50 ? 'text-green-400' : Number(percentage) > 20 ? 'text-yellow-400' : 'text-red-400'}`}>
-                                                    {percentage}%
-                                                </span>
-                                                <span className="text-[10px] text-gray-500 uppercase tracking-wider">Detected</span>
+                                        <div key={category}>
+                                            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 border-b border-white/5 pb-1 block">
+                                                {category}
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                {categoryDyes.map(dye => {
+                                                    const { ratio } = calculateEfficiency(dye);
+                                                    const percentage = (ratio * 100).toFixed(1);
+
+                                                    return (
+                                                        <div key={dye.id} className="bg-black/20 rounded-lg p-3 flex items-center justify-between border border-white/5">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: dye.color }}></div>
+                                                                <span className="text-sm font-medium text-gray-200">{dye.name}</span>
+                                                            </div>
+                                                            <div className="flex items-end flex-col">
+                                                                <span className={`text-lg font-bold ${Number(percentage) > 50 ? 'text-green-400' : Number(percentage) > 20 ? 'text-yellow-400' : 'text-red-400'}`}>
+                                                                    {percentage}%
+                                                                </span>
+                                                                <span className="text-[10px] text-gray-500 uppercase tracking-wider">Detected</span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     );
                                 })}
                                 {fluorophores.filter(f => f.visible).length === 0 && (
-                                    <div className="text-sm text-gray-500 italic col-span-full">Select dyes to view efficiency stats.</div>
+                                    <div className="text-sm text-gray-500 italic">Select dyes to view efficiency stats.</div>
                                 )}
                             </div>
                         </div>
