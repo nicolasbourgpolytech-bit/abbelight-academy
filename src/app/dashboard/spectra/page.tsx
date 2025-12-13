@@ -41,7 +41,7 @@ export default function SpectraPage() {
                     </div>
                 </div>
 
-                <div className="glass-card overflow-hidden relative border border-white/10 shadow-2xl h-[600px] shrink-0">
+                <div className="flex-1">
                     <SpectraChart />
                 </div>
             </main>

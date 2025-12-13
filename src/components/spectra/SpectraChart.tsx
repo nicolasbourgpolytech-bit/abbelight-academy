@@ -240,7 +240,7 @@ export function SpectraChart() {
     if (!isMounted || isLoading) return <div className="h-full flex items-center justify-center text-white">Loading spectra...</div>;
 
     return (
-        <div className="flex flex-col h-full space-y-4">
+        <div className="flex flex-col space-y-6">
             {/* Global Controls: Range & Toggles */}
             <div className="flex flex-wrap items-center justify-between gap-4 bg-white/5 border border-white/10 p-3 rounded-xl backdrop-blur-sm">
 
@@ -306,10 +306,10 @@ export function SpectraChart() {
             </div>
 
             {/* Main Layout: Categories Left, Chart Right */}
-            <div className="flex flex-col md:flex-row gap-4 h-full min-h-0">
+            <div className="flex flex-col lg:flex-row gap-6">
 
                 {/* Categories Sidebar */}
-                <div className="w-full md:w-64 flex flex-col gap-3 overflow-y-auto custom-scrollbar pr-1">
+                <div className="w-full lg:w-72 flex flex-col gap-3 pr-1">
                     {/* SAFe Optics Section */}
                     {optics.length > 0 && (
                         <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
@@ -413,8 +413,8 @@ export function SpectraChart() {
                 </div>
 
                 {/* Chart Area */}
-                <div className="flex-1 w-full flex flex-col gap-4 min-h-0">
-                    <div className="flex-1 w-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 relative group flex flex-col min-h-[400px]">
+                <div className="flex-1 w-full flex flex-col gap-4">
+                    <div className="w-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 relative group flex flex-col h-[600px]">
                         {/* Background Grid Pattern */}
                         <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
 
