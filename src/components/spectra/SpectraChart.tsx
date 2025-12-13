@@ -8,6 +8,7 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
+    Line,
 } from 'recharts';
 
 // --- Types & Data ---
@@ -27,12 +28,23 @@ type Fluorophore = {
     emission_data: { wavelength: number; value: number }[];
 };
 
+type OpticalComponent = {
+    id: string;
+    name: string;
+    type: string;
+    visible: boolean;
+    color: string;
+    line_style: string;
+    data: { wavelength: number; value: number }[];
+};
+
 // Generate range of wavelengths matching the data source
 const WAVELENGTHS = Array.from({ length: 501 }, (_, i) => 300 + i); // 300nm to 800nm
 
 export function SpectraChart() {
     const [isMounted, setIsMounted] = useState(false);
     const [fluorophores, setFluorophores] = useState<Fluorophore[]>([]);
+    const [optics, setOptics] = useState<OpticalComponent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showExcitation, setShowExcitation] = useState(true);
     const [showEmission, setShowEmission] = useState(true);
@@ -41,7 +53,7 @@ export function SpectraChart() {
     const [minWavelength, setMinWavelength] = useState<number>(300);
     const [maxWavelength, setMaxWavelength] = useState<number>(800);
 
-    const [openCategories, setOpenCategories] = useState<string[]>(['UV', 'Green', 'Red', 'Far-red']);
+    const [openCategories, setOpenCategories] = useState<string[]>(['UV', 'Green', 'Red', 'Far-red', 'Optics']);
 
     useEffect(() => {
         setIsMounted(true);
@@ -50,14 +62,27 @@ export function SpectraChart() {
 
     const fetchData = async () => {
         try {
-            const res = await fetch('/api/spectra');
-            if (res.ok) {
-                const data = await res.json();
+            const [spectraRes, opticsRes] = await Promise.all([
+                fetch('/api/spectra'),
+                fetch('/api/spectra/optics')
+            ]);
+
+            if (spectraRes.ok) {
+                const data = await spectraRes.json();
                 const mapped = data.map((d: any) => ({
                     ...d,
                     visible: ['DAPI', 'Alexa Fluor 488'].includes(d.name)
                 }));
                 setFluorophores(mapped);
+            }
+
+            if (opticsRes.ok) {
+                const data = await opticsRes.json();
+                const mapped = data.map((d: any) => ({
+                    ...d,
+                    visible: false // Hidden by default
+                }));
+                setOptics(mapped);
             }
         } catch (e) {
             console.error(e);
@@ -72,6 +97,12 @@ export function SpectraChart() {
         ));
     };
 
+    const toggleOptic = (id: string) => {
+        setOptics(prev => prev.map(o =>
+            o.id === id ? { ...o, visible: !o.visible } : o
+        ));
+    };
+
     const toggleCategory = (category: string) => {
         setOpenCategories(prev =>
             prev.includes(category)
@@ -80,12 +111,8 @@ export function SpectraChart() {
         );
     };
 
-    // Calculate chart data based on visible fluorophores
+    // Calculate chart data based on visible fluorophores and optics
     const chartData = useMemo(() => {
-        // Filter WAVELENGTHS based on min/max for optimization (optional, but good for performance)
-        // However, Recharts domain handles the view. 
-        // Let's pass all data and let domain handle cropping to ensure smooth transitions if we seek.
-        // Actually, let's keep it simple and just map all. 
         return WAVELENGTHS.map((nm, index) => {
             const point: SpectrumDataPoint = { wavelength: nm };
 
@@ -98,9 +125,17 @@ export function SpectraChart() {
                     if (emPoint) point[`${f.id}_em`] = emPoint.value;
                 }
             });
+
+            optics.forEach(o => {
+                if (o.visible) {
+                    const opPoint = o.data?.find((p: any) => p.wavelength === nm);
+                    if (opPoint) point[`${o.id}_optic`] = opPoint.value;
+                }
+            });
+
             return point;
         });
-    }, [fluorophores]);
+    }, [fluorophores, optics]);
 
     const categories = ['UV', 'Green', 'Red', 'Far-red'];
 
@@ -157,6 +192,48 @@ export function SpectraChart() {
 
                 {/* Categories Sidebar */}
                 <div className="w-full md:w-64 flex flex-col gap-3 overflow-y-auto custom-scrollbar pr-1">
+                    {/* SAFe Optics Section */}
+                    {optics.length > 0 && (
+                        <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
+                            <button
+                                onClick={() => toggleCategory('Optics')}
+                                className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-white" />
+                                    <span className="font-semibold text-sm">Abbelight SAFe</span>
+                                    <span className="text-xs text-gray-500">({optics.length})</span>
+                                </div>
+                                <svg
+                                    className={`w-4 h-4 text-gray-400 transition-transform ${openCategories.includes('Optics') ? 'rotate-180' : ''}`}
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            {openCategories.includes('Optics') && (
+                                <div className="p-2 space-y-1">
+                                    {optics.map(optic => (
+                                        <button
+                                            key={optic.id}
+                                            onClick={() => toggleOptic(optic.id)}
+                                            className={`
+                                                w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all text-xs
+                                                ${optic.visible
+                                                    ? 'bg-white/10 text-white border border-white/20'
+                                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'}
+                                            `}
+                                        >
+                                            <div className="w-4 h-0 border-t border-dashed border-white/50" />
+                                            <span className="truncate flex-1">{optic.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {categories.map(category => {
                         const categoryDyes = fluorophores.filter(f => f.category === category);
                         const isOpen = openCategories.includes(category);
@@ -249,7 +326,7 @@ export function SpectraChart() {
                                             return (
                                                 <div className="bg-black/90 border border-white/10 p-3 rounded-lg shadow-xl backdrop-blur-md">
                                                     <p className="text-gray-400 text-xs mb-2">{label} nm</p>
-                                                    {payload.map((entry: { name: string; value: number; color: string }) => (
+                                                    {payload.map((entry: any) => (
                                                         <div key={entry.name} className="flex items-center gap-2 text-sm">
                                                             <div
                                                                 className="w-2 h-2 rounded-full"
@@ -324,6 +401,26 @@ export function SpectraChart() {
                                         />
                                     );
                                 })}
+
+                                {/* Optics Rendering */}
+                                {optics.map(optic => {
+                                    if (!optic.visible) return null;
+                                    return (
+                                        <Line
+                                            key={optic.id}
+                                            name={optic.name}
+                                            type="monotone"
+                                            dataKey={`${optic.id}_optic`}
+                                            stroke={optic.color}
+                                            strokeWidth={2}
+                                            strokeDasharray="6 4" // Distinct dash pattern for optics
+                                            dot={false}
+                                            activeDot={{ r: 4, fill: '#fff', stroke: '#fff' }}
+                                            isAnimationActive={true}
+                                        />
+                                    );
+                                })}
+
                             </ComposedChart>
                         </ResponsiveContainer>
                     </div>

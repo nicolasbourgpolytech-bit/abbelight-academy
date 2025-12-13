@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { DyeForm } from "@/components/admin/spectra/DyeForm";
 import { DyeList } from "@/components/admin/spectra/DyeList";
+import { OpticsManager } from "@/components/admin/spectra/OpticsManager";
 
 export type Dye = {
     id: string;
@@ -18,29 +19,38 @@ export type Dye = {
 
 export default function SpectraAdminPage() {
     const [dyes, setDyes] = useState<Dye[]>([]);
+    const [optics, setOptics] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingDye, setEditingDye] = useState<Dye | null>(null);
 
     const categories = ['UV', 'Green', 'Red', 'Far-red'];
 
-    const fetchDyes = async () => {
+    const fetchData = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch('/api/spectra');
-            if (res.ok) {
-                const data = await res.json();
+            const [dyesRes, opticsRes] = await Promise.all([
+                fetch('/api/spectra'),
+                fetch('/api/spectra/optics')
+            ]);
+
+            if (dyesRes.ok) {
+                const data = await dyesRes.json();
                 setDyes(data);
             }
+            if (opticsRes.ok) {
+                const data = await opticsRes.json();
+                setOptics(data);
+            }
         } catch (error) {
-            console.error("Failed to fetch dyes", error);
+            console.error("Failed to fetch data", error);
         } finally {
             setIsLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchDyes();
+        fetchData();
     }, []);
 
     const handleEdit = (dye: Dye) => {
@@ -52,7 +62,7 @@ export default function SpectraAdminPage() {
         if (!confirm("Are you sure you want to delete this dye?")) return;
         try {
             await fetch(`/api/spectra/${id}`, { method: 'DELETE' });
-            fetchDyes();
+            fetchData();
         } catch (error) {
             console.error("Failed to delete", error);
         }
@@ -61,7 +71,7 @@ export default function SpectraAdminPage() {
     const handleFormSubmit = async () => {
         setIsFormOpen(false);
         setEditingDye(null);
-        fetchDyes();
+        fetchData();
     };
 
     return (
@@ -97,32 +107,41 @@ export default function SpectraAdminPage() {
                     />
                 </div>
             ) : (
-                <div className="grid gap-8">
-                    {categories.map(cat => {
-                        const categoryDyes = dyes.filter(d => d.category === cat);
-                        return (
-                            <div key={cat} className="space-y-4">
-                                <h3 className="text-xl font-semibold border-b border-white/10 pb-2 flex items-center gap-2">
-                                    <span className={`w-3 h-3 rounded-full ${cat === 'UV' ? 'bg-purple-400' :
-                                        cat === 'Green' ? 'bg-green-400' :
-                                            cat === 'Red' ? 'bg-red-500' : 'bg-pink-600'
-                                        }`} />
-                                    {cat} Dyes
-                                    <span className="text-sm font-normal text-gray-500 ml-2">({categoryDyes.length})</span>
-                                </h3>
+                <div className="grid gap-12">
+                    {/* Dyes Section */}
+                    <div className="space-y-8">
+                        {categories.map(cat => {
+                            const categoryDyes = dyes.filter(d => d.category === cat);
+                            return (
+                                <div key={cat} className="space-y-4">
+                                    <h3 className="text-xl font-semibold border-b border-white/10 pb-2 flex items-center gap-2">
+                                        <span className={`w-3 h-3 rounded-full ${cat === 'UV' ? 'bg-purple-400' :
+                                            cat === 'Green' ? 'bg-green-400' :
+                                                cat === 'Red' ? 'bg-red-500' : 'bg-pink-600'
+                                            }`} />
+                                        {cat} Dyes
+                                        <span className="text-sm font-normal text-gray-500 ml-2">({categoryDyes.length})</span>
+                                    </h3>
 
-                                {categoryDyes.length === 0 ? (
-                                    <p className="text-gray-600 italic text-sm">No dyes in this category.</p>
-                                ) : (
-                                    <DyeList
-                                        dyes={categoryDyes}
-                                        onEdit={handleEdit}
-                                        onDelete={handleDelete}
-                                    />
-                                )}
-                            </div>
-                        );
-                    })}
+                                    {categoryDyes.length === 0 ? (
+                                        <p className="text-gray-600 italic text-sm">No dyes in this category.</p>
+                                    ) : (
+                                        <DyeList
+                                            dyes={categoryDyes}
+                                            onEdit={handleEdit}
+                                            onDelete={handleDelete}
+                                        />
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Optics Section */}
+                    <OpticsManager
+                        optics={optics}
+                        onRefresh={fetchData}
+                    />
                 </div>
             )}
         </div>
