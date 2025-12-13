@@ -4,7 +4,7 @@ import { SpectraChart } from "@/components/spectra/SpectraChart";
 
 export default function SpectraPage() {
     return (
-        <div className="flex flex-col h-[calc(100vh-2rem)] bg-[#050505] text-white p-4 md:p-8">
+        <div className="flex flex-col min-h-screen bg-[#050505] text-white p-4 md:p-8 overflow-y-auto custom-scrollbar">
             <header className="mb-6 shrink-0">
                 <div className="flex items-center gap-4 mb-2">
                     <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
@@ -23,7 +23,7 @@ export default function SpectraPage() {
                 </div>
             </header>
 
-            <main className="flex-1 flex flex-col min-h-0">
+            <main className="flex flex-col gap-6">
                 {/* Introduction / Info Section */}
                 <div className="mb-4 bg-white/5 border border-white/10 rounded-2xl p-4 md:p-6 backdrop-blur-sm relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
@@ -41,7 +41,7 @@ export default function SpectraPage() {
                     </div>
                 </div>
 
-                <div className="glass-card flex-1 overflow-hidden relative border border-white/10 shadow-2xl">
+                <div className="glass-card overflow-hidden relative border border-white/10 shadow-2xl h-[600px] shrink-0">
                     <SpectraChart />
                 </div>
             </main>
