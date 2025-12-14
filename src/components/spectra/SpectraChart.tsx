@@ -766,18 +766,16 @@ export function SpectraChart() {
                                                     {categoryDyes.map(dye => {
                                                         const isDual = ['M90', 'MN360'].includes(selectedProduct);
 
-                                                        // Calculate efficiency for current active
-                                                        const primaryStats = calculateEfficiency(dye);
+                                                        // ALWAYS Calculate Cam 1 Stats
+                                                        const cam1Stats = calculateEfficiency(dye, cam1FilterId);
+                                                        const p1 = (cam1Stats.ratio * 100).toFixed(1);
 
-                                                        // Calculate for other camera if dual
-                                                        let secondaryStats = null;
+                                                        // Calculate Cam 2 Stats if Dual
+                                                        let p2 = null;
                                                         if (isDual) {
-                                                            const otherFilterId = activeCameraView === 'cam1' ? cam2FilterId : cam1FilterId;
-                                                            secondaryStats = calculateEfficiency(dye, otherFilterId);
+                                                            const cam2Stats = calculateEfficiency(dye, cam2FilterId);
+                                                            p2 = (cam2Stats.ratio * 100).toFixed(1);
                                                         }
-
-                                                        const p1 = (primaryStats.ratio * 100).toFixed(1);
-                                                        const p2 = secondaryStats ? (secondaryStats.ratio * 100).toFixed(1) : null;
 
                                                         return (
                                                             <div key={dye.id} className="bg-white/5 rounded-lg p-2 border border-white/5 hover:border-white/10 transition-colors">
@@ -787,18 +785,18 @@ export function SpectraChart() {
                                                                 </div>
 
                                                                 <div className="flex items-center gap-2">
-                                                                    {/* Primary Stat */}
-                                                                    <div className="flex-1 bg-black/30 rounded px-2 py-1 flex justify-between items-center">
-                                                                        <span className="text-[9px] text-gray-500 uppercase">{activeCameraView}</span>
+                                                                    {/* Cam 1 (Always Left) */}
+                                                                    <div className={`flex-1 bg-black/30 rounded px-2 py-1 flex justify-between items-center ${activeCameraView === 'cam1' || !isDual ? 'opacity-100' : 'opacity-60'}`}>
+                                                                        <span className="text-[9px] text-gray-500 uppercase">CAM 1</span>
                                                                         <span className={`text-sm font-bold ${Number(p1) > 50 ? 'text-green-400' : Number(p1) > 20 ? 'text-yellow-400' : 'text-red-400'}`}>
                                                                             {p1}%
                                                                         </span>
                                                                     </div>
 
-                                                                    {/* Secondary Stat (if dual) */}
-                                                                    {p2 && (
-                                                                        <div className="flex-1 bg-black/30 rounded px-2 py-1 flex justify-between items-center border border-white/5 opacity-80">
-                                                                            <span className="text-[9px] text-gray-500 uppercase">{activeCameraView === 'cam1' ? 'cam2' : 'cam1'}</span>
+                                                                    {/* Cam 2 (Always Right, if Dual) */}
+                                                                    {isDual && p2 && (
+                                                                        <div className={`flex-1 bg-black/30 rounded px-2 py-1 flex justify-between items-center ${activeCameraView === 'cam2' ? 'opacity-100' : 'opacity-60'}`}>
+                                                                            <span className="text-[9px] text-gray-500 uppercase">CAM 2</span>
                                                                             <span className={`text-sm font-bold ${Number(p2) > 50 ? 'text-green-400' : Number(p2) > 20 ? 'text-yellow-400' : 'text-red-400'}`}>
                                                                                 {p2}%
                                                                             </span>
