@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { DyeForm } from "@/components/admin/spectra/DyeForm";
 import { DyeList } from "@/components/admin/spectra/DyeList";
 import { OpticsManager } from "@/components/admin/spectra/OpticsManager";
+import { ModalitiesManager } from '@/components/admin/spectra/ModalitiesManager';
 
 export type Dye = {
     id: string;
@@ -157,6 +158,7 @@ export default function SpectraAdminPage() {
                             type="imaging_splitter"
                             title="Imaging Splitters (Cubes)"
                         />
+                        <ModalitiesManager optics={optics} />
                     </div>
                 </div>
             )}

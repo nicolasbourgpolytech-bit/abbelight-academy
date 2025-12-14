@@ -57,6 +57,10 @@ export function SpectraChart() {
     const [emissionFilters, setEmissionFilters] = useState<OpticalComponent[]>([]);
     const [imagingSplitters, setImagingSplitters] = useState<OpticalComponent[]>([]);
 
+    // Modalities
+    const [modalities, setModalities] = useState<any[]>([]);
+    const [selectedModalityId, setSelectedModalityId] = useState<string>('');
+
     // Filter Wheel State
     const [cam1FilterId, setCam1FilterId] = useState<string>('');
     const [cam2FilterId, setCam2FilterId] = useState<string>('');
@@ -76,9 +80,10 @@ export function SpectraChart() {
 
     const fetchData = async () => {
         try {
-            const [spectraRes, opticsRes] = await Promise.all([
+            const [spectraRes, opticsRes, modalitiesRes] = await Promise.all([
                 fetch('/api/spectra'),
-                fetch('/api/spectra/optics')
+                fetch('/api/spectra/optics'),
+                fetch('/api/spectra/modalities')
             ]);
 
             if (spectraRes.ok) {
@@ -116,6 +121,11 @@ export function SpectraChart() {
                     setCam2FilterId(f[0].id);
                 }
             }
+
+            if (modalitiesRes.ok) {
+                const data = await modalitiesRes.json();
+                setModalities(data);
+            }
         } catch (e) {
             console.error(e);
         } finally {
@@ -141,6 +151,37 @@ export function SpectraChart() {
                 ? prev.filter(c => c !== category)
                 : [...prev, category]
         );
+    };
+
+    const applyModality = (modalityId: string) => {
+        setSelectedModalityId(modalityId);
+        if (!modalityId) return; // If cleared, maybe reset? Or keep current.
+
+        const modality = modalities.find(m => m.id === modalityId);
+        if (!modality) return;
+
+        // Apply Dichroic (set visible)
+        if (modality.dichroic_id) {
+            setDichroics(prev => prev.map(d =>
+                d.id === modality.dichroic_id ? { ...d, visible: true } : { ...d, visible: false }
+            ));
+        } else {
+            // If no dichroic in modality, hide all?
+            setDichroics(prev => prev.map(d => ({ ...d, visible: false })));
+        }
+
+        // Apply Splitter
+        if (modality.splitter_id) {
+            setImagingSplitters(prev => prev.map(s =>
+                s.id === modality.splitter_id ? { ...s, visible: true } : { ...s, visible: false }
+            ));
+        } else {
+            setImagingSplitters(prev => prev.map(s => ({ ...s, visible: false })));
+        }
+
+        // Apply Filters
+        if (modality.cam1_filter_id) setCam1FilterId(modality.cam1_filter_id);
+        if (modality.cam2_filter_id) setCam2FilterId(modality.cam2_filter_id);
     };
 
     // --- Calculation Helpers ---
@@ -386,13 +427,31 @@ export function SpectraChart() {
                     <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Product System</label>
                     <select
                         value={selectedProduct}
-                        onChange={(e) => setSelectedProduct(e.target.value)}
+                        onChange={(e) => {
+                            setSelectedProduct(e.target.value);
+                            setSelectedModalityId(''); // Reset modality on product change
+                        }}
                         className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[140px]"
                     >
                         <option value="M45" className="bg-gray-900 text-white">SAFe M45</option>
                         <option value="M90" className="bg-gray-900 text-white">SAFe M90</option>
                         <option value="MN180" className="bg-gray-900 text-white">SAFe MN180</option>
                         <option value="MN360" className="bg-gray-900 text-white">SAFe MN360</option>
+                    </select>
+                </div>
+
+                {/* Modality Selector */}
+                <div className="space-y-1">
+                    <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Imaging Modality</label>
+                    <select
+                        value={selectedModalityId}
+                        onChange={(e) => applyModality(e.target.value)}
+                        className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[180px]"
+                    >
+                        <option value="" className="bg-gray-900 text-white">Custom / None</option>
+                        {modalities.filter(m => m.product === selectedProduct).map(m => (
+                            <option key={m.id} value={m.id} className="bg-gray-900 text-white">{m.name}</option>
+                        ))}
                     </select>
                 </div>
 
