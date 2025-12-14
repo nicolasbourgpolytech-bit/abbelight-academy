@@ -60,6 +60,7 @@ export function SpectraChart() {
     const [cam1FilterId, setCam1FilterId] = useState<string>('');
     const [cam2FilterId, setCam2FilterId] = useState<string>('');
     const [activeCameraView, setActiveCameraView] = useState<'cam1' | 'cam2'>('cam1');
+    const [isCompareMode, setIsCompareMode] = useState(false);
 
     // Wavelength Range Controls
     const [minWavelength, setMinWavelength] = useState<number>(400); // Default 400nm
@@ -156,16 +157,22 @@ export function SpectraChart() {
     };
 
     // Calculate Detection Efficiency
-    const calculateEfficiency = (dye: Fluorophore) => {
-        // 1. Get Combined Optics Transmission (Dichroics + Active Filter)
+    const calculateEfficiency = (dye: Fluorophore, overrideFilterId?: string) => {
+        // 1. Get Combined Optics Transmission (Dichroics + Filter)
         const visibleDichroics = dichroics.filter(o => o.visible);
 
-        // Active Filter
+        // Determine Filter to use
         let activeFilter: OpticalComponent | undefined;
-        if (activeCameraView === 'cam1' && cam1FilterId) {
-            activeFilter = emissionFilters.find(f => f.id === cam1FilterId);
-        } else if (activeCameraView === 'cam2' && cam2FilterId) {
-            activeFilter = emissionFilters.find(f => f.id === cam2FilterId);
+
+        if (overrideFilterId) {
+            activeFilter = emissionFilters.find(f => f.id === overrideFilterId);
+        } else {
+            // Default to current active view
+            if (activeCameraView === 'cam1' && cam1FilterId) {
+                activeFilter = emissionFilters.find(f => f.id === cam1FilterId);
+            } else if (activeCameraView === 'cam2' && cam2FilterId) {
+                activeFilter = emissionFilters.find(f => f.id === cam2FilterId);
+            }
         }
 
         // If no optics (dichroics or filters) are selected, assume 100%? 
@@ -216,6 +223,7 @@ export function SpectraChart() {
     const chartData = useMemo(() => {
         const visibleDichroics = dichroics.filter(o => o.visible);
 
+        // Active Filter
         let activeFilter: OpticalComponent | undefined;
         if (activeCameraView === 'cam1' && cam1FilterId) {
             activeFilter = emissionFilters.find(f => f.id === cam1FilterId);
@@ -223,36 +231,40 @@ export function SpectraChart() {
             activeFilter = emissionFilters.find(f => f.id === cam2FilterId);
         }
 
+        // Secondary Filter (for comparison)
+        let secondaryFilter: OpticalComponent | undefined;
+        if (isCompareMode && ['M90', 'MN360'].includes(selectedProduct)) {
+            if (activeCameraView === 'cam1' && cam2FilterId) {
+                secondaryFilter = emissionFilters.find(f => f.id === cam2FilterId);
+            } else if (activeCameraView === 'cam2' && cam1FilterId) {
+                secondaryFilter = emissionFilters.find(f => f.id === cam1FilterId);
+            }
+        }
+
         return WAVELENGTHS.map((nm, index) => {
             const point: SpectrumDataPoint = { wavelength: nm };
 
             // 1. Calculate Combined Optic Value
             let combinedOpticTrans = 1.0;
+            let secondaryOpticTrans = 1.0;
 
-            // Dichroics
+            // Dichroics (Apply to both)
             visibleDichroics.forEach(opt => {
                 const opP = opt.data?.find((p: any) => p.wavelength === nm);
-                combinedOpticTrans *= (opP ? opP.value : 0);
+                const val = opP ? opP.value : 0;
+                combinedOpticTrans *= val;
+                secondaryOpticTrans *= val;
             });
 
-            // Filter
+            // Active Filter
             if (activeFilter) {
                 const fP = activeFilter.data?.find((p: any) => p.wavelength === nm);
                 combinedOpticTrans *= (fP ? fP.value : 0);
-
-                // Also add filter curve to chart for visualization reference?
-                // Maybe as a separate line?
-                // Depending on requirements. User wants "combined transmission".
-                // Let's add the combined transmission as a "System" curve?
             }
-
-            // Add Combined Transmission Visualization (optional, but helpful)
-            // Or stick to showing just visible Dichroics lines as before + specific Filter line.
-
-            // Store active filter point for visualization
-            if (activeFilter) {
-                const fP = activeFilter.data?.find((p: any) => p.wavelength === nm);
-                point[`active_filter`] = fP ? fP.value : 0;
+            // Secondary Filter
+            if (secondaryFilter) {
+                const fP = secondaryFilter.data?.find((p: any) => p.wavelength === nm);
+                secondaryOpticTrans *= (fP ? fP.value : 0);
             }
 
             fluorophores.forEach(f => {
@@ -261,25 +273,21 @@ export function SpectraChart() {
                     const emPoint = f.emission_data?.find((p: any) => p.wavelength === nm);
 
                     if (activeTab === 'raw') {
-                        // RAW TAB: Show original data
+                        // RAW TAB
                         if (exPoint) point[`${f.id}_ex`] = exPoint.value;
                         if (emPoint) point[`${f.id}_em`] = emPoint.value;
                     } else {
-                        // DETECTED TAB:
-                        // Excitation: Usually we care about Emission for detection.
-                        // But let's show Excitation raw or hidden?
-                        // User said: "spectre total du dye et le spectre pondérée par les optiques"
-                        // Usually implies Emission.
-                        // Let's hide Excitation in Detected tab for clarity, or just show it raw?
-                        // Let's keep Excitation RAW (or multiplied by Excitation filters if we had them, but we only have "Optics" generally).
-                        // Assuming these are Emission filters (Dichroics/Emitters). 
-                        // Let's just Multiply Emission.
-                        if (exPoint && showExcitation) point[`${f.id}_ex`] = exPoint.value; // Keep Ex raw for context?
+                        // DETECTED TAB
+                        if (exPoint && showExcitation) point[`${f.id}_ex`] = exPoint.value;
 
                         if (emPoint) {
-                            // Weight Emission by Combined Optics
-                            const val = emPoint.value * combinedOpticTrans;
-                            point[`${f.id}_em`] = val;
+                            // Primary Curve
+                            point[`${f.id}_em`] = emPoint.value * combinedOpticTrans;
+
+                            // Secondary Curve (Ghost)
+                            if (secondaryFilter) {
+                                point[`${f.id}_em_secondary`] = emPoint.value * secondaryOpticTrans;
+                            }
                         }
                     }
                 }
@@ -298,7 +306,7 @@ export function SpectraChart() {
 
             return point;
         });
-    }, [fluorophores, dichroics, emissionFilters, activeTab, showExcitation, activeCameraView, cam1FilterId, cam2FilterId]);
+    }, [fluorophores, dichroics, emissionFilters, activeTab, showExcitation, activeCameraView, cam1FilterId, cam2FilterId, isCompareMode, selectedProduct]);
 
     const categories = ['UV', 'Green', 'Red', 'Far-red'];
 
@@ -364,21 +372,29 @@ export function SpectraChart() {
 
                             <div className="w-px h-8 bg-white/10 hidden md:block"></div>
 
-                            {/* View Toggle */}
+                            {/* View Toggle & Compare */}
                             <div className="space-y-1">
                                 <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Active Camera</label>
-                                <div className="flex bg-black/20 rounded-lg border border-white/5 p-0.5">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex bg-black/20 rounded-lg border border-white/5 p-0.5">
+                                        <button
+                                            onClick={() => setActiveCameraView('cam1')}
+                                            className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeCameraView === 'cam1' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                                        >
+                                            Cam 1
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveCameraView('cam2')}
+                                            className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeCameraView === 'cam2' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                                        >
+                                            Cam 2
+                                        </button>
+                                    </div>
                                     <button
-                                        onClick={() => setActiveCameraView('cam1')}
-                                        className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeCameraView === 'cam1' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                                        onClick={() => setIsCompareMode(!isCompareMode)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${isCompareMode ? 'bg-white/10 text-white border-white/30' : 'text-gray-400 border-transparent hover:text-white'}`}
                                     >
-                                        Cam 1
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveCameraView('cam2')}
-                                        className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeCameraView === 'cam2' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
-                                    >
-                                        Cam 2
+                                        Compare
                                     </button>
                                 </div>
                             </div>
@@ -558,17 +574,18 @@ export function SpectraChart() {
                     })}
                 </div>
 
-                {/* Chart Area */}
+                {/* Chart & Metrics Area */}
                 <div className="flex-1 w-full flex flex-col gap-4">
-                    <div className="w-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 relative group flex flex-col h-[600px]">
-                        {/* Background Grid Pattern */}
-                        <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
+                    <div className="w-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 relative group flex flex-col lg:flex-row h-[600px] gap-4">
+                        {/* Background Grid Pattern - Apply to whole box? Or just chart? Probably whole box looks nice, or maybe just chart area. Let's keep it on parent for cohesion. */}
+                        <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none rounded-2xl" />
 
-                        <div className="flex-1 w-full min-h-0">
+                        {/* Chart Component */}
+                        <div className="flex-1 min-w-0 h-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart
                                     data={chartData}
-                                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                                    margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
                                 >
                                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                                     <XAxis
@@ -576,33 +593,23 @@ export function SpectraChart() {
                                         type="number"
                                         domain={[minWavelength, maxWavelength]}
                                         allowDataOverflow={true}
-                                        tick={{ fill: '#6B7280', fontSize: 12 }}
+                                        tick={{ fill: '#6B7280', fontSize: 10 }}
                                         tickLine={false}
                                         axisLine={{ stroke: '#ffffff20' }}
-                                        label={{ value: 'Wavelength (nm)', position: 'insideBottom', offset: -10, fill: '#9CA3AF' }}
+                                        label={{ value: 'Wavelength (nm)', position: 'insideBottom', offset: -10, fill: '#9CA3AF', fontSize: 10 }}
                                     />
-                                    <YAxis
-                                        hide
-                                        domain={[0, 1.1]}
-                                    />
+                                    <YAxis hide domain={[0, 1.1]} />
                                     <Tooltip
                                         content={({ active, payload, label }) => {
                                             if (active && payload && payload.length) {
                                                 return (
-                                                    <div className="bg-black/90 border border-white/10 p-3 rounded-lg shadow-xl backdrop-blur-md">
-                                                        <p className="text-gray-400 text-xs mb-2">{label} nm</p>
+                                                    <div className="bg-black/90 border border-white/10 p-2 rounded-lg shadow-xl backdrop-blur-md text-xs">
+                                                        <p className="text-gray-400 mb-1">{label} nm</p>
                                                         {payload.map((entry: any) => (
-                                                            <div key={entry.name} className="flex items-center gap-2 text-sm">
-                                                                <div
-                                                                    className="w-2 h-2 rounded-full"
-                                                                    style={{ backgroundColor: entry.color }}
-                                                                />
-                                                                <span className="text-white font-medium capitalize">
-                                                                    {entry.name.replace('_', ' ')}:
-                                                                </span>
-                                                                <span className="text-gray-400">
-                                                                    {(entry.value * 100).toFixed(0)}%
-                                                                </span>
+                                                            <div key={entry.name} className="flex items-center gap-2">
+                                                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                                                                <span className="text-white capitalize">{entry.name.replace('_', ' ')}:</span>
+                                                                <span className="text-gray-400">{(entry.value * 100).toFixed(0)}%</span>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -621,7 +628,7 @@ export function SpectraChart() {
                                         ))}
                                     </defs>
 
-                                    {/* Excitation Areas (Dashed line, very faint fill) */}
+                                    {/* Excitation */}
                                     {fluorophores.map(dye => {
                                         if (!dye.visible || !showExcitation) return null;
                                         return (
@@ -636,38 +643,51 @@ export function SpectraChart() {
                                                 fill={dye.color}
                                                 fillOpacity={0.1}
                                                 dot={false}
-                                                activeDot={{ r: 4, fill: dye.color }}
-                                                isAnimationActive={true}
-                                                animationDuration={1500}
-                                                animationEasing="ease-in-out"
+                                                isAnimationActive={false}
                                             />
                                         );
                                     })}
 
-                                    {/* Emission Areas (Solid line, creating a "glow" fill) */}
+                                    {/* Emission Primary */}
                                     {fluorophores.map(dye => {
                                         if (!dye.visible || !showEmission) return null;
                                         return (
                                             <Area
                                                 key={`${dye.id}_em`}
-                                                name={`${dye.name} Em`}
+                                                name={`${dye.name}`}
                                                 type="monotone"
                                                 dataKey={`${dye.id}_em`}
                                                 stroke={dye.color}
                                                 strokeWidth={2}
-                                                fill={`url(#grad_${dye.id})`} // Use gradient for emission for better "colorée" effect
+                                                fill={`url(#grad_${dye.id})`}
                                                 fillOpacity={0.4}
                                                 dot={false}
-                                                activeDot={{ r: 6, fill: dye.color, stroke: '#fff', strokeWidth: 2 }}
                                                 isAnimationActive={true}
-                                                animationDuration={1500}
-                                                animationBegin={200}
-                                                animationEasing="ease-in-out"
+                                                animationDuration={1000}
                                             />
                                         );
                                     })}
 
-                                    {/* Optics Rendering (Dichroics) */}
+                                    {/* Emission Secondary (Ghost for comparison) */}
+                                    {fluorophores.map(dye => {
+                                        if (!dye.visible || !showEmission || !isCompareMode) return null;
+                                        return (
+                                            <Line
+                                                key={`${dye.id}_em_secondary`}
+                                                name={`${dye.name} (Other Cam)`}
+                                                type="monotone"
+                                                dataKey={`${dye.id}_em_secondary`}
+                                                stroke={dye.color}
+                                                strokeWidth={1.5}
+                                                strokeDasharray="2 2"
+                                                strokeOpacity={0.5}
+                                                dot={false}
+                                                isAnimationActive={true}
+                                            />
+                                        );
+                                    })}
+
+                                    {/* Dichroics */}
                                     {dichroics.map(optic => {
                                         if (!optic.visible) return null;
                                         return (
@@ -677,84 +697,92 @@ export function SpectraChart() {
                                                 type="monotone"
                                                 dataKey={`${optic.id}_optic`}
                                                 stroke={optic.color}
-                                                strokeWidth={1.5}
-                                                strokeDasharray="6 4"
+                                                strokeWidth={1}
+                                                strokeDasharray="4 4"
                                                 dot={false}
-                                                activeDot={{ r: 4, fill: '#fff', stroke: '#fff' }}
-                                                isAnimationActive={true}
+                                                isAnimationActive={false}
                                             />
                                         );
                                     })}
-
-                                    {/* Active Filter Rendering */}
-                                    {activeTab === 'detected' && (
-                                        <Line
-                                            name="Active Filter"
-                                            type="monotone"
-                                            dataKey="active_filter"
-                                            stroke="#FFD700"
-                                            strokeWidth={2}
-                                            strokeDasharray="2 2"
-                                            dot={false}
-                                            activeDot={{ r: 4, fill: '#FFD700', stroke: '#fff' }}
-                                            isAnimationActive={true}
-                                        />
-                                    )}
-
                                 </ComposedChart>
                             </ResponsiveContainer>
                         </div>
+
+                        {/* Metrics Sidebar (Right Side) */}
+                        {activeTab === 'detected' && (
+                            <div className="w-full lg:w-72 bg-black/20 border-t lg:border-t-0 lg:border-l border-white/10 p-0 lg:pl-4 overflow-y-auto custom-scrollbar flex flex-col gap-4">
+                                <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wider sticky top-0 bg-[#0c0c16]/90 backdrop-blur-md py-2 z-10 border-b border-white/5">
+                                    Efficiency Metrics
+                                </h3>
+                                <div className="space-y-4">
+                                    {categories.map(category => {
+                                        const categoryDyes = fluorophores.filter(f => f.visible && f.category === category);
+                                        if (categoryDyes.length === 0) return null;
+
+                                        return (
+                                            <div key={category}>
+                                                <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                                    {category}
+                                                </h4>
+                                                <div className="space-y-2">
+                                                    {categoryDyes.map(dye => {
+                                                        const isDual = ['M90', 'MN360'].includes(selectedProduct);
+
+                                                        // Calculate efficiency for current active
+                                                        const primaryStats = calculateEfficiency(dye);
+
+                                                        // Calculate for other camera if dual
+                                                        let secondaryStats = null;
+                                                        if (isDual) {
+                                                            const otherFilterId = activeCameraView === 'cam1' ? cam2FilterId : cam1FilterId;
+                                                            secondaryStats = calculateEfficiency(dye, otherFilterId);
+                                                        }
+
+                                                        const p1 = (primaryStats.ratio * 100).toFixed(1);
+                                                        const p2 = secondaryStats ? (secondaryStats.ratio * 100).toFixed(1) : null;
+
+                                                        return (
+                                                            <div key={dye.id} className="bg-white/5 rounded-lg p-2 border border-white/5 hover:border-white/10 transition-colors">
+                                                                <div className="flex items-center gap-2 mb-1.5">
+                                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: dye.color }}></div>
+                                                                    <span className="text-xs font-medium text-gray-200 truncate">{dye.name}</span>
+                                                                </div>
+
+                                                                <div className="flex items-center gap-2">
+                                                                    {/* Primary Stat */}
+                                                                    <div className="flex-1 bg-black/30 rounded px-2 py-1 flex justify-between items-center">
+                                                                        <span className="text-[9px] text-gray-500 uppercase">{activeCameraView}</span>
+                                                                        <span className={`text-sm font-bold ${Number(p1) > 50 ? 'text-green-400' : Number(p1) > 20 ? 'text-yellow-400' : 'text-red-400'}`}>
+                                                                            {p1}%
+                                                                        </span>
+                                                                    </div>
+
+                                                                    {/* Secondary Stat (if dual) */}
+                                                                    {p2 && (
+                                                                        <div className="flex-1 bg-black/30 rounded px-2 py-1 flex justify-between items-center border border-white/5 opacity-80">
+                                                                            <span className="text-[9px] text-gray-500 uppercase">{activeCameraView === 'cam1' ? 'cam2' : 'cam1'}</span>
+                                                                            <span className={`text-sm font-bold ${Number(p2) > 50 ? 'text-green-400' : Number(p2) > 20 ? 'text-yellow-400' : 'text-red-400'}`}>
+                                                                                {p2}%
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {fluorophores.filter(f => f.visible).length === 0 && (
+                                        <div className="text-xs text-gray-500 italic text-center py-4">Select dyes to view metrics.</div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Stats Panel (Only in Detected Tab) */}
-                    {activeTab === 'detected' && (
-                        <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm">
-                            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                                <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                                Detection Efficiency Metrics
-                            </h3>
-                            <div className="space-y-6">
-                                {categories.map(category => {
-                                    const categoryDyes = fluorophores.filter(f => f.visible && f.category === category);
-                                    if (categoryDyes.length === 0) return null;
-
-                                    return (
-                                        <div key={category}>
-                                            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 border-b border-white/5 pb-1 block">
-                                                {category}
-                                            </h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                {categoryDyes.map(dye => {
-                                                    const { ratio } = calculateEfficiency(dye);
-                                                    const percentage = (ratio * 100).toFixed(1);
-
-                                                    return (
-                                                        <div key={dye.id} className="bg-black/20 rounded-lg p-3 flex items-center justify-between border border-white/5">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: dye.color }}></div>
-                                                                <span className="text-sm font-medium text-gray-200">{dye.name}</span>
-                                                            </div>
-                                                            <div className="flex items-end flex-col">
-                                                                <span className={`text-lg font-bold ${Number(percentage) > 50 ? 'text-green-400' : Number(percentage) > 20 ? 'text-yellow-400' : 'text-red-400'}`}>
-                                                                    {percentage}%
-                                                                </span>
-                                                                <span className="text-[10px] text-gray-500 uppercase tracking-wider">Detected</span>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                                {fluorophores.filter(f => f.visible).length === 0 && (
-                                    <div className="text-sm text-gray-500 italic">Select dyes to view efficiency stats.</div>
-                                )}
-                            </div>
-                        </div>
-                    )}
+                    {/* Old Metrics Panel Removed */}
                 </div>
             </div>
         </div>
