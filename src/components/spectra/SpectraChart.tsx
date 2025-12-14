@@ -403,7 +403,7 @@ export function SpectraChart() {
                     {/* Camera 1 Filter */}
                     <div className="space-y-1">
                         <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">
-                            {['M90', 'MN360'].includes(selectedProduct) ? 'Camera 1 Filter' : 'Emission Filter'}
+                            {['M90', 'MN360'].includes(selectedProduct) ? 'Transmission Camera (Cam T)' : 'Emission Filter'}
                         </label>
                         <select
                             value={cam1FilterId}
@@ -421,7 +421,7 @@ export function SpectraChart() {
                     {['M90', 'MN360'].includes(selectedProduct) && (
                         <>
                             <div className="space-y-1">
-                                <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Camera 2 Filter</label>
+                                <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Reflection Camera (Cam R)</label>
                                 <select
                                     value={cam2FilterId}
                                     onChange={(e) => setCam2FilterId(e.target.value)}
@@ -445,13 +445,13 @@ export function SpectraChart() {
                                             onClick={() => setActiveCameraView('cam1')}
                                             className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeCameraView === 'cam1' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
                                         >
-                                            Cam 1
+                                            Cam T
                                         </button>
                                         <button
                                             onClick={() => setActiveCameraView('cam2')}
                                             className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeCameraView === 'cam2' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
                                         >
-                                            Cam 2
+                                            Cam R
                                         </button>
                                     </div>
                                     <button
@@ -901,7 +901,7 @@ export function SpectraChart() {
                                     {/* Secondary Filter Rendering (Only in Detected Tab + Compare Mode) */}
                                     {activeTab === 'detected' && isCompareMode && (
                                         <Line
-                                            name="Emission Filter (Other Cam)"
+                                            name={`Emission Filter (${activeCameraView === 'cam1' ? 'Cam R' : 'Cam T'})`}
                                             type="monotone"
                                             dataKey="secondary_filter"
                                             stroke="#FFA500"
