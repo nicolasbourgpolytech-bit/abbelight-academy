@@ -5,10 +5,10 @@ export const dynamic = 'force-dynamic';
 
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = params.id;
+        const { id } = await params;
         await sql`DELETE FROM imaging_modalities WHERE id = ${id}`;
         return NextResponse.json({ message: 'Modality deleted successfully' });
     } catch (error) {
