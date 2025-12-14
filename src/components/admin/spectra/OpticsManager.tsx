@@ -31,62 +31,93 @@ export function OpticsManager({ optics, onRefresh, type, title }: OpticsManagerP
 
         reader.onload = async (event) => {
             const text = event.target?.result as string;
-            // Parse CSV: Expecting "Wavelength, Transmission"
-            const lines = text.split('\n');
+            const lines = text.split(/\r?\n/); // Handle CRLF and LF
             const data: { wavelength: number; value: number }[] = [];
 
             lines.forEach((line, index) => {
-                // Skip header if it contains text
-                if (index === 0 && isNaN(parseFloat(line.split(',')[0]))) return;
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return;
 
-                const parts = line.split(',').map(p => p.trim());
+                // Detect delimiter: Tab, Semicolon, Comma, Space
+                let parts: string[] = [];
+                if (trimmedLine.includes('\t')) {
+                    parts = trimmedLine.split('\t');
+                } else if (trimmedLine.includes(';')) {
+                    parts = trimmedLine.split(';');
+                } else if (trimmedLine.includes(',')) {
+                    // Check if it's "1,2" (decimal) vs "1, 2" (separator)
+                    // If multiple commas, it's ambiguous, but let's try standard CSV split first
+                    // or if it looks like "380 0,5", there's no comma separator, only decimal.
+                    // Actually, if we are here, there's a comma.
+                    // If strictly 2 parts with a comma in between...
+                    // Let's assume standard CSV.
+                    parts = trimmedLine.split(',');
+                } else {
+                    parts = trimmedLine.split(/\s+/);
+                }
+
+                parts = parts.map(p => p.trim()).filter(p => p !== '');
+
+                // Skip header if first part is not a number
+                if (index === 0) {
+                    // Try to parse first part.
+                    // Handle "0,5" style before checking
+                    const testStr = parts[0]?.replace(',', '.');
+                    if (isNaN(parseFloat(testStr))) return;
+                }
+
                 if (parts.length >= 2) {
-                    const wl = parseFloat(parts[0]);
-                    const trans = parseFloat(parts[1]);
+                    // Handle comma decimal (French format) e.g. "0,08" -> "0.08"
+                    const wlStr = parts[0].replace(',', '.');
+                    const valStr = parts[1].replace(',', '.');
+
+                    const wl = parseFloat(wlStr);
+                    const trans = parseFloat(valStr);
 
                     if (!isNaN(wl) && !isNaN(trans)) {
-                        // Normalize transmission to 0-1 range if it's 0-100
-                        // Heuristic: if max value > 1, assume percentage
                         data.push({ wavelength: wl, value: trans });
                     }
                 }
             });
 
             // Normalize check
-            const maxVal = Math.max(...data.map(d => d.value));
-            const normalizedData = maxVal > 1.1
-                ? data.map(d => ({ ...d, value: d.value / 100 }))
-                : data;
+            if (data.length > 0) {
+                const maxVal = Math.max(...data.map(d => d.value));
+                // Heuristic: if max > 1.1, assume 0-100 scale and normalize to 0-1
+                // User said "multiplier par 100 pour mettre en %", implies input 0-1 is standard.
+                // But if input is already 80 (meaning 80%), we handle it.
+                const normalizedData = maxVal > 1.1
+                    ? data.map(d => ({ ...d, value: d.value / 100 }))
+                    : data;
 
-            try {
-                const res = await fetch('/api/spectra/optics', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name,
-                        data: normalizedData,
-                        type, // Use prop
-                        color: type === 'dichroic' ? '#ffffff' : '#FFD700', // Different default for filters? Maybe gold?
-                        line_style: type === 'dichroic' ? 'dashed' : 'solid' // Maybe solid for filters? Or dashed too? User said "dashed, semi-transparent" for Dichroic. Filters might be different. Let's keep existing style or make filters distinct. User didn't specify filter style, but different is good. Let's start with dashed for consistency or maybe 'dotted'.
-                        // Actually, user said "Cela sera les mêmes filtres pour toutes les cameras".
-                        // In page.tsx: "Add Emission Filters section...".
-                        // Let's stick to dashed for now but maybe different color if verified.
-                        // For now, let's keep hardcoded white/dashed or slight var.
-                        // Reverting complexity: just pass type.
-                    })
-                });
+                try {
+                    const res = await fetch('/api/spectra/optics', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name,
+                            data: normalizedData,
+                            type,
+                            color: type === 'dichroic' ? '#ffffff' : '#FFD700',
+                            line_style: type === 'dichroic' ? 'dashed' : 'solid'
+                        })
+                    });
 
-                if (res.ok) {
-                    setName("");
-                    if (fileInputRef.current) fileInputRef.current.value = "";
-                    onRefresh();
-                } else {
-                    console.error("Upload failed");
+                    if (res.ok) {
+                        setName("");
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                        onRefresh();
+                    } else {
+                        console.error("Upload failed");
+                    }
+                } catch (error) {
+                    console.error("Upload error", error);
+                } finally {
+                    setIsUploading(false);
                 }
-            } catch (error) {
-                console.error("Upload error", error);
-            } finally {
+            } else {
                 setIsUploading(false);
+                alert("Could not parse file. Please check format.");
             }
         };
 
@@ -126,10 +157,10 @@ export function OpticsManager({ optics, onRefresh, type, title }: OpticsManagerP
                         />
                     </div>
                     <div className="flex-1 space-y-1">
-                        <label className="text-xs text-gray-500">CSV File (Wavelength, Transmission %)</label>
+                        <label className="text-xs text-gray-500">File (CSV or TXT - Wavelength, Transmission)</label>
                         <input
                             type="file"
-                            accept=".csv"
+                            accept=".csv,.txt"
                             ref={fileInputRef}
                             disabled={!name}
                             onChange={handleFileUpload}
