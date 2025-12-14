@@ -24,6 +24,8 @@ export function OpticsManager({ optics, onRefresh, type, title }: OpticsManagerP
     const [editId, setEditId] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const formRef = useRef<HTMLDivElement>(null);
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !name) return;
@@ -139,7 +141,7 @@ export function OpticsManager({ optics, onRefresh, type, title }: OpticsManagerP
     const handleEdit = (optic: OpticalComponent) => {
         setEditId(optic.id);
         setName(optic.name);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
 
     const handleSaveWithoutFile = async () => {
@@ -184,7 +186,7 @@ export function OpticsManager({ optics, onRefresh, type, title }: OpticsManagerP
             </h3>
 
             {/* Upload Form */}
-            <div className={`bg-white/5 border ${editId ? 'border-primary/50' : 'border-white/10'} rounded-xl p-4 space-y-4 transition-colors`}>
+            <div ref={formRef} className={`bg-white/5 border ${editId ? 'border-primary/50' : 'border-white/10'} rounded-xl p-4 space-y-4 transition-colors`}>
                 <div className="flex justify-between items-center">
                     <h4 className="text-sm font-medium text-gray-300">{editId ? `Edit ${title.slice(0, -1)}` : `Add New ${title.slice(0, -1)}`}</h4>
                     {editId && (

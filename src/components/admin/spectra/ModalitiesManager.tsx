@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Trash2, Plus, Save, X, Edit2 } from 'lucide-react';
 
 type OpticalComponent = {
@@ -27,6 +27,7 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [isAdding, setIsAdding] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
+    const formRef = useRef<HTMLDivElement>(null);
 
     // Form State
     const [newName, setNewName] = useState('');
@@ -79,7 +80,10 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
         setNewCam2Filter(modality.cam2_filter_id || '');
         setEditId(modality.id);
         setIsAdding(true);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Scroll to form ref instead of window top
+        setTimeout(() => {
+            formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
     };
 
     const handleSave = async () => {
@@ -153,7 +157,7 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
 
             <div className="p-4 space-y-4">
                 {isAdding && (
-                    <div className={`bg-white/5 p-4 rounded-lg border ${editId ? 'border-primary/50' : 'border-white/10'} space-y-4`}>
+                    <div ref={formRef} className={`bg-white/5 p-4 rounded-lg border ${editId ? 'border-primary/50' : 'border-white/10'} space-y-4`}>
                         <div className="flex justify-between items-center mb-2">
                             <h3 className="text-sm font-semibold text-white">{editId ? 'Edit Modality' : 'New Modality'}</h3>
                             {editId && <button onClick={resetForm} className="text-xs text-red-400">Cancel Edit</button>}
