@@ -147,7 +147,7 @@ export function Sidebar() {
                 </span>
             </div>
 
-            <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
+            <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto custom-scrollbar">
                 {navItems.map((item) => {
                     const isActive = item.href === "/dashboard"
                         ? pathname === item.href
