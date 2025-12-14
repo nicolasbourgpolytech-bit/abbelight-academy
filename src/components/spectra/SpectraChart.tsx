@@ -995,15 +995,19 @@ export function SpectraChart() {
                                                     {categoryDyes.map(dye => {
                                                         const isDual = ['M90', 'MN360'].includes(selectedProduct);
 
-                                                        // ALWAYS Calculate Cam 1 Stats
+                                                        // ALWAYS Calculate Cam T (Cam 1) Stats
                                                         const cam1Stats = calculateEfficiency(dye, cam1FilterId, 'cam1');
                                                         const p1 = (cam1Stats.ratio * 100).toFixed(1);
 
-                                                        // Calculate Cam 2 Stats if Dual
+                                                        // Calculate Cam R (Cam 2) Stats if Dual
                                                         let p2 = null;
+                                                        let splitRatioT = 0;
                                                         if (isDual) {
                                                             const cam2Stats = calculateEfficiency(dye, cam2FilterId, 'cam2');
                                                             p2 = (cam2Stats.ratio * 100).toFixed(1);
+
+                                                            const totalEff = cam1Stats.ratio + cam2Stats.ratio;
+                                                            splitRatioT = totalEff > 0 ? (cam1Stats.ratio / totalEff) * 100 : 0;
                                                         }
 
                                                         return (
@@ -1013,25 +1017,45 @@ export function SpectraChart() {
                                                                     <span className="text-xs font-medium text-gray-200 truncate">{dye.name}</span>
                                                                 </div>
 
-                                                                <div className="flex items-center gap-2">
-                                                                    {/* Cam 1 (Always Left) */}
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    {/* Cam T (Always Left) */}
                                                                     <div className={`flex-1 bg-black/30 rounded px-2 py-1 flex justify-between items-center ${activeCameraView === 'cam1' || !isDual ? 'opacity-100' : 'opacity-60'}`}>
-                                                                        <span className="text-[9px] text-gray-500 uppercase">CAM 1</span>
+                                                                        <span className="text-[9px] text-gray-500 uppercase">CAM T</span>
                                                                         <span className={`text-sm font-bold ${Number(p1) > 50 ? 'text-green-400' : Number(p1) > 20 ? 'text-yellow-400' : 'text-red-400'}`}>
                                                                             {p1}%
                                                                         </span>
                                                                     </div>
 
-                                                                    {/* Cam 2 (Always Right, if Dual) */}
+                                                                    {/* Cam R (Always Right, if Dual) */}
                                                                     {isDual && p2 && (
                                                                         <div className={`flex-1 bg-black/30 rounded px-2 py-1 flex justify-between items-center ${activeCameraView === 'cam2' ? 'opacity-100' : 'opacity-60'}`}>
-                                                                            <span className="text-[9px] text-gray-500 uppercase">CAM 2</span>
+                                                                            <span className="text-[9px] text-gray-500 uppercase">CAM R</span>
                                                                             <span className={`text-sm font-bold ${Number(p2) > 50 ? 'text-green-400' : Number(p2) > 20 ? 'text-yellow-400' : 'text-red-400'}`}>
                                                                                 {p2}%
                                                                             </span>
                                                                         </div>
                                                                     )}
                                                                 </div>
+
+                                                                {/* Split Ratio Bar (Only Dual) */}
+                                                                {isDual && (
+                                                                    <div className="space-y-1">
+                                                                        <div className="flex justify-between text-[9px] text-gray-400">
+                                                                            <span>Split T/R</span>
+                                                                            <span>{splitRatioT.toFixed(0)}% / {(100 - splitRatioT).toFixed(0)}%</span>
+                                                                        </div>
+                                                                        <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden flex">
+                                                                            <div
+                                                                                className="h-full bg-blue-500 transition-all duration-500"
+                                                                                style={{ width: `${splitRatioT}%` }}
+                                                                            />
+                                                                            <div
+                                                                                className="h-full bg-indigo-500 transition-all duration-500"
+                                                                                style={{ width: `${100 - splitRatioT}%` }}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         );
                                                     })}
