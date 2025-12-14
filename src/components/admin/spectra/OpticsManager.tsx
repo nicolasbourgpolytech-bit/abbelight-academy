@@ -190,50 +190,48 @@ export function OpticsManager({ optics, onRefresh, type, title }: OpticsManagerP
                         </button>
                     </div>
                 )}
+                {isUploading && <p className="text-xs text-primary animate-pulse">Uploading and processing...</p>}
             </div>
-        </div>
-            { isUploading && <p className="text-xs text-primary animate-pulse">Uploading and processing...</p> }
-        </div >
 
-        {/* List */ }
-        < div className = "grid gap-3" >
-        {
-            optics.map(optic => (
-                <div key={optic.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5 hover:border-white/20 transition-all">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
+            {/* List */}
+            <div className="grid gap-3">
+                {
+                    optics.map(optic => (
+                        <div key={optic.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5 hover:border-white/20 transition-all">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 className="font-medium text-white">{optic.name}</h4>
+                                    <p className="text-xs text-gray-500">{optic.type} • {optic.data?.length || 0} points</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => handleEdit(optic)}
+                                    className="text-gray-500 hover:text-blue-500 p-2 transition-colors"
+                                >
+                                    <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(optic.id)}
+                                    className="text-gray-500 hover:text-red-500 p-2 transition-colors"
+                                >
+                                    <Trash2 className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
-                        <div>
-                            <h4 className="font-medium text-white">{optic.name}</h4>
-                            <p className="text-xs text-gray-500">{optic.type} • {optic.data?.length || 0} points</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => handleEdit(optic)}
-                            className="text-gray-500 hover:text-blue-500 p-2 transition-colors"
-                        >
-                            <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={() => handleDelete(optic.id)}
-                            className="text-gray-500 hover:text-red-500 p-2 transition-colors"
-                        >
-                            <Trash2 className="w-5 h-5" />
-                        </button>
-                    </div>
-                </div>
-            ))
-        }
+                    ))
+                }
             </div >
-    {
-        optics.length === 0 && (
-            <p className="text-gray-600 italic text-sm text-center py-4">No optical components added yet.</p>
-        )
-    }
+            {
+                optics.length === 0 && (
+                    <p className="text-gray-600 italic text-sm text-center py-4">No optical components added yet.</p>
+                )
+            }
         </div >
     );
 }
