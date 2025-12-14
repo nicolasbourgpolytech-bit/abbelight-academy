@@ -634,9 +634,9 @@ export function SpectraChart() {
                                         ))}
                                     </defs>
 
-                                    {/* Excitation */}
+                                    {/* Excitation (Only in Raw Tab) */}
                                     {fluorophores.map(dye => {
-                                        if (!dye.visible || !showExcitation) return null;
+                                        if (!dye.visible || !showExcitation || activeTab === 'detected') return null;
                                         return (
                                             <Area
                                                 key={`${dye.id}_ex`}
@@ -693,8 +693,8 @@ export function SpectraChart() {
                                         );
                                     })}
 
-                                    {/* Dichroics */}
-                                    {dichroics.map(optic => {
+                                    {/* Dichroics (Only in Detected Tab) */}
+                                    {activeTab === 'detected' && dichroics.map(optic => {
                                         if (!optic.visible) return null;
                                         return (
                                             <Line
@@ -711,20 +711,22 @@ export function SpectraChart() {
                                         );
                                     })}
 
-                                    {/* Active Filter Rendering (Always Visible) */}
-                                    <Line
-                                        name="Active Filter"
-                                        type="monotone"
-                                        dataKey="active_filter"
-                                        stroke="#FFD700"
-                                        strokeWidth={2}
-                                        strokeDasharray="4 2"
-                                        dot={false}
-                                        isAnimationActive={true}
-                                    />
+                                    {/* Active Filter Rendering (Only in Detected Tab) */}
+                                    {activeTab === 'detected' && (
+                                        <Line
+                                            name="Active Filter"
+                                            type="monotone"
+                                            dataKey="active_filter"
+                                            stroke="#FFD700"
+                                            strokeWidth={2}
+                                            strokeDasharray="4 2"
+                                            dot={false}
+                                            isAnimationActive={true}
+                                        />
+                                    )}
 
-                                    {/* Secondary Filter Rendering (Compare Mode) */}
-                                    {isCompareMode && (
+                                    {/* Secondary Filter Rendering (Only in Detected Tab + Compare Mode) */}
+                                    {activeTab === 'detected' && isCompareMode && (
                                         <Line
                                             name="Secondary Filter"
                                             type="monotone"
