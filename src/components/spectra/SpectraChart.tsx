@@ -1041,8 +1041,8 @@ export function SpectraChart() {
                                                                 {isDual && (
                                                                     <div className="space-y-1">
                                                                         <div className="flex justify-between text-[9px] text-gray-400">
-                                                                            <span>Split T/R</span>
-                                                                            <span>{splitRatioT.toFixed(0)}% / {(100 - splitRatioT).toFixed(0)}%</span>
+                                                                            <span>Split Ratio (Cam T)</span>
+                                                                            <span>{splitRatioT.toFixed(0)}%</span>
                                                                         </div>
                                                                         <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden flex">
                                                                             <div
