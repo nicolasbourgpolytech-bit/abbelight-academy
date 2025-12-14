@@ -151,6 +151,12 @@ export default function SpectraAdminPage() {
                             type="emission_filter"
                             title="Emission Filters"
                         />
+                        <OpticsManager
+                            optics={optics.filter(o => o.type === 'imaging_splitter')}
+                            onRefresh={fetchData}
+                            type="imaging_splitter"
+                            title="Imaging Splitters (Cubes)"
+                        />
                     </div>
                 </div>
             )}

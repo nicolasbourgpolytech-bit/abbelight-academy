@@ -13,7 +13,7 @@ type OpticalComponent = {
 interface OpticsManagerProps {
     optics: OpticalComponent[];
     onRefresh: () => void;
-    type: 'dichroic' | 'emission_filter';
+    type: 'dichroic' | 'emission_filter' | 'imaging_splitter';
     title: string;
 }
 

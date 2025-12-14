@@ -55,6 +55,7 @@ export function SpectraChart() {
     const [selectedProduct, setSelectedProduct] = useState<string>('MN180'); // Default to MN180
     const [dichroics, setDichroics] = useState<OpticalComponent[]>([]);
     const [emissionFilters, setEmissionFilters] = useState<OpticalComponent[]>([]);
+    const [imagingSplitters, setImagingSplitters] = useState<OpticalComponent[]>([]);
 
     // Filter Wheel State
     const [cam1FilterId, setCam1FilterId] = useState<string>('');
@@ -103,9 +104,11 @@ export function SpectraChart() {
 
                 const d = mapped.filter((o: any) => o.type === 'dichroic' || !o.type); // Default to dichroic
                 const f = mapped.filter((o: any) => o.type === 'emission_filter');
+                const s = mapped.filter((o: any) => o.type === 'imaging_splitter');
 
                 setDichroics(d);
                 setEmissionFilters(f);
+                setImagingSplitters(s);
 
                 // Set default filters if available
                 if (f.length > 0) {
@@ -156,8 +159,26 @@ export function SpectraChart() {
         return area;
     };
 
+    // Helper to get active splitter (Cube) transmission for a given camera
+    const getSplitterTransmission = (wavelength: number, camera: 'cam1' | 'cam2') => {
+        // Assume only one splitter is active/visible at a time? Or usually just one "Cube" in system.
+        // If multiple are visible, maybe they cascade? Let's assume the first visible one is THE splitter.
+        const activeSplitter = imagingSplitters.find(s => s.visible);
+
+        if (!activeSplitter) return 1.0; // No splitter = 100% transmission (or 50/50? Usually if no cube, path is clear? Let's assume 100%)
+
+        const point = activeSplitter.data.find(p => p.wavelength === wavelength);
+        const T = point ? point.value : 0; // Transmission
+
+        if (camera === 'cam1') {
+            return T; // Transmitted
+        } else {
+            return 1.0 - T; // Reflected
+        }
+    };
+
     // Calculate Detection Efficiency
-    const calculateEfficiency = (dye: Fluorophore, overrideFilterId?: string) => {
+    const calculateEfficiency = (dye: Fluorophore, overrideFilterId?: string, overrideCamera?: 'cam1' | 'cam2') => {
         // 1. Get Combined Optics Transmission (Dichroics + Filter)
         const visibleDichroics = dichroics.filter(o => o.visible);
 
@@ -174,6 +195,8 @@ export function SpectraChart() {
                 activeFilter = emissionFilters.find(f => f.id === cam2FilterId);
             }
         }
+
+        const targetCamera = overrideCamera || activeCameraView;
 
         // If no optics (dichroics or filters) are selected, assume 100%? 
         // Or if "Detected", we need at least something? 
@@ -199,6 +222,10 @@ export function SpectraChart() {
                 const val = point ? point.value : 0;
                 transmission *= val;
             }
+
+            // Apply Imaging Splitter (Cube)
+            const splitterTrans = getSplitterTransmission(nm, targetCamera);
+            transmission *= splitterTrans;
 
             opticsMap.set(nm, transmission);
         });
@@ -255,6 +282,18 @@ export function SpectraChart() {
                 combinedOpticTrans *= val;
                 secondaryOpticTrans *= val;
             });
+
+            // Imaging Splitters (Cube 1)
+            // Combined (Active View)
+            const activeSplitterTrans = getSplitterTransmission(nm, activeCameraView);
+            combinedOpticTrans *= activeSplitterTrans;
+
+            // Secondary (Other View for Compare)
+            if (isCompareMode) {
+                const otherCam = activeCameraView === 'cam1' ? 'cam2' : 'cam1';
+                const secondarySplitterTrans = getSplitterTransmission(nm, otherCam);
+                secondaryOpticTrans *= secondarySplitterTrans;
+            }
 
             // Active Filter
             if (activeFilter) {
@@ -481,6 +520,57 @@ export function SpectraChart() {
 
                 {/* Categories Sidebar */}
                 <div className="w-full lg:w-72 flex flex-col gap-3 pr-1">
+
+                    {/* Imaging Splitters (Cubes) Section */}
+                    {imagingSplitters.length > 0 && (
+                        <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
+                            <button
+                                onClick={() => toggleCategory('Splitters')}
+                                className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-blue-400" />
+                                    <span className="font-semibold text-sm">Imaging Splitters</span>
+                                    <span className="text-xs text-gray-500">({imagingSplitters.length})</span>
+                                </div>
+                                <svg
+                                    className={`w-4 h-4 text-gray-400 transition-transform ${openCategories.includes('Splitters') ? 'rotate-180' : ''}`}
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            {openCategories.includes('Splitters') && (
+                                <div className="p-2 space-y-1">
+                                    {imagingSplitters.map(splitter => (
+                                        <button
+                                            key={splitter.id}
+                                            onClick={() => {
+                                                // Toggle logic for splitters (maybe radio behavior? For now toggle)
+                                                // Actually logic needs update to setImagingSplitters visibility
+                                                setImagingSplitters(prev => prev.map(s =>
+                                                    s.id === splitter.id ? { ...s, visible: !s.visible } : s
+                                                ));
+                                            }}
+                                            className={`
+                                                w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all text-xs
+                                                ${splitter.visible
+                                                    ? 'bg-blue-500/20 text-blue-200 border border-blue-500/30'
+                                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'}
+                                            `}
+                                        >
+                                            <div className="w-4 h-4 flex items-center justify-center">
+                                                {splitter.visible && <div className="w-2 h-2 rounded-full bg-blue-400" />}
+                                            </div>
+                                            <span className="truncate flex-1">{splitter.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* SAFe Optics Section */}
                     {dichroics.length > 0 && (
                         <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
@@ -767,13 +857,13 @@ export function SpectraChart() {
                                                         const isDual = ['M90', 'MN360'].includes(selectedProduct);
 
                                                         // ALWAYS Calculate Cam 1 Stats
-                                                        const cam1Stats = calculateEfficiency(dye, cam1FilterId);
+                                                        const cam1Stats = calculateEfficiency(dye, cam1FilterId, 'cam1');
                                                         const p1 = (cam1Stats.ratio * 100).toFixed(1);
 
                                                         // Calculate Cam 2 Stats if Dual
                                                         let p2 = null;
                                                         if (isDual) {
-                                                            const cam2Stats = calculateEfficiency(dye, cam2FilterId);
+                                                            const cam2Stats = calculateEfficiency(dye, cam2FilterId, 'cam2');
                                                             p2 = (cam2Stats.ratio * 100).toFixed(1);
                                                         }
 
