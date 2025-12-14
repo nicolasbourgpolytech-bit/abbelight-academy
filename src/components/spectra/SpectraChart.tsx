@@ -717,16 +717,62 @@ export function SpectraChart() {
                                     <Tooltip
                                         content={({ active, payload, label }) => {
                                             if (active && payload && payload.length) {
+                                                // Grouping logic
+                                                const fluorophores = payload.filter((p: any) => p.dataKey.includes('_ex') || p.dataKey.includes('_em'));
+                                                const optics = payload.filter((p: any) => p.dataKey.includes('_optic') || p.dataKey.includes('_splitter'));
+                                                const filters = payload.filter((p: any) => p.dataKey.includes('active_filter') || p.dataKey.includes('secondary_filter'));
+
                                                 return (
-                                                    <div className="bg-black/90 border border-white/10 p-2 rounded-lg shadow-xl backdrop-blur-md text-xs">
-                                                        <p className="text-gray-400 mb-1">{label} nm</p>
-                                                        {payload.map((entry: any) => (
-                                                            <div key={entry.name} className="flex items-center gap-2">
-                                                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: entry.color }} />
-                                                                <span className="text-white capitalize">{entry.name.replace('_', ' ')}:</span>
-                                                                <span className="text-gray-400">{(entry.value * 100).toFixed(0)}%</span>
+                                                    <div className="bg-black/95 border border-white/20 p-3 rounded-lg shadow-2xl backdrop-blur-md text-xs min-w-[200px]">
+                                                        <p className="text-gray-400 font-mono mb-2 border-b border-white/10 pb-1">{label} nm</p>
+
+                                                        {/* Fluorophores */}
+                                                        {fluorophores.length > 0 && (
+                                                            <div className="mb-2 space-y-1">
+                                                                <p className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Fluorophores</p>
+                                                                {fluorophores.map((entry: any) => (
+                                                                    <div key={entry.name} className="flex justify-between items-center gap-4">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                                                            <span className="text-gray-200">{entry.name}</span>
+                                                                        </div>
+                                                                        <span className="font-mono text-gray-400">{(entry.value * 100).toFixed(0)}%</span>
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                        ))}
+                                                        )}
+
+                                                        {/* Optics (Dichroics / Splitters) */}
+                                                        {optics.length > 0 && (
+                                                            <div className="mb-2 space-y-1">
+                                                                <p className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Optics & Splitters</p>
+                                                                {optics.map((entry: any) => (
+                                                                    <div key={entry.name} className="flex justify-between items-center gap-4">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="w-2 h-0.5" style={{ backgroundColor: entry.color, borderTop: '1px dashed ' + entry.color }} />
+                                                                            <span className="text-gray-200">{entry.name}</span>
+                                                                        </div>
+                                                                        <span className="font-mono text-gray-400">{(entry.value * 100).toFixed(0)}%</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Filters */}
+                                                        {filters.length > 0 && (
+                                                            <div className="space-y-1">
+                                                                <p className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Filters</p>
+                                                                {filters.map((entry: any) => (
+                                                                    <div key={entry.name} className="flex justify-between items-center gap-4">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="w-2 h-0.5" style={{ backgroundColor: entry.color }} />
+                                                                            <span className="text-gray-200">{entry.name}</span>
+                                                                        </div>
+                                                                        <span className="font-mono text-gray-400">{(entry.value * 100).toFixed(0)}%</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 );
                                             }
@@ -769,7 +815,7 @@ export function SpectraChart() {
                                         return (
                                             <Area
                                                 key={`${dye.id}_em`}
-                                                name={`${dye.name}`}
+                                                name={`${dye.name} (Em)`}
                                                 type="monotone"
                                                 dataKey={`${dye.id}_em`}
                                                 stroke={dye.color}
@@ -808,7 +854,7 @@ export function SpectraChart() {
                                         return (
                                             <Line
                                                 key={optic.id}
-                                                name={optic.name}
+                                                name={`${optic.name} (Dichroic)`}
                                                 type="monotone"
                                                 dataKey={`${optic.id}_optic`}
                                                 stroke={optic.color}
@@ -841,7 +887,7 @@ export function SpectraChart() {
                                     {/* Active Filter Rendering (Only in Detected Tab) */}
                                     {activeTab === 'detected' && (
                                         <Line
-                                            name="Active Filter"
+                                            name="Emission Filter"
                                             type="monotone"
                                             dataKey="active_filter"
                                             stroke="#FFD700"
@@ -855,7 +901,7 @@ export function SpectraChart() {
                                     {/* Secondary Filter Rendering (Only in Detected Tab + Compare Mode) */}
                                     {activeTab === 'detected' && isCompareMode && (
                                         <Line
-                                            name="Secondary Filter"
+                                            name="Emission Filter (Other Cam)"
                                             type="monotone"
                                             dataKey="secondary_filter"
                                             stroke="#FFA500"
