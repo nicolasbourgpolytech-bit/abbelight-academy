@@ -261,10 +261,16 @@ export function SpectraChart() {
                 const fP = activeFilter.data?.find((p: any) => p.wavelength === nm);
                 combinedOpticTrans *= (fP ? fP.value : 0);
             }
-            // Secondary Filter
+            // Store active filter point for visualization
+            if (activeFilter) {
+                const fP = activeFilter.data?.find((p: any) => p.wavelength === nm);
+                point[`active_filter`] = fP ? fP.value : 0;
+            }
+
+            // Store secondary filter point for visualization (if compare mode)
             if (secondaryFilter) {
                 const fP = secondaryFilter.data?.find((p: any) => p.wavelength === nm);
-                secondaryOpticTrans *= (fP ? fP.value : 0);
+                point[`secondary_filter`] = fP ? fP.value : 0;
             }
 
             fluorophores.forEach(f => {
@@ -704,10 +710,37 @@ export function SpectraChart() {
                                             />
                                         );
                                     })}
+
+                                    {/* Active Filter Rendering (Always Visible) */}
+                                    <Line
+                                        name="Active Filter"
+                                        type="monotone"
+                                        dataKey="active_filter"
+                                        stroke="#FFD700"
+                                        strokeWidth={2}
+                                        strokeDasharray="4 2"
+                                        dot={false}
+                                        isAnimationActive={true}
+                                    />
+
+                                    {/* Secondary Filter Rendering (Compare Mode) */}
+                                    {isCompareMode && (
+                                        <Line
+                                            name="Secondary Filter"
+                                            type="monotone"
+                                            dataKey="secondary_filter"
+                                            stroke="#FFA500"
+                                            strokeWidth={2}
+                                            strokeDasharray="2 4"
+                                            strokeOpacity={0.7}
+                                            dot={false}
+                                            isAnimationActive={true}
+                                        />
+                                    )}
+
                                 </ComposedChart>
                             </ResponsiveContainer>
                         </div>
-
                         {/* Metrics Sidebar (Right Side) */}
                         {activeTab === 'detected' && (
                             <div className="w-full lg:w-72 bg-black/20 border-t lg:border-t-0 lg:border-l border-white/10 p-0 lg:pl-4 overflow-y-auto custom-scrollbar flex flex-col gap-4">
