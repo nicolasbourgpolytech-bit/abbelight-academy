@@ -43,3 +43,35 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
+
+export async function PUT(request: Request) {
+    try {
+        const body = await request.json();
+        const { id, name, product, dichroic_id, splitter_id, cam1_filter_id, cam2_filter_id } = body;
+
+        if (!id || !name || !product) {
+            return NextResponse.json({ error: 'ID, Name and Product are required' }, { status: 400 });
+        }
+
+        const result = await sql`
+            UPDATE imaging_modalities 
+            SET name = ${name}, 
+                product = ${product}, 
+                dichroic_id = ${dichroic_id || null}, 
+                splitter_id = ${splitter_id || null}, 
+                cam1_filter_id = ${cam1_filter_id || null}, 
+                cam2_filter_id = ${cam2_filter_id || null}
+            WHERE id = ${id}
+            RETURNING *;
+        `;
+
+        if (result.rowCount === 0) {
+            return NextResponse.json({ error: "Modality not found" }, { status: 404 });
+        }
+
+        return NextResponse.json(result.rows[0], { status: 200 });
+    } catch (error) {
+        console.error('Database Error:', error);
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    }
+}

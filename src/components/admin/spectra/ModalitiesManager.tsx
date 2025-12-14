@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Plus, Save, X } from 'lucide-react';
+import { Trash2, Plus, Save, X, Edit2 } from 'lucide-react';
 
 type OpticalComponent = {
     id: string;
@@ -26,6 +26,7 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
     const [selectedProduct, setSelectedProduct] = useState<string>('MN360');
     const [isLoading, setIsLoading] = useState(false);
     const [isAdding, setIsAdding] = useState(false);
+    const [editId, setEditId] = useState<string | null>(null);
 
     // Form State
     const [newName, setNewName] = useState('');
@@ -64,26 +65,26 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
         if (!newName) return;
 
         try {
-            const res = await fetch('/api/spectra/modalities', {
-                method: 'POST',
+            const url = '/api/spectra/modalities';
+            const method = editId ? 'PUT' : 'POST';
+            const body = {
+                id: editId, // Optional/Ignored for POST
+                name: newName,
+                product: selectedProduct,
+                dichroic_id: newDichroic || null,
+                splitter_id: newSplitter || null,
+                cam1_filter_id: newCam1Filter || null,
+                cam2_filter_id: newCam2Filter || null
+            };
+
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: newName,
-                    product: selectedProduct,
-                    dichroic_id: newDichroic || null,
-                    splitter_id: newSplitter || null,
-                    cam1_filter_id: newCam1Filter || null,
-                    cam2_filter_id: newCam2Filter || null
-                })
+                body: JSON.stringify(body)
             });
 
             if (res.ok) {
-                setNewName('');
-                setNewDichroic('');
-                setNewSplitter('');
-                setNewCam1Filter('');
-                setNewCam2Filter('');
-                setIsAdding(false);
+                resetForm();
                 fetchModalities();
             }
         } catch (error) {
@@ -119,7 +120,10 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
                 </select>
 
                 <button
-                    onClick={() => setIsAdding(true)}
+                    onClick={() => {
+                        resetForm();
+                        setIsAdding(true);
+                    }}
                     className="flex items-center gap-2 bg-primary/20 hover:bg-primary/30 text-primary px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-primary/20"
                 >
                     <Plus size={16} /> Add Modality
@@ -128,7 +132,11 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
 
             <div className="p-4 space-y-4">
                 {isAdding && (
-                    <div className="bg-white/5 p-4 rounded-lg border border-white/10 space-y-4">
+                    <div className={`bg-white/5 p-4 rounded-lg border ${editId ? 'border-primary/50' : 'border-white/10'} space-y-4`}>
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="text-sm font-semibold text-white">{editId ? 'Edit Modality' : 'New Modality'}</h3>
+                            {editId && <button onClick={resetForm} className="text-xs text-red-400">Cancel Edit</button>}
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs text-gray-400 mb-1">Modality Name</label>
@@ -188,8 +196,8 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
                             </div>
                         </div>
                         <div className="flex justify-end gap-2">
-                            <button onClick={() => setIsAdding(false)} className="px-3 py-1.5 text-sm text-gray-400 hover:text-white">Cancel</button>
-                            <button onClick={handleSave} className="flex items-center gap-2 bg-primary text-white px-3 py-1.5 rounded-lg text-sm"><Save size={14} /> Save</button>
+                            <button onClick={resetForm} className="px-3 py-1.5 text-sm text-gray-400 hover:text-white">Cancel</button>
+                            <button onClick={handleSave} className="flex items-center gap-2 bg-primary text-white px-3 py-1.5 rounded-lg text-sm"><Save size={14} /> {editId ? 'Update' : 'Save'}</button>
                         </div>
                     </div>
                 )}
@@ -208,7 +216,10 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
                                     {m.cam2_filter_id && <span className="bg-white/5 px-2 py-0.5 rounded border border-white/10">Cam R: {optics.find(o => o.id === m.cam2_filter_id)?.name}</span>}
                                 </div>
                             </div>
-                            <button onClick={() => handleDelete(m.id)} className="text-red-400 hover:text-red-300 p-2"><Trash2 size={16} /></button>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => handleEdit(m)} className="text-blue-400 hover:text-blue-300 p-2"><Edit2 size={16} /></button>
+                                <button onClick={() => handleDelete(m.id)} className="text-red-400 hover:text-red-300 p-2"><Trash2 size={16} /></button>
+                            </div>
                         </div>
                     ))}
                 </div>

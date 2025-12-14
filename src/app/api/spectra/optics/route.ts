@@ -39,6 +39,51 @@ export async function POST(request: Request) {
     }
 }
 
+export async function PUT(request: Request) {
+    try {
+        const body = await request.json();
+        const { id, name, data, type, color, line_style } = body;
+
+        if (!id || !name) {
+            return NextResponse.json({ error: "Missing required fields (id, name)" }, { status: 400 });
+        }
+
+        let result;
+        if (data) {
+            result = await sql`
+                UPDATE optical_components 
+                SET name = ${name}, 
+                    type = ${type}, 
+                    data = ${JSON.stringify(data)}::jsonb, 
+                    color = ${color}, 
+                    line_style = ${line_style}
+                WHERE id = ${id}
+                RETURNING *
+            `;
+        } else {
+            // Update without changing data
+            result = await sql`
+                UPDATE optical_components 
+                SET name = ${name}, 
+                    type = ${type},
+                    color = ${color}, 
+                    line_style = ${line_style}
+                WHERE id = ${id}
+                RETURNING *
+            `;
+        }
+
+        if (result.rowCount === 0) {
+            return NextResponse.json({ error: "Component not found" }, { status: 404 });
+        }
+
+        return NextResponse.json(result.rows[0], { status: 200 });
+    } catch (error) {
+        console.error("Update Optics Error:", error);
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    }
+}
+
 export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

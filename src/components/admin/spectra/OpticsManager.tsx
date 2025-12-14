@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { Edit2, Trash2 } from "lucide-react";
 
 type OpticalComponent = {
     id: string;
@@ -20,6 +21,7 @@ interface OpticsManagerProps {
 export function OpticsManager({ optics, onRefresh, type, title }: OpticsManagerProps) {
     const [isUploading, setIsUploading] = useState(false);
     const [name, setName] = useState("");
+    const [editId, setEditId] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,21 +93,25 @@ export function OpticsManager({ optics, onRefresh, type, title }: OpticsManagerP
                     : data;
 
                 try {
-                    const res = await fetch('/api/spectra/optics', {
-                        method: 'POST',
+                    const url = '/api/spectra/optics';
+                    const method = editId ? 'PUT' : 'POST';
+                    const body = {
+                        id: editId, // Optional for POST, required for PUT
+                        name,
+                        data: normalizedData,
+                        type,
+                        color: type === 'dichroic' ? '#ffffff' : '#FFD700',
+                        line_style: type === 'dichroic' ? 'dashed' : 'solid'
+                    };
+
+                    const res = await fetch(url, {
+                        method,
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            name,
-                            data: normalizedData,
-                            type,
-                            color: type === 'dichroic' ? '#ffffff' : '#FFD700',
-                            line_style: type === 'dichroic' ? 'dashed' : 'solid'
-                        })
+                        body: JSON.stringify(body)
                     });
 
                     if (res.ok) {
-                        setName("");
-                        if (fileInputRef.current) fileInputRef.current.value = "";
+                        resetForm();
                         onRefresh();
                     } else {
                         console.error("Upload failed");
@@ -143,8 +149,13 @@ export function OpticsManager({ optics, onRefresh, type, title }: OpticsManagerP
             </h3>
 
             {/* Upload Form */}
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-4">
-                <h4 className="text-sm font-medium text-gray-300">Add New {title.slice(0, -1)}</h4>
+            <div className={`bg-white/5 border ${editId ? 'border-primary/50' : 'border-white/10'} rounded-xl p-4 space-y-4 transition-colors`}>
+                <div className="flex justify-between items-center">
+                    <h4 className="text-sm font-medium text-gray-300">{editId ? `Edit ${title.slice(0, -1)}` : `Add New ${title.slice(0, -1)}`}</h4>
+                    {editId && (
+                        <button onClick={resetForm} className="text-xs text-red-400 hover:text-red-300">Cancel Edit</button>
+                    )}
+                </div>
                 <div className="flex gap-4 items-end">
                     <div className="flex-1 space-y-1">
                         <label className="text-xs text-gray-500">Name</label>
@@ -168,38 +179,61 @@ export function OpticsManager({ optics, onRefresh, type, title }: OpticsManagerP
                         />
                     </div>
                 </div>
-                {isUploading && <p className="text-xs text-primary animate-pulse">Uploading and processing...</p>}
+                {/* Save Button for Name-Only Edits */}
+                {editId && (
+                    <div className="flex justify-end">
+                        <button
+                            onClick={handleSaveWithoutFile}
+                            className="bg-primary hover:bg-primary/90 text-white text-xs px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                            Update Name Only
+                        </button>
+                    </div>
+                )}
             </div>
+        </div>
+            { isUploading && <p className="text-xs text-primary animate-pulse">Uploading and processing...</p> }
+        </div >
 
-            {/* List */}
-            <div className="grid gap-3">
-                {optics.map(optic => (
-                    <div key={optic.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5 hover:border-white/20 transition-all">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h4 className="font-medium text-white">{optic.name}</h4>
-                                <p className="text-xs text-gray-500">{optic.type} • {optic.data?.length || 0} points</p>
-                            </div>
+        {/* List */ }
+        < div className = "grid gap-3" >
+        {
+            optics.map(optic => (
+                <div key={optic.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5 hover:border-white/20 transition-all">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
                         </div>
+                        <div>
+                            <h4 className="font-medium text-white">{optic.name}</h4>
+                            <p className="text-xs text-gray-500">{optic.type} • {optic.data?.length || 0} points</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => handleEdit(optic)}
+                            className="text-gray-500 hover:text-blue-500 p-2 transition-colors"
+                        >
+                            <Edit2 className="w-4 h-4" />
+                        </button>
                         <button
                             onClick={() => handleDelete(optic.id)}
                             className="text-gray-500 hover:text-red-500 p-2 transition-colors"
                         >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            <Trash2 className="w-5 h-5" />
                         </button>
                     </div>
-                ))}
-                {optics.length === 0 && (
-                    <p className="text-gray-600 italic text-sm text-center py-4">No optical components added yet.</p>
-                )}
-            </div>
-        </div>
+                </div>
+            ))
+        }
+            </div >
+    {
+        optics.length === 0 && (
+            <p className="text-gray-600 italic text-sm text-center py-4">No optical components added yet.</p>
+        )
+    }
+        </div >
     );
 }
