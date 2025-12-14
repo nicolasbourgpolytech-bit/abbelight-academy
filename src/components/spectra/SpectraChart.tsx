@@ -271,7 +271,9 @@ export function SpectraChart() {
             // Store secondary filter point for visualization (if compare mode)
             if (secondaryFilter) {
                 const fP = secondaryFilter.data?.find((p: any) => p.wavelength === nm);
-                point[`secondary_filter`] = fP ? fP.value : 0;
+                const val = fP ? Number(fP.value) : 0.0;
+                secondaryOpticTrans *= val;
+                point[`secondary_filter`] = val;
             }
 
             fluorophores.forEach(f => {
