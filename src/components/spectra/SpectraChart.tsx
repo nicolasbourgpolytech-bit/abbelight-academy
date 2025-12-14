@@ -251,7 +251,7 @@ export function SpectraChart() {
             // Dichroics (Apply to both)
             visibleDichroics.forEach(opt => {
                 const opP = opt.data?.find((p: any) => p.wavelength === nm);
-                const val = opP ? opP.value : 0;
+                const val = opP ? Number(opP.value) : 1.0; // Assume 1.0 if no data? Or 0? Let's assume 1.0 to avoid invisible bugs if generic.
                 combinedOpticTrans *= val;
                 secondaryOpticTrans *= val;
             });
@@ -259,12 +259,13 @@ export function SpectraChart() {
             // Active Filter
             if (activeFilter) {
                 const fP = activeFilter.data?.find((p: any) => p.wavelength === nm);
-                combinedOpticTrans *= (fP ? fP.value : 0);
-            }
-            // Store active filter point for visualization
-            if (activeFilter) {
-                const fP = activeFilter.data?.find((p: any) => p.wavelength === nm);
-                point[`active_filter`] = fP ? fP.value : 0;
+                const val = fP ? Number(fP.value) : 0.0; // Assume 0 (Blocked) if data missing/gap for Bandpass
+                combinedOpticTrans *= val;
+
+                // Visualization
+                point[`active_filter`] = val;
+            } else {
+                // Even if undefined, if we are in detected mode, maybe render 0 line? No.
             }
 
             // Store secondary filter point for visualization (if compare mode)
