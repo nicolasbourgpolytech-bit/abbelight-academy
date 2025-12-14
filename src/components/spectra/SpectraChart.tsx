@@ -317,10 +317,10 @@ export function SpectraChart() {
                         onChange={(e) => setSelectedProduct(e.target.value)}
                         className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[140px]"
                     >
-                        <option value="M45">SAFe M45</option>
-                        <option value="MN180">SAFe MN180</option>
-                        <option value="M90">SAFe M90</option>
-                        <option value="MN360">SAFe MN360</option>
+                        <option value="M45" className="bg-gray-900 text-white">SAFe M45</option>
+                        <option value="M90" className="bg-gray-900 text-white">SAFe M90</option>
+                        <option value="MN180" className="bg-gray-900 text-white">SAFe MN180</option>
+                        <option value="MN360" className="bg-gray-900 text-white">SAFe MN360</option>
                     </select>
                 </div>
 
@@ -339,9 +339,9 @@ export function SpectraChart() {
                             className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[200px]"
                         >
                             {emissionFilters.map(f => (
-                                <option key={f.id} value={f.id}>{f.name}</option>
+                                <option key={f.id} value={f.id} className="bg-gray-900 text-white">{f.name}</option>
                             ))}
-                            {emissionFilters.length === 0 && <option value="">No filters available</option>}
+                            {emissionFilters.length === 0 && <option value="" className="bg-gray-900 text-white">No filters available</option>}
                         </select>
                     </div>
 
@@ -356,9 +356,9 @@ export function SpectraChart() {
                                     className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[200px]"
                                 >
                                     {emissionFilters.map(f => (
-                                        <option key={f.id} value={f.id}>{f.name}</option>
+                                        <option key={f.id} value={f.id} className="bg-gray-900 text-white">{f.name}</option>
                                     ))}
-                                    {emissionFilters.length === 0 && <option value="">No filters available</option>}
+                                    {emissionFilters.length === 0 && <option value="" className="bg-gray-900 text-white">No filters available</option>}
                                 </select>
                             </div>
 
