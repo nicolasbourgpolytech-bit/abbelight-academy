@@ -130,6 +130,41 @@ export function OpticsManager({ optics, onRefresh, type, title }: OpticsManagerP
         reader.readAsText(file);
     };
 
+    const resetForm = () => {
+        setName("");
+        setEditId(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    const handleEdit = (optic: OpticalComponent) => {
+        setEditId(optic.id);
+        setName(optic.name);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleSaveWithoutFile = async () => {
+        if (!editId || !name) return;
+        try {
+            const res = await fetch('/api/spectra/optics', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: editId,
+                    name,
+                    type,
+                    color: type === 'dichroic' ? '#ffffff' : '#FFD700',
+                    line_style: type === 'dichroic' ? 'dashed' : 'solid'
+                })
+            });
+            if (res.ok) {
+                resetForm();
+                onRefresh();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to delete this component?")) return;
         try {
