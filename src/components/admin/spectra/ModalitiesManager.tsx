@@ -61,6 +61,27 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
         }
     };
 
+    const resetForm = () => {
+        setNewName('');
+        setNewDichroic('');
+        setNewSplitter('');
+        setNewCam1Filter('');
+        setNewCam2Filter('');
+        setIsAdding(false);
+        setEditId(null);
+    };
+
+    const handleEdit = (modality: Modality) => {
+        setNewName(modality.name);
+        setNewDichroic(modality.dichroic_id || '');
+        setNewSplitter(modality.splitter_id || '');
+        setNewCam1Filter(modality.cam1_filter_id || '');
+        setNewCam2Filter(modality.cam2_filter_id || '');
+        setEditId(modality.id);
+        setIsAdding(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const handleSave = async () => {
         if (!newName) return;
 
