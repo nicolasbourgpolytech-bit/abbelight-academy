@@ -288,6 +288,22 @@ export function SpectraChart() {
             const activeSplitterTrans = getSplitterTransmission(nm, activeCameraView);
             combinedOpticTrans *= activeSplitterTrans;
 
+            // Store for visualization
+            imagingSplitters.forEach(s => {
+                if (s.visible) {
+                    const sPoint = s.data?.find((p: any) => p.wavelength === nm);
+                    if (sPoint) {
+                        // For visualization, do we show the Raw T? Or the effective T for the camera?
+                        // User wants to understand, so probably the Effective T for the active camera VIEW.
+                        // If Cam 2 (Reflected), we should probably show the Reflection curve (1-T).
+                        // Let's use getSplitterTransmission logic logic but for this specific splitter.
+                        let val = sPoint.value;
+                        if (activeCameraView === 'cam2') val = 1.0 - val;
+                        point[`${s.id}_splitter`] = val;
+                    }
+                }
+            });
+
             // Secondary (Other View for Compare)
             if (isCompareMode) {
                 const otherCam = activeCameraView === 'cam1' ? 'cam2' : 'cam1';
@@ -800,6 +816,24 @@ export function SpectraChart() {
                                                 strokeDasharray="4 4"
                                                 dot={false}
                                                 isAnimationActive={false}
+                                            />
+                                        );
+                                    })}
+
+                                    {/* Imaging Splitters (Only in Detected Tab) */}
+                                    {activeTab === 'detected' && imagingSplitters.map(splitter => {
+                                        if (!splitter.visible) return null;
+                                        return (
+                                            <Line
+                                                key={splitter.id}
+                                                name={`${splitter.name} (${activeCameraView === 'cam1' ? 'T' : 'R'})`}
+                                                type="monotone"
+                                                dataKey={`${splitter.id}_splitter`}
+                                                stroke="#3B82F6" // Blue-500
+                                                strokeWidth={2}
+                                                strokeDasharray="6 2"
+                                                dot={false}
+                                                isAnimationActive={true}
                                             />
                                         );
                                     })}
