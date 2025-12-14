@@ -354,7 +354,7 @@ export function SpectraChart() {
 
             return point;
         });
-    }, [fluorophores, dichroics, emissionFilters, activeTab, showExcitation, activeCameraView, cam1FilterId, cam2FilterId, isCompareMode, selectedProduct]);
+    }, [fluorophores, dichroics, emissionFilters, imagingSplitters, activeTab, showExcitation, activeCameraView, cam1FilterId, cam2FilterId, isCompareMode, selectedProduct]);
 
     const categories = ['UV', 'Green', 'Red', 'Far-red'];
 
