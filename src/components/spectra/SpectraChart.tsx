@@ -165,15 +165,17 @@ export function SpectraChart() {
 
     const handleExport = async () => {
         setIsExporting(true);
-        // Allow render cycle to populate report
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Allow render cycle to populate report - reduced timeout as it's always mounted
+        await new Promise(resolve => setTimeout(resolve, 200));
 
         try {
             if (reportRef.current) {
                 // Use html-to-image on the hidden report component
                 const dataUrl = await toPng(reportRef.current, {
                     cacheBust: true,
-                    backgroundColor: '#ffffff'
+                    backgroundColor: '#ffffff',
+                    width: 1000, // Explicitly set dimensions
+                    height: reportRef.current.scrollHeight || 1200
                 });
 
                 const downloadLink = document.createElement('a');
@@ -1144,8 +1146,8 @@ export function SpectraChart() {
                             </ResponsiveContainer>
                         </div>
 
-                        {/* Hidden Report Component - Rendered only for export */}
-                        {isExporting && (
+                        {/* Hidden Report Component - Always Rendered but Hidden */}
+                        <div style={{ position: 'fixed', left: '-9999px', top: 0, overflow: 'hidden', height: 0, width: 0 }}>
                             <SpectraReport
                                 ref={reportRef}
                                 chartData={chartData}
@@ -1161,7 +1163,7 @@ export function SpectraChart() {
                                 maxWavelength={maxWavelength}
                                 efficiencyMetrics={efficiencyMetrics}
                             />
-                        )}
+                        </div>
 
                         {/* Metrics Sidebar (Right Side) */}
                         {activeTab === 'detected' && (
