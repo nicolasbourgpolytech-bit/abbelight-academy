@@ -188,7 +188,7 @@ export const SpectraReport = React.forwardRef<HTMLDivElement, ReportProps>(({
                             );
                         })}
 
-                        {/* Optics Lines */}
+                        {/* Optics Lines (Dichroics) */}
                         {dichroics.map(optic => {
                             if (!optic.visible) return null;
                             return (
@@ -200,6 +200,24 @@ export const SpectraReport = React.forwardRef<HTMLDivElement, ReportProps>(({
                                     stroke={optic.color || '#9ca3af'}
                                     strokeWidth={1}
                                     strokeDasharray="4 4"
+                                    dot={false}
+                                    isAnimationActive={false}
+                                />
+                            );
+                        })}
+
+                        {/* Imaging Splitters */}
+                        {imagingSplitters.map(splitter => {
+                            if (!splitter.visible) return null;
+                            return (
+                                <Line
+                                    key={splitter.id}
+                                    name={splitter.name}
+                                    type="monotone"
+                                    dataKey={`${splitter.id}_splitter`}
+                                    stroke="#3B82F6"
+                                    strokeWidth={2}
+                                    strokeDasharray="6 2"
                                     dot={false}
                                     isAnimationActive={false}
                                 />
@@ -244,6 +262,7 @@ export const SpectraReport = React.forwardRef<HTMLDivElement, ReportProps>(({
                             <th className="py-2 font-bold text-gray-700">Fluorophore</th>
                             <th className="py-2 font-bold text-gray-700">Camera T (Transmission)</th>
                             {isDual && <th className="py-2 font-bold text-gray-700">Camera R (Reflection)</th>}
+                            {isDual && <th className="py-2 font-bold text-gray-700">Total Efficiency</th>}
                             {isDual && <th className="py-2 font-bold text-gray-700">Split Ratio (T/Total)</th>}
                         </tr>
                     </thead>
@@ -254,9 +273,12 @@ export const SpectraReport = React.forwardRef<HTMLDivElement, ReportProps>(({
                                     <span className="w-3 h-3 rounded-full" style={{ backgroundColor: m.color }}></span>
                                     {m.dyeName}
                                 </td>
-                                <td className="py-3 font-mono font-bold text-gray-800">{m.cam1}</td>
-                                {isDual && <td className="py-3 font-mono font-bold text-gray-800">{m.cam2 || '-'}</td>}
-                                {isDual && <td className="py-3 font-mono text-gray-600">{m.splitRatio || '-'}</td>}
+                                <td className="py-3 font-mono font-bold text-gray-800">{m.cam1}%</td>
+                                {isDual && <td className="py-3 font-mono font-bold text-gray-800">{m.cam2 || '-'}%</td>}
+                                {isDual && <td className="py-3 font-mono font-bold text-gray-900">
+                                    {(parseFloat(m.cam1) + parseFloat(m.cam2 || '0')).toFixed(1)}%
+                                </td>}
+                                {isDual && <td className="py-3 font-mono text-gray-600">{m.splitRatio || '-'}%</td>}
                             </tr>
                         ))}
                         {efficiencyMetrics.length === 0 && (
