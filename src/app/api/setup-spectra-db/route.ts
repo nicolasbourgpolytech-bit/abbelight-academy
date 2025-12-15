@@ -27,6 +27,7 @@ export async function GET(request: Request) {
         try {
             await sql`ALTER TABLE fluorophores ADD COLUMN IF NOT EXISTS excitation_peak INTEGER`;
             await sql`ALTER TABLE fluorophores ADD COLUMN IF NOT EXISTS emission_peak INTEGER`;
+            await sql`ALTER TABLE fluorophores ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'Organic Dye'`;
         } catch (e) {
             console.log("Migration columns might already exist", e);
         }

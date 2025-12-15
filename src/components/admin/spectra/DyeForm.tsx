@@ -11,6 +11,7 @@ interface DyeFormProps {
 
 export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
     const [name, setName] = useState(initialData?.name || "");
+    const [type, setType] = useState<'Organic Dye' | 'Fluorescent Protein'>(initialData?.type || "Organic Dye");
     const [category, setCategory] = useState(initialData?.category || "Green");
     const [color, setColor] = useState(initialData?.color || "#00D296");
     const [exPeak, setExPeak] = useState<number | string>(initialData?.excitation_peak || "");
@@ -25,6 +26,25 @@ export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
     // Parsed data
     const [excitationData, setExcitationData] = useState<any[]>(initialData?.excitation_data || []);
     const [emissionData, setEmissionData] = useState<any[]>(initialData?.emission_data || []);
+
+    const wavelengthToColor = (wavelength: number): string => {
+        // ... (lines 29-224 omitted for brevity in replacement, but I must match exact target content)
+        // Wait, I cannot omit lines in ReplacementContent if I target a large block.
+        // I should break this into chunks.
+    };
+
+    // I will do 2 separate edits. One for state, one for submit payload, one for JSX.
+    // Actually, let's just do state and payload in one if they are close, or separate.
+    // State is at top. Payload is in handleSubmit.
+
+    // Edit 1: State
+    // Edit 2: Payload
+    // Edit 3: JSX
+
+    // Let's restart tool calls with correct strategy.
+
+    // RETRYING WITH chunked strategy.
+
 
     const wavelengthToColor = (wavelength: number): string => {
         // HSL mapping for "Pleasant/Professional" Aesthetics
@@ -227,6 +247,7 @@ export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
         try {
             const payload = {
                 name,
+                type,
                 category,
                 color,
                 excitation_peak: exPeak ? Number(exPeak) : null,
@@ -270,6 +291,17 @@ export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
                         placeholder="e.g. Alexa Fluor 488"
                         required
                     />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-2">Type</label>
+                    <select
+                        value={type}
+                        onChange={e => setType(e.target.value as any)}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 focus:outline-none focus:border-primary text-white"
+                    >
+                        <option value="Organic Dye">Organic Dye</option>
+                        <option value="Fluorescent Protein">Fluorescent Protein</option>
+                    </select>
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-400 mb-2">Category</label>

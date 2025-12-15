@@ -9,6 +9,7 @@ import { ModalitiesManager } from '@/components/admin/spectra/ModalitiesManager'
 export type Dye = {
     id: string;
     name: string;
+    type: 'Organic Dye' | 'Fluorescent Protein';
     category: 'UV' | 'Green' | 'Red' | 'Far-red';
     color: string;
     excitation_peak?: number;
