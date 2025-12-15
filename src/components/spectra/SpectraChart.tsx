@@ -551,6 +551,65 @@ export function SpectraChart() {
                         </>
                     )}
                 </div>
+
+                {/* Optics & Splitters Configuration (New Row) */}
+                {(dichroics.length > 0 || (hasSplitter && imagingSplitters.length > 0)) && (
+                    <>
+                        <div className="w-full h-px bg-white/10"></div>
+
+                        <div className="flex flex-wrap gap-x-8 gap-y-4 w-full">
+                            {/* SAFe Optics Chips */}
+                            {dichroics.length > 0 && (
+                                <div className="space-y-2">
+                                    <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">
+                                        Abbelight SAFe Excitation/Emission dichroic
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {dichroics.map(optic => (
+                                            <button
+                                                key={optic.id}
+                                                onClick={() => toggleOptic(optic.id)}
+                                                className={`
+                                                    px-3 py-1.5 rounded-full text-xs font-medium transition-all border
+                                                    ${optic.visible
+                                                        ? 'bg-primary/20 text-primary border-primary/50 shadow-[0_0_10px_rgba(var(--primary-rgb),0.2)]'
+                                                        : 'bg-black/20 text-gray-400 border-white/5 hover:text-white hover:border-white/10'}
+                                                `}
+                                            >
+                                                {optic.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Imaging Splitters Chips */}
+                            {hasSplitter && imagingSplitters.length > 0 && (
+                                <div className="space-y-2">
+                                    <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">
+                                        Imaging Splitters
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {imagingSplitters.map(splitter => (
+                                            <button
+                                                key={splitter.id}
+                                                onClick={() => toggleImagingSplitter(splitter.id)}
+                                                className={`
+                                                    px-3 py-1.5 rounded-full text-xs font-medium transition-all border
+                                                    ${splitter.visible
+                                                        ? 'bg-blue-500/20 text-blue-300 border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.2)]'
+                                                        : 'bg-black/20 text-gray-400 border-white/5 hover:text-white hover:border-white/10'}
+                                                `}
+                                            >
+                                                {splitter.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Global Controls: Range & Toggles */}
@@ -643,94 +702,6 @@ export function SpectraChart() {
                             </button>
                         </div>
                     </div>
-
-
-
-                    {/* Imaging Splitters (Cubes) Section */}
-                    {hasSplitter && imagingSplitters.length > 0 && (
-                        <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
-                            <button
-                                onClick={() => toggleCategory('Splitters')}
-                                className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-blue-400" />
-                                    <span className="font-semibold text-sm">Imaging Splitters</span>
-                                    <span className="text-xs text-gray-500">({imagingSplitters.length})</span>
-                                </div>
-                                <svg
-                                    className={`w-4 h-4 text-gray-400 transition-transform ${openCategories.includes('Splitters') ? 'rotate-180' : ''}`}
-                                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-
-                            {openCategories.includes('Splitters') && (
-                                <div className="p-2 space-y-1">
-                                    {imagingSplitters.map(splitter => (
-                                        <button
-                                            key={splitter.id}
-                                            onClick={() => toggleImagingSplitter(splitter.id)}
-                                            className={`
-                                                w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all text-xs
-                                                ${splitter.visible
-                                                    ? 'bg-blue-500/20 text-blue-200 border border-blue-500/30'
-                                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'}
-                                            `}
-                                        >
-                                            <div className="w-4 h-4 flex items-center justify-center">
-                                                {splitter.visible && <div className="w-2 h-2 rounded-full bg-blue-400" />}
-                                            </div>
-                                            <span className="truncate flex-1">{splitter.name}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* SAFe Optics Section */}
-                    {dichroics.length > 0 && (
-                        <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
-                            <button
-                                onClick={() => toggleCategory('Optics')}
-                                className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-white" />
-                                    <span className="font-semibold text-sm">Abbelight SAFe</span>
-                                    <span className="text-xs text-gray-500">({dichroics.length})</span>
-                                </div>
-                                <svg
-                                    className={`w-4 h-4 text-gray-400 transition-transform ${openCategories.includes('Optics') ? 'rotate-180' : ''}`}
-                                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-
-                            {openCategories.includes('Optics') && (
-                                <div className="p-2 space-y-1">
-                                    {dichroics.map(optic => (
-                                        <button
-                                            key={optic.id}
-                                            onClick={() => toggleOptic(optic.id)}
-                                            className={`
-                                                w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all text-xs
-                                                ${optic.visible
-                                                    ? 'bg-white/10 text-white border border-white/20'
-                                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'}
-                                            `}
-                                        >
-                                            <div className="w-4 h-0 border-t border-dashed border-white/50" />
-                                            <span className="truncate flex-1">{optic.name}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
 
                     {categories.map(category => {
                         const categoryDyes = fluorophores.filter(f => {
