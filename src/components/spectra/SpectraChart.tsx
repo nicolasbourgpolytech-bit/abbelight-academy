@@ -21,6 +21,7 @@ type SpectrumDataPoint = {
 type Fluorophore = {
     id: string; // UUID from DB
     name: string;
+    type: 'Organic Dye' | 'Fluorescent Protein';
     category: string;
     color: string;
     visible: boolean;
@@ -48,6 +49,10 @@ export function SpectraChart() {
     const [isLoading, setIsLoading] = useState(true);
     const [showExcitation, setShowExcitation] = useState(false); // Default hidden as requested
     const [showEmission, setShowEmission] = useState(true);
+
+    // Filters
+    const [showOrganicDyes, setShowOrganicDyes] = useState(true);
+    const [showFluorescentProteins, setShowFluorescentProteins] = useState(true);
 
     const [activeTab, setActiveTab] = useState<'raw' | 'detected'>('detected');
 
@@ -90,6 +95,7 @@ export function SpectraChart() {
                 const data = await spectraRes.json();
                 const mapped = data.map((d: any) => ({
                     ...d,
+                    type: d.type || 'Organic Dye', // Default if missing
                     visible: d.is_default !== undefined ? d.is_default : ['DAPI', 'Alexa Fluor 488'].includes(d.name)
                 }));
                 setFluorophores(mapped);
@@ -616,6 +622,27 @@ export function SpectraChart() {
 
                 {/* Categories Sidebar */}
                 <div className="w-full lg:w-72 flex flex-col gap-3 pr-1">
+
+                    {/* Dye Type Filters */}
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-3 backdrop-blur-sm shrink-0 space-y-2">
+                        <div className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Filter Types</div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setShowOrganicDyes(!showOrganicDyes)}
+                                className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg text-xs font-medium transition-all ${showOrganicDyes ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-white/5 text-gray-500 border border-transparent hover:bg-white/10'}`}
+                            >
+                                <span className="w-2 h-2 rounded-full bg-blue-400" />
+                                Dyes
+                            </button>
+                            <button
+                                onClick={() => setShowFluorescentProteins(!showFluorescentProteins)}
+                                className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg text-xs font-medium transition-all ${showFluorescentProteins ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-white/5 text-gray-500 border border-transparent hover:bg-white/10'}`}
+                            >
+                                <span className="w-2 h-2 rounded-full bg-green-400" />
+                                Proteins
+                            </button>
+                        </div>
+                    </div>
 
 
 
