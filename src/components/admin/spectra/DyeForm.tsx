@@ -297,6 +297,7 @@ export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
                         className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 focus:outline-none focus:border-primary text-white"
                     >
                         <option value="UV">UV</option>
+                        <option value="Blue">Blue</option>
                         <option value="Green">Green</option>
                         <option value="Red">Red</option>
                         <option value="Far-red">Far-red</option>

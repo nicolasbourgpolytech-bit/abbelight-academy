@@ -10,7 +10,7 @@ export type Dye = {
     id: string;
     name: string;
     type: 'Organic Dye' | 'Fluorescent Protein';
-    category: 'UV' | 'Green' | 'Red' | 'Far-red';
+    category: 'UV' | 'Blue' | 'Green' | 'Red' | 'Far-red';
     color: string;
     excitation_peak?: number;
     emission_peak?: number;
@@ -26,7 +26,7 @@ export default function SpectraAdminPage() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingDye, setEditingDye] = useState<Dye | null>(null);
 
-    const categories = ['UV', 'Green', 'Red', 'Far-red'];
+    const categories = ['UV', 'Blue', 'Green', 'Red', 'Far-red'];
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -118,8 +118,9 @@ export default function SpectraAdminPage() {
                                 <div key={cat} className="space-y-4">
                                     <h3 className="text-xl font-semibold border-b border-white/10 pb-2 flex items-center gap-2">
                                         <span className={`w-3 h-3 rounded-full ${cat === 'UV' ? 'bg-purple-400' :
-                                            cat === 'Green' ? 'bg-green-400' :
-                                                cat === 'Red' ? 'bg-red-500' : 'bg-pink-600'
+                                                cat === 'Blue' ? 'bg-blue-400' :
+                                                    cat === 'Green' ? 'bg-green-400' :
+                                                        cat === 'Red' ? 'bg-red-500' : 'bg-pink-600'
                                             }`} />
                                         {cat} Dyes
                                         <span className="text-sm font-normal text-gray-500 ml-2">({categoryDyes.length})</span>
