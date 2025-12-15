@@ -15,6 +15,7 @@ type Modality = {
     splitter_id?: string;
     cam1_filter_id?: string;
     cam2_filter_id?: string;
+    associated_dyes?: string[];
 };
 
 interface ModalitiesManagerProps {
@@ -244,8 +245,8 @@ export function ModalitiesManager({ optics, dyes }: ModalitiesManagerProps) {
                                                 key={dye.id}
                                                 onClick={() => toggleDyeSelection(dye.id)}
                                                 className={`px-2 py-1 text-xs rounded-full border transition-colors ${isSelected
-                                                        ? 'bg-primary/20 border-primary text-white'
-                                                        : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                                                    ? 'bg-primary/20 border-primary text-white'
+                                                    : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                                                     }`}
                                             >
                                                 {dye.name}
