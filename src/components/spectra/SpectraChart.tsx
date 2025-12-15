@@ -619,17 +619,6 @@ export function SpectraChart() {
 
 
 
-        // ...
-
-                    {/* Warning Overlay if Cam R is relevant but no Splitter active */}
-                    {(hasSplitter && (activeCameraView === 'cam2' || isCompareMode) && !imagingSplitters.some(s => s.visible)) && (
-                        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-                            <div className="bg-black/80 backdrop-blur-md border border-white/20 px-6 py-3 rounded-xl text-white font-medium flex items-center gap-3 animate-in fade-in zoom-in duration-300">
-                                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                                <span>Add Imaging Splitter to detect signal on Cam R</span>
-                            </div>
-                        </div>
-                    )}
                     {/* Imaging Splitters (Cubes) Section */}
                     {hasSplitter && imagingSplitters.length > 0 && (
                         <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
