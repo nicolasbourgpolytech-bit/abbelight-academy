@@ -25,15 +25,20 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { name, product, dichroic_id, splitter_id, cam1_filter_id, cam2_filter_id, associated_dyes } = body;
+        const { name, product, dichroic_id, splitter_id, cam1_filter_id, cam2_filter_id, associated_dyes, is_default } = body;
 
         if (!name || !product) {
             return NextResponse.json({ error: 'Name and Product are required' }, { status: 400 });
         }
 
+        // If this is set as default, unset others for this product
+        if (is_default) {
+            await sql`UPDATE imaging_modalities SET is_default = FALSE WHERE product = ${product}`;
+        }
+
         const result = await sql`
-            INSERT INTO imaging_modalities (name, product, dichroic_id, splitter_id, cam1_filter_id, cam2_filter_id, associated_dyes)
-            VALUES (${name}, ${product}, ${dichroic_id || null}, ${splitter_id || null}, ${cam1_filter_id || null}, ${cam2_filter_id || null}, ${JSON.stringify(associated_dyes || [])}::jsonb)
+            INSERT INTO imaging_modalities (name, product, dichroic_id, splitter_id, cam1_filter_id, cam2_filter_id, associated_dyes, is_default)
+            VALUES (${name}, ${product}, ${dichroic_id || null}, ${splitter_id || null}, ${cam1_filter_id || null}, ${cam2_filter_id || null}, ${JSON.stringify(associated_dyes || [])}::jsonb, ${is_default || false})
             RETURNING *;
         `;
 
@@ -47,10 +52,15 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
     try {
         const body = await request.json();
-        const { id, name, product, dichroic_id, splitter_id, cam1_filter_id, cam2_filter_id, associated_dyes } = body;
+        const { id, name, product, dichroic_id, splitter_id, cam1_filter_id, cam2_filter_id, associated_dyes, is_default } = body;
 
         if (!id || !name || !product) {
             return NextResponse.json({ error: 'ID, Name and Product are required' }, { status: 400 });
+        }
+
+        // If this is set as default, unset others for this product (excluding self, though unset all is fine too)
+        if (is_default) {
+            await sql`UPDATE imaging_modalities SET is_default = FALSE WHERE product = ${product} AND id != ${id}`;
         }
 
         const result = await sql`
@@ -61,7 +71,8 @@ export async function PUT(request: Request) {
                 splitter_id = ${splitter_id || null}, 
                 cam1_filter_id = ${cam1_filter_id || null}, 
                 cam2_filter_id = ${cam2_filter_id || null},
-                associated_dyes = ${JSON.stringify(associated_dyes || [])}::jsonb
+                associated_dyes = ${JSON.stringify(associated_dyes || [])}::jsonb,
+                is_default = ${is_default || false}
             WHERE id = ${id}
             RETURNING *;
         `;

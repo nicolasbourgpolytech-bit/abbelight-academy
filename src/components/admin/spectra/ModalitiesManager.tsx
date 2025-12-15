@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Trash2, Plus, Save, X, Edit2 } from 'lucide-react';
+import { Trash2, Plus, Save, X, Edit2, Star } from 'lucide-react';
 
 type OpticalComponent = {
     id: string;
@@ -16,6 +16,7 @@ type Modality = {
     cam1_filter_id?: string;
     cam2_filter_id?: string;
     associated_dyes?: string[];
+    is_default?: boolean;
 };
 
 interface ModalitiesManagerProps {
@@ -38,6 +39,7 @@ export function ModalitiesManager({ optics, dyes }: ModalitiesManagerProps) {
     const [newCam1Filter, setNewCam1Filter] = useState('');
     const [newCam2Filter, setNewCam2Filter] = useState('');
     const [newAssociatedDyes, setNewAssociatedDyes] = useState<string[]>([]);
+    const [newIsDefault, setNewIsDefault] = useState(false);
 
     const PRODUCTS = ['MN360', 'MN180', 'M90', 'M45'];
 
@@ -72,6 +74,7 @@ export function ModalitiesManager({ optics, dyes }: ModalitiesManagerProps) {
         setNewCam1Filter('');
         setNewCam2Filter('');
         setNewAssociatedDyes([]);
+        setNewIsDefault(false);
         setIsAdding(false);
         setEditId(null);
     };
@@ -83,6 +86,7 @@ export function ModalitiesManager({ optics, dyes }: ModalitiesManagerProps) {
         setNewCam1Filter(modality.cam1_filter_id || '');
         setNewCam2Filter(modality.cam2_filter_id || '');
         setNewAssociatedDyes(modality.associated_dyes || []);
+        setNewIsDefault(modality.is_default || false);
         setEditId(modality.id);
         setIsAdding(true);
         // Scroll to form ref instead of window top
@@ -114,7 +118,8 @@ export function ModalitiesManager({ optics, dyes }: ModalitiesManagerProps) {
                 splitter_id: newSplitter || null,
                 cam1_filter_id: newCam1Filter || null,
                 cam2_filter_id: newCam2Filter || null,
-                associated_dyes: newAssociatedDyes
+                associated_dyes: newAssociatedDyes,
+                is_default: newIsDefault
             };
 
             const res = await fetch(url, {
@@ -264,6 +269,18 @@ export function ModalitiesManager({ optics, dyes }: ModalitiesManagerProps) {
                             </div>
 
                         </div>
+
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="isDefault"
+                                checked={newIsDefault}
+                                onChange={(e) => setNewIsDefault(e.target.checked)}
+                                className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-primary focus:ring-primary"
+                            />
+                            <label htmlFor="isDefault" className="text-sm text-gray-300 select-none cursor-pointer">Set as Default Modality for {selectedProduct}</label>
+                        </div>
+
                         <div className="flex justify-end gap-2">
                             <button onClick={resetForm} disabled={isLoading} className="px-3 py-1.5 text-sm text-gray-400 hover:text-white disabled:opacity-50">Cancel</button>
                             <button onClick={handleSave} disabled={isLoading} className="flex items-center gap-2 bg-primary text-white px-3 py-1.5 rounded-lg text-sm disabled:opacity-50">
@@ -280,7 +297,10 @@ export function ModalitiesManager({ optics, dyes }: ModalitiesManagerProps) {
                     {modalities.map(m => (
                         <div key={m.id} className="bg-white/5 border border-white/10 p-3 rounded-lg flex items-center justify-between">
                             <div>
-                                <h3 className="font-semibold text-white">{m.name}</h3>
+                                <h3 className="font-semibold text-white flex items-center gap-2">
+                                    {m.name}
+                                    {m.is_default && <Star size={14} className="text-yellow-400 fill-yellow-400" />}
+                                </h3>
                                 <div className="text-xs text-gray-400 flex flex-wrap gap-2 mt-1">
                                     {m.dichroic_id && <span className="bg-white/5 px-2 py-0.5 rounded border border-white/10">Dichroic: {optics.find(o => o.id === m.dichroic_id)?.name}</span>}
                                     {m.splitter_id && <span className="bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 text-blue-200">Splitter: {optics.find(o => o.id === m.splitter_id)?.name}</span>}
