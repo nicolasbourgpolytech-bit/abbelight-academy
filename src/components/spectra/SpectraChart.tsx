@@ -706,7 +706,12 @@ export function SpectraChart() {
                     )}
 
                     {categories.map(category => {
-                        const categoryDyes = fluorophores.filter(f => f.category === category);
+                        const categoryDyes = fluorophores.filter(f => {
+                            if (f.category !== category) return false;
+                            if (f.type === 'Fluorescent Protein' && !showFluorescentProteins) return false;
+                            if (f.type !== 'Fluorescent Protein' && !showOrganicDyes) return false;
+                            return true;
+                        });
                         const isOpen = openCategories.includes(category);
 
                         return (
