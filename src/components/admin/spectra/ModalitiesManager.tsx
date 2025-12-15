@@ -19,9 +19,10 @@ type Modality = {
 
 interface ModalitiesManagerProps {
     optics: OpticalComponent[];
+    dyes: any[];
 }
 
-export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
+export function ModalitiesManager({ optics, dyes }: ModalitiesManagerProps) {
     const [modalities, setModalities] = useState<Modality[]>([]);
     const [selectedProduct, setSelectedProduct] = useState<string>('MN360');
     const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +36,7 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
     const [newSplitter, setNewSplitter] = useState('');
     const [newCam1Filter, setNewCam1Filter] = useState('');
     const [newCam2Filter, setNewCam2Filter] = useState('');
+    const [newAssociatedDyes, setNewAssociatedDyes] = useState<string[]>([]);
 
     const PRODUCTS = ['MN360', 'MN180', 'M90', 'M45'];
 
@@ -68,6 +70,7 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
         setNewSplitter('');
         setNewCam1Filter('');
         setNewCam2Filter('');
+        setNewAssociatedDyes([]);
         setIsAdding(false);
         setEditId(null);
     };
@@ -78,12 +81,21 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
         setNewSplitter(modality.splitter_id || '');
         setNewCam1Filter(modality.cam1_filter_id || '');
         setNewCam2Filter(modality.cam2_filter_id || '');
+        setNewAssociatedDyes(modality.associated_dyes || []);
         setEditId(modality.id);
         setIsAdding(true);
         // Scroll to form ref instead of window top
         setTimeout(() => {
             formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 100);
+    };
+
+    const toggleDyeSelection = (dyeId: string) => {
+        setNewAssociatedDyes(prev =>
+            prev.includes(dyeId)
+                ? prev.filter(id => id !== dyeId)
+                : [...prev, dyeId]
+        );
     };
 
     const handleSave = async () => {
@@ -99,7 +111,8 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
                 dichroic_id: newDichroic || null,
                 splitter_id: newSplitter || null,
                 cam1_filter_id: newCam1Filter || null,
-                cam2_filter_id: newCam2Filter || null
+                cam2_filter_id: newCam2Filter || null,
+                associated_dyes: newAssociatedDyes
             };
 
             const res = await fetch(url, {
@@ -219,6 +232,29 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
                                     </select>
                                 </div>
                             </div>
+
+                            {/* Associated Dyes Selection */}
+                            <div className="md:col-span-2">
+                                <label className="block text-xs text-gray-400 mb-1">Associated Dyes (Click to toggle)</label>
+                                <div className="flex flex-wrap gap-2 p-2 bg-black/20 border border-white/10 rounded max-h-40 overflow-y-auto">
+                                    {dyes.map(dye => {
+                                        const isSelected = newAssociatedDyes.includes(dye.id);
+                                        return (
+                                            <button
+                                                key={dye.id}
+                                                onClick={() => toggleDyeSelection(dye.id)}
+                                                className={`px-2 py-1 text-xs rounded-full border transition-colors ${isSelected
+                                                        ? 'bg-primary/20 border-primary text-white'
+                                                        : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                                                    }`}
+                                            >
+                                                {dye.name}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
                         </div>
                         <div className="flex justify-end gap-2">
                             <button onClick={resetForm} className="px-3 py-1.5 text-sm text-gray-400 hover:text-white">Cancel</button>
@@ -239,6 +275,13 @@ export function ModalitiesManager({ optics }: ModalitiesManagerProps) {
                                     {m.splitter_id && <span className="bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 text-blue-200">Splitter: {optics.find(o => o.id === m.splitter_id)?.name}</span>}
                                     {m.cam1_filter_id && <span className="bg-white/5 px-2 py-0.5 rounded border border-white/10">Cam T: {optics.find(o => o.id === m.cam1_filter_id)?.name}</span>}
                                     {m.cam2_filter_id && <span className="bg-white/5 px-2 py-0.5 rounded border border-white/10">Cam R: {optics.find(o => o.id === m.cam2_filter_id)?.name}</span>}
+
+                                    {/* Display Associated Dyes Count */}
+                                    {m.associated_dyes && m.associated_dyes.length > 0 && (
+                                        <span className="bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 text-purple-200">
+                                            {m.associated_dyes.length} Dyes Linked
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
