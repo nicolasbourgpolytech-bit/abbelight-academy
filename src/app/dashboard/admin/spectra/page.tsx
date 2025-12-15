@@ -118,9 +118,9 @@ export default function SpectraAdminPage() {
                                 <div key={cat} className="space-y-4">
                                     <h3 className="text-xl font-semibold border-b border-white/10 pb-2 flex items-center gap-2">
                                         <span className={`w-3 h-3 rounded-full ${cat === 'UV' ? 'bg-purple-400' :
-                                                cat === 'Blue' ? 'bg-blue-400' :
-                                                    cat === 'Green' ? 'bg-green-400' :
-                                                        cat === 'Red' ? 'bg-red-500' : 'bg-pink-600'
+                                            cat === 'Blue' ? 'bg-blue-400' :
+                                                cat === 'Green' ? 'bg-green-400' :
+                                                    cat === 'Red' ? 'bg-red-500' : 'bg-pink-600'
                                             }`} />
                                         {cat} Dyes
                                         <span className="text-sm font-normal text-gray-500 ml-2">({categoryDyes.length})</span>
@@ -160,7 +160,7 @@ export default function SpectraAdminPage() {
                             type="imaging_splitter"
                             title="Imaging Splitters (Cubes)"
                         />
-                        <ModalitiesManager optics={optics} />
+                        <ModalitiesManager optics={optics} dyes={dyes} />
                     </div>
                 </div>
             )}
