@@ -641,46 +641,48 @@ export function SpectraChart() {
                             </div>
                         </div>
                     )}
-                    <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
-                        <button
-                            onClick={() => toggleCategory('Splitters')}
-                            className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors"
-                        >
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-blue-400" />
-                                <span className="font-semibold text-sm">Imaging Splitters</span>
-                                <span className="text-xs text-gray-500">({imagingSplitters.length})</span>
-                            </div>
-                            <svg
-                                className={`w-4 h-4 text-gray-400 transition-transform ${openCategories.includes('Splitters') ? 'rotate-180' : ''}`}
-                                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    {/* Imaging Splitters (Cubes) Section */}
+                    {hasSplitter && imagingSplitters.length > 0 && (
+                        <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
+                            <button
+                                onClick={() => toggleCategory('Splitters')}
+                                className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors"
                             >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-blue-400" />
+                                    <span className="font-semibold text-sm">Imaging Splitters</span>
+                                    <span className="text-xs text-gray-500">({imagingSplitters.length})</span>
+                                </div>
+                                <svg
+                                    className={`w-4 h-4 text-gray-400 transition-transform ${openCategories.includes('Splitters') ? 'rotate-180' : ''}`}
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
 
-                        {openCategories.includes('Splitters') && (
-                            <div className="p-2 space-y-1">
-                                {imagingSplitters.map(splitter => (
-                                    <button
-                                        key={splitter.id}
-                                        onClick={() => toggleImagingSplitter(splitter.id)}
-                                        className={`
+                            {openCategories.includes('Splitters') && (
+                                <div className="p-2 space-y-1">
+                                    {imagingSplitters.map(splitter => (
+                                        <button
+                                            key={splitter.id}
+                                            onClick={() => toggleImagingSplitter(splitter.id)}
+                                            className={`
                                                 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all text-xs
                                                 ${splitter.visible
-                                                ? 'bg-blue-500/20 text-blue-200 border border-blue-500/30'
-                                                : 'text-gray-400 hover:bg-white/5 hover:text-white'}
+                                                    ? 'bg-blue-500/20 text-blue-200 border border-blue-500/30'
+                                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'}
                                             `}
-                                    >
-                                        <div className="w-4 h-4 flex items-center justify-center">
-                                            {splitter.visible && <div className="w-2 h-2 rounded-full bg-blue-400" />}
-                                        </div>
-                                        <span className="truncate flex-1">{splitter.name}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                                        >
+                                            <div className="w-4 h-4 flex items-center justify-center">
+                                                {splitter.visible && <div className="w-2 h-2 rounded-full bg-blue-400" />}
+                                            </div>
+                                            <span className="truncate flex-1">{splitter.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     )}
 
                     {/* SAFe Optics Section */}
