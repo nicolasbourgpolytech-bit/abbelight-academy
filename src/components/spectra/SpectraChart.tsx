@@ -215,12 +215,14 @@ export function SpectraChart() {
         setDichroics(prev => prev.map(o =>
             o.id === id ? { ...o, visible: !o.visible } : o
         ));
+        setSelectedModalityId('');
     };
 
     const toggleImagingSplitter = (id: string) => {
         setImagingSplitters(prev => prev.map(s =>
             s.id === id ? { ...s, visible: !s.visible } : { ...s, visible: false }
         ));
+        setSelectedModalityId('');
     };
 
     const toggleCategory = (category: string) => {
@@ -608,7 +610,10 @@ export function SpectraChart() {
                             </label>
                             <select
                                 value={cam1FilterId}
-                                onChange={(e) => setCam1FilterId(e.target.value)}
+                                onChange={(e) => {
+                                    setCam1FilterId(e.target.value);
+                                    setSelectedModalityId('');
+                                }}
                                 className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[200px]"
                             >
                                 {emissionFilters.map(f => (
@@ -625,7 +630,10 @@ export function SpectraChart() {
                                     <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Reflection Camera (Cam R)</label>
                                     <select
                                         value={cam2FilterId}
-                                        onChange={(e) => setCam2FilterId(e.target.value)}
+                                        onChange={(e) => {
+                                            setCam2FilterId(e.target.value);
+                                            setSelectedModalityId('');
+                                        }}
                                         className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[200px]"
                                     >
                                         {emissionFilters.map(f => (
