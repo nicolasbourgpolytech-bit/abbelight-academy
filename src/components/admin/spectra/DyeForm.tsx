@@ -27,23 +27,6 @@ export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
     const [excitationData, setExcitationData] = useState<any[]>(initialData?.excitation_data || []);
     const [emissionData, setEmissionData] = useState<any[]>(initialData?.emission_data || []);
 
-    const wavelengthToColor = (wavelength: number): string => {
-        // ... (lines 29-224 omitted for brevity in replacement, but I must match exact target content)
-        // Wait, I cannot omit lines in ReplacementContent if I target a large block.
-        // I should break this into chunks.
-    };
-
-    // I will do 2 separate edits. One for state, one for submit payload, one for JSX.
-    // Actually, let's just do state and payload in one if they are close, or separate.
-    // State is at top. Payload is in handleSubmit.
-
-    // Edit 1: State
-    // Edit 2: Payload
-    // Edit 3: JSX
-
-    // Let's restart tool calls with correct strategy.
-
-    // RETRYING WITH chunked strategy.
 
 
     const wavelengthToColor = (wavelength: number): string => {
