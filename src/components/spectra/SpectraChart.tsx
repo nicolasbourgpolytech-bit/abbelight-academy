@@ -617,18 +617,7 @@ export function SpectraChart() {
                 {/* Categories Sidebar */}
                 <div className="w-full lg:w-72 flex flex-col gap-3 pr-1">
 
-                    const hasSplitter = !['M45', 'MN180'].includes(selectedProduct);
 
-                    // ... (rest of code)
-
-                    return (
-                    // ...
-                    {/* Imaging Splitters (Cubes) Section */}
-                    {hasSplitter && imagingSplitters.length > 0 && (
-                        <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
-                            {/* ... content ... */}
-                        </div>
-                    )}
 
         // ...
 
