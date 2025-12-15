@@ -1146,8 +1146,9 @@ export function SpectraChart() {
                             </ResponsiveContainer>
                         </div>
 
-                        {/* Hidden Report Component - Always Rendered but Hidden */}
-                        <div style={{ position: 'fixed', left: '-9999px', top: 0, overflow: 'hidden', height: 0, width: 0 }}>
+                        {/* Hidden Report Component - Rendered "Behind" the app for screenshotting */}
+                        {/* Using z-index -50 and fixed position ensures it's painted by the browser but not visible to user */}
+                        <div style={{ position: 'fixed', left: 0, top: 0, zIndex: -50, visibility: 'visible' }}>
                             <SpectraReport
                                 ref={reportRef}
                                 chartData={chartData}
