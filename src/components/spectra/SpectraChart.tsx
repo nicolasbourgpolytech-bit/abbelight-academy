@@ -155,14 +155,18 @@ export function SpectraChart() {
     };
 
     // Add effect to apply default modality when modalities are loaded
+    // Add effect to apply default modality when modalities are loaded or product changes
     useEffect(() => {
-        if (modalities.length > 0 && selectedProduct === 'MN360' && !selectedModalityId) {
-            const defaultModality = modalities.find(m => m.name === "Far-red spectral demixing" && m.product === 'MN360');
+        // Only auto-select if no modality is currently selected (or if we just switched products and want to set the default)
+        if (modalities.length > 0 && !selectedModalityId) {
+            // Find default for current product
+            const defaultModality = modalities.find(m => m.product === selectedProduct && m.is_default);
+
             if (defaultModality) {
                 applyModality(defaultModality.id);
             }
         }
-    }, [modalities, selectedProduct]);
+    }, [modalities, selectedProduct, selectedModalityId]);
 
     const toggleFluorophore = (id: string) => {
         setFluorophores(prev => prev.map(f =>
