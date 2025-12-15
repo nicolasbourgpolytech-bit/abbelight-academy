@@ -25,15 +25,15 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { name, product, dichroic_id, splitter_id, cam1_filter_id, cam2_filter_id } = body;
+        const { name, product, dichroic_id, splitter_id, cam1_filter_id, cam2_filter_id, associated_dyes } = body;
 
         if (!name || !product) {
             return NextResponse.json({ error: 'Name and Product are required' }, { status: 400 });
         }
 
         const result = await sql`
-            INSERT INTO imaging_modalities (name, product, dichroic_id, splitter_id, cam1_filter_id, cam2_filter_id)
-            VALUES (${name}, ${product}, ${dichroic_id || null}, ${splitter_id || null}, ${cam1_filter_id || null}, ${cam2_filter_id || null})
+            INSERT INTO imaging_modalities (name, product, dichroic_id, splitter_id, cam1_filter_id, cam2_filter_id, associated_dyes)
+            VALUES (${name}, ${product}, ${dichroic_id || null}, ${splitter_id || null}, ${cam1_filter_id || null}, ${cam2_filter_id || null}, ${JSON.stringify(associated_dyes || [])}::jsonb)
             RETURNING *;
         `;
 
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
     try {
         const body = await request.json();
-        const { id, name, product, dichroic_id, splitter_id, cam1_filter_id, cam2_filter_id } = body;
+        const { id, name, product, dichroic_id, splitter_id, cam1_filter_id, cam2_filter_id, associated_dyes } = body;
 
         if (!id || !name || !product) {
             return NextResponse.json({ error: 'ID, Name and Product are required' }, { status: 400 });
@@ -60,7 +60,8 @@ export async function PUT(request: Request) {
                 dichroic_id = ${dichroic_id || null}, 
                 splitter_id = ${splitter_id || null}, 
                 cam1_filter_id = ${cam1_filter_id || null}, 
-                cam2_filter_id = ${cam2_filter_id || null}
+                cam2_filter_id = ${cam2_filter_id || null},
+                associated_dyes = ${JSON.stringify(associated_dyes || [])}::jsonb
             WHERE id = ${id}
             RETURNING *;
         `;
