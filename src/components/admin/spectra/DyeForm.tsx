@@ -249,7 +249,10 @@ export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
                 body: JSON.stringify(payload)
             });
 
-            if (!res.ok) throw new Error("Failed to save");
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Failed to save");
+            }
 
             onSubmit();
         } catch (err: any) {
