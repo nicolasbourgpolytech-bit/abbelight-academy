@@ -51,7 +51,7 @@ export const SpectraReport = React.forwardRef<HTMLDivElement, ReportProps>(({
     const cam1FilterName = emissionFilters.find(f => f.id === cam1FilterId)?.name || 'None';
     const cam2FilterName = emissionFilters.find(f => f.id === cam2FilterId)?.name || 'None';
 
-    const isDual = ['M90', 'MN360'].includes(product?.name || '');
+    const isDual = (product?.name || '').includes('M90') || (product?.name || '').includes('MN360');
 
     return (
         <div
