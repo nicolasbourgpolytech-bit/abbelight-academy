@@ -455,8 +455,16 @@ export function SpectraChart() {
                     <select
                         value={selectedProduct}
                         onChange={(e) => {
-                            setSelectedProduct(e.target.value);
+                            const newProduct = e.target.value;
+                            setSelectedProduct(newProduct);
                             setSelectedModalityId(''); // Reset modality on product change
+
+                            // Reset splitters and view for single-camera systems
+                            if (['M45', 'MN180'].includes(newProduct)) {
+                                setImagingSplitters(prev => prev.map(s => ({ ...s, visible: false })));
+                                setIsCompareMode(false);
+                                setActiveCameraView('cam1');
+                            }
                         }}
                         className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[140px]"
                     >
