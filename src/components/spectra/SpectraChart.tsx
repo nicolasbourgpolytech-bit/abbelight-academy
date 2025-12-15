@@ -219,6 +219,14 @@ export function SpectraChart() {
         // Apply Filters
         if (modality.cam1_filter_id) setCam1FilterId(modality.cam1_filter_id);
         if (modality.cam2_filter_id) setCam2FilterId(modality.cam2_filter_id);
+
+        // Apply Associated Dyes
+        if (modality.associated_dyes && modality.associated_dyes.length > 0) {
+            setFluorophores(prev => prev.map(f => ({
+                ...f,
+                visible: modality.associated_dyes.includes(f.id)
+            })));
+        }
     };
 
     // --- Calculation Helpers ---
