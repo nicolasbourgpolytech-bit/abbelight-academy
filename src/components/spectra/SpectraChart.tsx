@@ -155,6 +155,12 @@ export function SpectraChart() {
         ));
     };
 
+    const toggleImagingSplitter = (id: string) => {
+        setImagingSplitters(prev => prev.map(s =>
+            s.id === id ? { ...s, visible: !s.visible } : { ...s, visible: false }
+        ));
+    };
+
     const toggleCategory = (category: string) => {
         setOpenCategories(prev =>
             prev.includes(category)
@@ -631,13 +637,7 @@ export function SpectraChart() {
                                     {imagingSplitters.map(splitter => (
                                         <button
                                             key={splitter.id}
-                                            onClick={() => {
-                                                // Toggle logic for splitters (maybe radio behavior? For now toggle)
-                                                // Actually logic needs update to setImagingSplitters visibility
-                                                setImagingSplitters(prev => prev.map(s =>
-                                                    s.id === splitter.id ? { ...s, visible: !s.visible } : s
-                                                ));
-                                            }}
+                                            onClick={() => toggleImagingSplitter(splitter.id)}
                                             className={`
                                                 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all text-xs
                                                 ${splitter.visible
