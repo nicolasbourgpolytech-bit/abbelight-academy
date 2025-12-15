@@ -49,7 +49,7 @@ export function SpectraChart() {
     const [showExcitation, setShowExcitation] = useState(false); // Default hidden as requested
     const [showEmission, setShowEmission] = useState(true);
 
-    const [activeTab, setActiveTab] = useState<'raw' | 'detected'>('raw');
+    const [activeTab, setActiveTab] = useState<'raw' | 'detected'>('detected');
 
     // Product Configuration
     const [selectedProduct, setSelectedProduct] = useState<string>('MN360'); // Default to MN360
@@ -65,7 +65,7 @@ export function SpectraChart() {
     const [cam1FilterId, setCam1FilterId] = useState<string>('');
     const [cam2FilterId, setCam2FilterId] = useState<string>('');
     const [activeCameraView, setActiveCameraView] = useState<'cam1' | 'cam2'>('cam1');
-    const [isCompareMode, setIsCompareMode] = useState(false);
+    const [isCompareMode, setIsCompareMode] = useState(true);
 
     // Wavelength Range Controls
     const [minWavelength, setMinWavelength] = useState<number>(400); // Default 400nm
