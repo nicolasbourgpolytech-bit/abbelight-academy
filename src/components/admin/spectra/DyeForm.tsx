@@ -347,76 +347,64 @@ export function DyeForm({ initialData, onSubmit, onCancel }: DyeFormProps) {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 pt-4">
-                    <input
-                        type="checkbox"
-                        id="isDefault"
-                        checked={isDefault}
-                        onChange={e => setIsDefault(e.target.checked)}
-                        className="w-5 h-5 rounded border-white/10 bg-black/40 text-primary focus:ring-primary"
-                    />
-                    <label htmlFor="isDefault" className="text-sm font-medium text-gray-300">
-                        Show by default in Spectra Viewer
-                    </label>
-                </div>
-            </div>
 
-            <div className="border border-white/10 rounded-xl p-4">
-                <div className="flex gap-4 border-b border-white/10 pb-4 mb-4">
+
+                <div className="border border-white/10 rounded-xl p-4">
+                    <div className="flex gap-4 border-b border-white/10 pb-4 mb-4">
+                        <button
+                            type="button"
+                            onClick={() => setMode('csv')}
+                            className={`text-sm font-medium pb-1 ${mode === 'csv' ? 'text-primary border-b-2 border-primary' : 'text-gray-400'}`}
+                        >
+                            CSV Upload
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setMode('manual')}
+                            className={`text-sm font-medium pb-1 ${mode === 'manual' ? 'text-primary border-b-2 border-primary' : 'text-gray-400'}`}
+                        >
+                            Manual Entry (TBD)
+                        </button>
+                    </div>
+
+                    {mode === 'csv' ? (
+                        <div className="space-y-4">
+                            <p className="text-sm text-gray-400">Upload a CSV file with columns: <code>Wavelength</code>, <code>Excitation</code>, <code>Emission</code>.</p>
+                            <input
+                                type="file"
+                                accept=".csv"
+                                onChange={handleFileChange}
+                                className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/20 file:text-primary hover:file:bg-primary/30"
+                            />
+                            {excitationData.length > 0 && (
+                                <div className="text-green-400 text-sm">
+                                    Successfully loaded {excitationData.length} data points.
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="p-4 text-center text-gray-500 italic">
+                            Manual data entry not implemented yet. Please use CSV.
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
                     <button
                         type="button"
-                        onClick={() => setMode('csv')}
-                        className={`text-sm font-medium pb-1 ${mode === 'csv' ? 'text-primary border-b-2 border-primary' : 'text-gray-400'}`}
+                        onClick={onCancel}
+                        className="px-4 py-2 rounded-lg text-gray-400 hover:text-white"
                     >
-                        CSV Upload
+                        Cancel
                     </button>
                     <button
-                        type="button"
-                        onClick={() => setMode('manual')}
-                        className={`text-sm font-medium pb-1 ${mode === 'manual' ? 'text-primary border-b-2 border-primary' : 'text-gray-400'}`}
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="bg-primary hover:bg-primary/80 text-white px-6 py-2 rounded-lg font-medium disabled:opacity-50"
                     >
-                        Manual Entry (TBD)
+                        {isSubmitting ? 'Saving...' : 'Save Dye'}
                     </button>
                 </div>
-
-                {mode === 'csv' ? (
-                    <div className="space-y-4">
-                        <p className="text-sm text-gray-400">Upload a CSV file with columns: <code>Wavelength</code>, <code>Excitation</code>, <code>Emission</code>.</p>
-                        <input
-                            type="file"
-                            accept=".csv"
-                            onChange={handleFileChange}
-                            className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/20 file:text-primary hover:file:bg-primary/30"
-                        />
-                        {excitationData.length > 0 && (
-                            <div className="text-green-400 text-sm">
-                                Successfully loaded {excitationData.length} data points.
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    <div className="p-4 text-center text-gray-500 italic">
-                        Manual data entry not implemented yet. Please use CSV.
-                    </div>
-                )}
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    className="px-4 py-2 rounded-lg text-gray-400 hover:text-white"
-                >
-                    Cancel
-                </button>
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="bg-primary hover:bg-primary/80 text-white px-6 py-2 rounded-lg font-medium disabled:opacity-50"
-                >
-                    {isSubmitting ? 'Saving...' : 'Save Dye'}
-                </button>
-            </div>
         </form>
     );
 }

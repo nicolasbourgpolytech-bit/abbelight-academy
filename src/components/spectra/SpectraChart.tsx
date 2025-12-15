@@ -106,7 +106,7 @@ export function SpectraChart() {
                 const mapped = data.map((d: any) => ({
                     ...d,
                     type: d.type || 'Organic Dye', // Default if missing
-                    visible: d.is_default !== undefined ? d.is_default : ['DAPI', 'Alexa Fluor 488'].includes(d.name)
+                    visible: false
                 }));
                 setFluorophores(mapped);
             }
