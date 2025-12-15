@@ -165,17 +165,16 @@ export function SpectraChart() {
 
     const handleExport = async () => {
         setIsExporting(true);
-        // Allow render cycle to populate report - reduced timeout as it's always mounted
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // Allow render cycle to populate report - wait longer to ensure fonts/svgs render
+        // Showing it on screen as an overlay ensures browser paints it.
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         try {
             if (reportRef.current) {
-                // Use html-to-image on the hidden report component
                 const dataUrl = await toPng(reportRef.current, {
                     cacheBust: true,
                     backgroundColor: '#ffffff',
-                    width: 1000, // Explicitly set dimensions
-                    height: reportRef.current.scrollHeight || 1200
+                    width: 1000,
                 });
 
                 const downloadLink = document.createElement('a');
@@ -1146,24 +1145,42 @@ export function SpectraChart() {
                             </ResponsiveContainer>
                         </div>
 
-                        {/* Hidden Report Component - Rendered "Behind" the app for screenshotting */}
-                        {/* Using z-index -50 and fixed position ensures it's painted by the browser but not visible to user */}
-                        <div style={{ position: 'fixed', left: 0, top: 0, zIndex: -50, visibility: 'visible' }}>
-                            <SpectraReport
-                                ref={reportRef}
-                                chartData={chartData}
-                                product={selectedProductData}
-                                modalityName={modalities.find(m => m.id === selectedModalityId)?.name}
-                                fluorophores={fluorophores}
-                                dichroics={dichroics}
-                                emissionFilters={emissionFilters}
-                                imagingSplitters={imagingSplitters}
-                                cam1FilterId={cam1FilterId}
-                                cam2FilterId={cam2FilterId}
-                                minWavelength={minWavelength}
-                                maxWavelength={maxWavelength}
-                                efficiencyMetrics={efficiencyMetrics}
-                            />
+                        {/* Hidden Report Component - Rendered as Overlay during Export */}
+                        <div
+                            style={{
+                                position: 'fixed',
+                                left: 0,
+                                top: 0,
+                                zIndex: isExporting ? 9999 : -50, // Bring to front when exporting 
+                                opacity: isExporting ? 1 : 0,     // Make visible when exporting
+                                pointerEvents: 'none',            // Never capture clicks
+                                width: '100vw',
+                                height: '100vh',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: 'rgba(0,0,0,0.8)'     // Dim background
+                            }}
+                        >
+                            {/* The actual report container */}
+                            <div className="relative">
+                                {isExporting && <div className="absolute -top-10 left-0 w-full text-center text-white font-bold">Generating Report...</div>}
+                                <SpectraReport
+                                    ref={reportRef}
+                                    chartData={chartData}
+                                    product={selectedProductData}
+                                    modalityName={modalities.find(m => m.id === selectedModalityId)?.name}
+                                    fluorophores={fluorophores}
+                                    dichroics={dichroics}
+                                    emissionFilters={emissionFilters}
+                                    imagingSplitters={imagingSplitters}
+                                    cam1FilterId={cam1FilterId}
+                                    cam2FilterId={cam2FilterId}
+                                    minWavelength={minWavelength}
+                                    maxWavelength={maxWavelength}
+                                    efficiencyMetrics={efficiencyMetrics}
+                                />
+                            </div>
                         </div>
 
                         {/* Metrics Sidebar (Right Side) */}
