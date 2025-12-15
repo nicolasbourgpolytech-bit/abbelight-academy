@@ -248,7 +248,47 @@ export const SpectraReport = React.forwardRef<HTMLDivElement, ReportProps>(({
                             />
                         )}
 
-                        <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                        <Legend
+                            content={(props) => {
+                                const { payload } = props;
+                                return (
+                                    <div className="flex flex-wrap justify-center gap-4 pt-4 text-xs">
+                                        {payload?.map((entry, index) => {
+                                            const value = entry.value || '';
+                                            const isCamR = value.includes('(Reflection)');
+                                            const isSplitter = value.includes('Splitter');
+                                            const isFilter = value.includes('Filter');
+                                            const isDichroic = value.includes('Dichroic') || (value && !isCamR && !isSplitter && !isFilter && !value.includes('(Em)'));
+
+                                            // Determine border style based on type
+                                            let borderStyle = 'solid';
+                                            if (isCamR) borderStyle = 'dotted';
+                                            if (isSplitter) borderStyle = 'dashed';
+
+                                            // Clean up name for display
+                                            let displayName = value;
+                                            if (displayName.includes('(Em)')) displayName = displayName.replace('(Em)', '(Cam T)');
+                                            if (displayName.includes('(Reflection)')) displayName = displayName.replace('(Reflection)', '(Cam R)');
+
+                                            return (
+                                                <div key={`item-${index}`} className="flex items-center gap-1.5">
+                                                    <div
+                                                        style={{
+                                                            width: 12,
+                                                            height: 12,
+                                                            borderRadius: '50%',
+                                                            border: `2px ${borderStyle} ${entry.color}`,
+                                                            backgroundColor: 'transparent' // User asked for "outline", implies no fill or separate fill
+                                                        }}
+                                                    />
+                                                    <span className="text-gray-700 font-medium">{displayName}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            }}
+                        />
                     </ComposedChart>
                 </ResponsiveContainer>
             </div>
