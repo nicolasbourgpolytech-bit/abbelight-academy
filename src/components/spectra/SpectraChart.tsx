@@ -643,7 +643,7 @@ export function SpectraChart() {
                             </div>
                         </>
                     )}
-                )}
+
                 </div>
             </div>
 
