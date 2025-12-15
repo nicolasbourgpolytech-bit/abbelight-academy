@@ -57,7 +57,7 @@ export const SpectraReport = React.forwardRef<HTMLDivElement, ReportProps>(({
         <div
             ref={ref}
             className="w-[1000px] bg-white p-8 flex flex-col gap-6 text-black font-sans"
-            style={{ position: 'absolute', top: -10000, left: -10000 }} // Hidden from view but renderable
+        // Style removed: positioning is now handled by the parent container in SpectraChart.tsx
         >
             {/* Header: Title & Logo/Product */}
             <div className="flex justify-between items-start border-b border-gray-200 pb-6">
