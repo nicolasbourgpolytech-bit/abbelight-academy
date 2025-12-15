@@ -448,6 +448,8 @@ export function SpectraChart() {
         });
     }, [fluorophores, dichroics, emissionFilters, imagingSplitters, activeTab, showExcitation, activeCameraView, cam1FilterId, cam2FilterId, isCompareMode, selectedProduct]);
 
+    const categories = ['UV', 'Blue', 'Green', 'Red', 'Far-red'];
+
     const category = fluorophores.find(f => f.category === 'Blue') ? 'Blue' : 'UV';
 
     const hasSplitter = !['M45', 'MN180'].includes(selectedProduct);
