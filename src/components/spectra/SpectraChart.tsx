@@ -455,12 +455,7 @@ export function SpectraChart() {
     const hasSplitter = !['M45', 'MN180'].includes(selectedProduct);
     const selectedProductData = products.find(p => p.name.includes(selectedProduct));
 
-    console.log('SpectraChart Debug:', {
-        selectedProduct,
-        productsCount: products.length,
-        foundProduct: selectedProductData,
-        products: products
-    });
+
 
     if (!isMounted || isLoading) return <div className="h-full flex items-center justify-center text-white">Loading spectra...</div>;
 
