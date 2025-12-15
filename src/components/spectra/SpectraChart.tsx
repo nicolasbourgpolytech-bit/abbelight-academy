@@ -203,7 +203,9 @@ export function SpectraChart() {
                 applyModality(defaultModality.id);
             }
         }
-    }, [modalities, selectedProduct, selectedModalityId]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [modalities, selectedProduct]);
+
 
     const toggleFluorophore = (id: string) => {
         setFluorophores(prev => prev.map(f =>
