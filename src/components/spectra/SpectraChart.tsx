@@ -438,7 +438,7 @@ export function SpectraChart() {
         });
     }, [fluorophores, dichroics, emissionFilters, imagingSplitters, activeTab, showExcitation, activeCameraView, cam1FilterId, cam2FilterId, isCompareMode, selectedProduct]);
 
-    const categories = ['UV', 'Green', 'Red', 'Far-red'];
+    const categories = ['UV', 'Blue', 'Green', 'Red', 'Far-red'];
 
     const hasSplitter = !['M45', 'MN180'].includes(selectedProduct);
 
@@ -719,7 +719,7 @@ export function SpectraChart() {
                                     className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors"
                                 >
                                     <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${category === 'UV' ? 'bg-purple-400' : category === 'Green' ? 'bg-green-400' : category === 'Red' ? 'bg-red-500' : 'bg-pink-600'}`} />
+                                        <div className={`w-2 h-2 rounded-full ${category === 'UV' ? 'bg-purple-400' : category === 'Blue' ? 'bg-blue-400' : category === 'Green' ? 'bg-green-400' : category === 'Red' ? 'bg-red-500' : 'bg-pink-600'}`} />
                                         <span className="font-semibold text-sm">{category}</span>
                                         <span className="text-xs text-gray-500">({categoryDyes.length})</span>
                                     </div>
