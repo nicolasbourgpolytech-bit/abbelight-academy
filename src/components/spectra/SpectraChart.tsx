@@ -142,6 +142,11 @@ export function SpectraChart() {
                 const data = await modalitiesRes.json();
                 setModalities(data);
             }
+
+            if (productsRes.ok) {
+                const data = await productsRes.json();
+                setProducts(data);
+            }
         } catch (e) {
             console.error(e);
         } finally {
