@@ -222,7 +222,10 @@ export function SpectraChart() {
         // If multiple are visible, maybe they cascade? Let's assume the first visible one is THE splitter.
         const activeSplitter = imagingSplitters.find(s => s.visible);
 
-        if (!activeSplitter) return 1.0; // No splitter = 100% transmission (or 50/50? Usually if no cube, path is clear? Let's assume 100%)
+        if (!activeSplitter) {
+            // No splitter: Cam1 (Transmitted) gets 100%, Cam2 (Reflected) gets 0%
+            return camera === 'cam1' ? 1.0 : 0.0;
+        }
 
         const point = activeSplitter.data.find(p => p.wavelength === wavelength);
         const T = point ? point.value : 0; // Transmission
