@@ -434,6 +434,8 @@ export function SpectraChart() {
 
     const categories = ['UV', 'Green', 'Red', 'Far-red'];
 
+    const hasSplitter = !['M45', 'MN180'].includes(selectedProduct);
+
     if (!isMounted || isLoading) return <div className="h-full flex items-center justify-center text-white">Loading spectra...</div>;
 
     return (
@@ -615,48 +617,70 @@ export function SpectraChart() {
                 {/* Categories Sidebar */}
                 <div className="w-full lg:w-72 flex flex-col gap-3 pr-1">
 
-                    {/* Imaging Splitters (Cubes) Section */}
-                    {imagingSplitters.length > 0 && (
-                        <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
-                            <button
-                                onClick={() => toggleCategory('Splitters')}
-                                className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-blue-400" />
-                                    <span className="font-semibold text-sm">Imaging Splitters</span>
-                                    <span className="text-xs text-gray-500">({imagingSplitters.length})</span>
-                                </div>
-                                <svg
-                                    className={`w-4 h-4 text-gray-400 transition-transform ${openCategories.includes('Splitters') ? 'rotate-180' : ''}`}
-                                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
+                    const hasSplitter = !['M45', 'MN180'].includes(selectedProduct);
 
-                            {openCategories.includes('Splitters') && (
-                                <div className="p-2 space-y-1">
-                                    {imagingSplitters.map(splitter => (
-                                        <button
-                                            key={splitter.id}
-                                            onClick={() => toggleImagingSplitter(splitter.id)}
-                                            className={`
+                    // ... (rest of code)
+
+                    return (
+                    // ...
+                    {/* Imaging Splitters (Cubes) Section */}
+                    {hasSplitter && imagingSplitters.length > 0 && (
+                        <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
+                            {/* ... content ... */}
+                        </div>
+                    )}
+
+        // ...
+
+                    {/* Warning Overlay if Cam R is relevant but no Splitter active */}
+                    {(hasSplitter && (activeCameraView === 'cam2' || isCompareMode) && !imagingSplitters.some(s => s.visible)) && (
+                        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+                            <div className="bg-black/80 backdrop-blur-md border border-white/20 px-6 py-3 rounded-xl text-white font-medium flex items-center gap-3 animate-in fade-in zoom-in duration-300">
+                                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                                <span>Add Imaging Splitter to detect signal on Cam R</span>
+                            </div>
+                        </div>
+                    )}
+                    <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
+                        <button
+                            onClick={() => toggleCategory('Splitters')}
+                            className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-blue-400" />
+                                <span className="font-semibold text-sm">Imaging Splitters</span>
+                                <span className="text-xs text-gray-500">({imagingSplitters.length})</span>
+                            </div>
+                            <svg
+                                className={`w-4 h-4 text-gray-400 transition-transform ${openCategories.includes('Splitters') ? 'rotate-180' : ''}`}
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        {openCategories.includes('Splitters') && (
+                            <div className="p-2 space-y-1">
+                                {imagingSplitters.map(splitter => (
+                                    <button
+                                        key={splitter.id}
+                                        onClick={() => toggleImagingSplitter(splitter.id)}
+                                        className={`
                                                 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all text-xs
                                                 ${splitter.visible
-                                                    ? 'bg-blue-500/20 text-blue-200 border border-blue-500/30'
-                                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'}
+                                                ? 'bg-blue-500/20 text-blue-200 border border-blue-500/30'
+                                                : 'text-gray-400 hover:bg-white/5 hover:text-white'}
                                             `}
-                                        >
-                                            <div className="w-4 h-4 flex items-center justify-center">
-                                                {splitter.visible && <div className="w-2 h-2 rounded-full bg-blue-400" />}
-                                            </div>
-                                            <span className="truncate flex-1">{splitter.name}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                                    >
+                                        <div className="w-4 h-4 flex items-center justify-center">
+                                            {splitter.visible && <div className="w-2 h-2 rounded-full bg-blue-400" />}
+                                        </div>
+                                        <span className="truncate flex-1">{splitter.name}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                     )}
 
                     {/* SAFe Optics Section */}
@@ -770,7 +794,7 @@ export function SpectraChart() {
                         {/* Chart Component */}
                         <div className="flex-1 min-w-0 h-full relative">
                             {/* Warning Overlay if Cam R is relevant but no Splitter active */}
-                            {((activeCameraView === 'cam2' || isCompareMode) && !imagingSplitters.some(s => s.visible)) && (
+                            {(hasSplitter && (activeCameraView === 'cam2' || isCompareMode) && !imagingSplitters.some(s => s.visible)) && (
                                 <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
                                     <div className="bg-black/80 backdrop-blur-md border border-white/20 px-6 py-3 rounded-xl text-white font-medium flex items-center gap-3 animate-in fade-in zoom-in duration-300">
                                         <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
