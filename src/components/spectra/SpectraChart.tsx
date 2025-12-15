@@ -161,7 +161,7 @@ export function SpectraChart() {
     const handleExport = async () => {
         setIsExporting(true);
         // Allow render cycle to update styles (Dark -> Light)
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 500)); // Increased timeout for stability
 
         try {
             if (chartContainerRef.current) {
@@ -172,6 +172,11 @@ export function SpectraChart() {
                     // Serialize SVG
                     const serializer = new XMLSerializer();
                     let svgString = serializer.serializeToString(svgElement);
+
+                    // Add NameSpace if missing (Required for Image Source)
+                    if (!svgString.match(/^<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)) {
+                        svgString = svgString.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+                    }
 
                     // Create Canvas
                     const canvas = document.createElement('canvas');
@@ -923,7 +928,7 @@ export function SpectraChart() {
                         <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none rounded-2xl" />
 
                         {/* Chart Component */}
-                        <div className="flex-1 min-w-0 h-full relative">
+                        <div className="flex-1 min-w-0 h-full relative" ref={chartContainerRef}>
                             {/* Warning Overlay if Cam R is relevant but no Splitter active */}
                             {(hasSplitter && (activeCameraView === 'cam2' || isCompareMode) && !imagingSplitters.some(s => s.visible)) && (
                                 <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
@@ -934,229 +939,227 @@ export function SpectraChart() {
                                 </div>
                             )}
 
-                            <ResponsiveContainer width="100%" height="100%" ref={isExporting ? undefined : undefined}>
-                                <div ref={chartContainerRef} className="w-full h-full">
-                                    <ComposedChart
-                                        data={chartData}
-                                        margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
-                                    >
-                                        <CartesianGrid
-                                            strokeDasharray="3 3"
-                                            stroke={isExporting ? "#e5e7eb" : "#ffffff10"}
-                                            vertical={false}
-                                        />
-                                        <XAxis
-                                            dataKey="wavelength"
-                                            type="number"
-                                            domain={[minWavelength, maxWavelength]}
-                                            allowDataOverflow={true}
-                                            tick={{ fill: isExporting ? '#000000' : '#6B7280', fontSize: 10 }}
-                                            tickLine={false}
-                                            axisLine={{ stroke: isExporting ? '#000000' : '#ffffff20' }}
-                                            label={{ value: 'Wavelength (nm)', position: 'insideBottom', offset: -10, fill: isExporting ? '#000000' : '#9CA3AF', fontSize: 10 }}
-                                        />
-                                        <YAxis hide domain={[0, 1.1]} />
-                                        <Tooltip
-                                            content={({ active, payload, label }) => {
-                                                if (active && payload && payload.length) {
-                                                    // Grouping logic
-                                                    const fluorophores = payload.filter((p: any) => p.dataKey.includes('_ex') || p.dataKey.includes('_em'));
-                                                    const optics = payload.filter((p: any) => p.dataKey.includes('_optic') || p.dataKey.includes('_splitter'));
-                                                    const filters = payload.filter((p: any) => p.dataKey.includes('active_filter') || p.dataKey.includes('secondary_filter'));
+                            <ResponsiveContainer width="100%" height="100%">
+                                <ComposedChart
+                                    data={chartData}
+                                    margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                                >
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                        stroke={isExporting ? "#e5e7eb" : "#ffffff10"}
+                                        vertical={false}
+                                    />
+                                    <XAxis
+                                        dataKey="wavelength"
+                                        type="number"
+                                        domain={[minWavelength, maxWavelength]}
+                                        allowDataOverflow={true}
+                                        tick={{ fill: isExporting ? '#000000' : '#6B7280', fontSize: 10 }}
+                                        tickLine={false}
+                                        axisLine={{ stroke: isExporting ? '#000000' : '#ffffff20' }}
+                                        label={{ value: 'Wavelength (nm)', position: 'insideBottom', offset: -10, fill: isExporting ? '#000000' : '#9CA3AF', fontSize: 10 }}
+                                    />
+                                    <YAxis hide domain={[0, 1.1]} />
+                                    <Tooltip
+                                        content={({ active, payload, label }) => {
+                                            if (active && payload && payload.length) {
+                                                // Grouping logic
+                                                const fluorophores = payload.filter((p: any) => p.dataKey.includes('_ex') || p.dataKey.includes('_em'));
+                                                const optics = payload.filter((p: any) => p.dataKey.includes('_optic') || p.dataKey.includes('_splitter'));
+                                                const filters = payload.filter((p: any) => p.dataKey.includes('active_filter') || p.dataKey.includes('secondary_filter'));
 
-                                                    return (
-                                                        <div className="bg-black/95 border border-white/20 p-3 rounded-lg shadow-2xl backdrop-blur-md text-xs min-w-[200px]">
-                                                            <p className="text-gray-400 font-mono mb-2 border-b border-white/10 pb-1">{label} nm</p>
+                                                return (
+                                                    <div className="bg-black/95 border border-white/20 p-3 rounded-lg shadow-2xl backdrop-blur-md text-xs min-w-[200px]">
+                                                        <p className="text-gray-400 font-mono mb-2 border-b border-white/10 pb-1">{label} nm</p>
 
-                                                            {/* Fluorophores */}
-                                                            {fluorophores.length > 0 && (
-                                                                <div className="mb-2 space-y-1">
-                                                                    <p className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Fluorophores</p>
-                                                                    {fluorophores.map((entry: any) => (
-                                                                        <div key={entry.name} className="flex justify-between items-center gap-4">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                                                                                <span className="text-gray-200">{entry.name}</span>
-                                                                            </div>
-                                                                            <span className="font-mono text-gray-400">{(entry.value * 100).toFixed(0)}%</span>
+                                                        {/* Fluorophores */}
+                                                        {fluorophores.length > 0 && (
+                                                            <div className="mb-2 space-y-1">
+                                                                <p className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Fluorophores</p>
+                                                                {fluorophores.map((entry: any) => (
+                                                                    <div key={entry.name} className="flex justify-between items-center gap-4">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                                                            <span className="text-gray-200">{entry.name}</span>
                                                                         </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
+                                                                        <span className="font-mono text-gray-400">{(entry.value * 100).toFixed(0)}%</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
 
-                                                            {/* Optics (Dichroics / Splitters) */}
-                                                            {optics.length > 0 && (
-                                                                <div className="mb-2 space-y-1">
-                                                                    <p className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Optics & Splitters</p>
-                                                                    {optics.map((entry: any) => (
-                                                                        <div key={entry.name} className="flex justify-between items-center gap-4">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <div className="w-2 h-0.5" style={{ backgroundColor: entry.color, borderTop: '1px dashed ' + entry.color }} />
-                                                                                <span className="text-gray-200">{entry.name}</span>
-                                                                            </div>
-                                                                            <span className="font-mono text-gray-400">{(entry.value * 100).toFixed(0)}%</span>
+                                                        {/* Optics (Dichroics / Splitters) */}
+                                                        {optics.length > 0 && (
+                                                            <div className="mb-2 space-y-1">
+                                                                <p className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Optics & Splitters</p>
+                                                                {optics.map((entry: any) => (
+                                                                    <div key={entry.name} className="flex justify-between items-center gap-4">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="w-2 h-0.5" style={{ backgroundColor: entry.color, borderTop: '1px dashed ' + entry.color }} />
+                                                                            <span className="text-gray-200">{entry.name}</span>
                                                                         </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
+                                                                        <span className="font-mono text-gray-400">{(entry.value * 100).toFixed(0)}%</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
 
-                                                            {/* Filters */}
-                                                            {filters.length > 0 && (
-                                                                <div className="space-y-1">
-                                                                    <p className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Filters</p>
-                                                                    {filters.map((entry: any) => (
-                                                                        <div key={entry.name} className="flex justify-between items-center gap-4">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <div className="w-2 h-0.5" style={{ backgroundColor: entry.color }} />
-                                                                                <span className="text-gray-200">{entry.name}</span>
-                                                                            </div>
-                                                                            <span className="font-mono text-gray-400">{(entry.value * 100).toFixed(0)}%</span>
+                                                        {/* Filters */}
+                                                        {filters.length > 0 && (
+                                                            <div className="space-y-1">
+                                                                <p className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Filters</p>
+                                                                {filters.map((entry: any) => (
+                                                                    <div key={entry.name} className="flex justify-between items-center gap-4">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="w-2 h-0.5" style={{ backgroundColor: entry.color }} />
+                                                                            <span className="text-gray-200">{entry.name}</span>
                                                                         </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                }
-                                                return null;
-                                            }}
-                                        />
+                                                                        <span className="font-mono text-gray-400">{(entry.value * 100).toFixed(0)}%</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        }}
+                                    />
 
-                                        <defs>
-                                            {fluorophores.map(dye => (
-                                                <linearGradient key={`grad_${dye.id}`} id={`grad_${dye.id}`} x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor={dye.color} stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor={dye.color} stopOpacity={0} />
-                                                </linearGradient>
-                                            ))}
-                                        </defs>
+                                    <defs>
+                                        {fluorophores.map(dye => (
+                                            <linearGradient key={`grad_${dye.id}`} id={`grad_${dye.id}`} x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor={dye.color} stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor={dye.color} stopOpacity={0} />
+                                            </linearGradient>
+                                        ))}
+                                    </defs>
 
-                                        {/* Excitation (Only in Raw Tab) */}
-                                        {fluorophores.map(dye => {
-                                            if (!dye.visible || !showExcitation || activeTab === 'detected') return null;
-                                            return (
-                                                <Area
-                                                    key={`${dye.id}_ex`}
-                                                    name={`${dye.name} Ex`}
-                                                    type="monotone"
-                                                    dataKey={`${dye.id}_ex`}
-                                                    stroke={dye.color}
-                                                    strokeWidth={1}
-                                                    strokeDasharray="4 4"
-                                                    fill={dye.color}
-                                                    fillOpacity={0.1}
-                                                    dot={false}
-                                                    isAnimationActive={false}
-                                                />
-                                            );
-                                        })}
-
-                                        {/* Emission Primary */}
-                                        {fluorophores.map(dye => {
-                                            if (!dye.visible || !showEmission) return null;
-                                            return (
-                                                <Area
-                                                    key={`${dye.id}_em`}
-                                                    name={`${dye.name} (Em)`}
-                                                    type="monotone"
-                                                    dataKey={`${dye.id}_em`}
-                                                    stroke={dye.color}
-                                                    strokeWidth={2}
-                                                    fill={`url(#grad_${dye.id})`}
-                                                    fillOpacity={0.4}
-                                                    dot={false}
-                                                    isAnimationActive={true}
-                                                    animationDuration={1000}
-                                                />
-                                            );
-                                        })}
-
-                                        {/* Emission Secondary (Ghost for comparison) */}
-                                        {fluorophores.map(dye => {
-                                            if (!dye.visible || !showEmission || !isCompareMode) return null;
-                                            return (
-                                                <Line
-                                                    key={`${dye.id}_em_secondary`}
-                                                    name={`${dye.name} (Other Cam)`}
-                                                    type="monotone"
-                                                    dataKey={`${dye.id}_em_secondary`}
-                                                    stroke={dye.color}
-                                                    strokeWidth={1.5}
-                                                    strokeDasharray="2 2"
-                                                    strokeOpacity={0.5}
-                                                    dot={false}
-                                                    isAnimationActive={true}
-                                                />
-                                            );
-                                        })}
-
-                                        {/* Dichroics (Only in Detected Tab) */}
-                                        {activeTab === 'detected' && dichroics.map(optic => {
-                                            if (!optic.visible) return null;
-                                            return (
-                                                <Line
-                                                    key={optic.id}
-                                                    name={`${optic.name} (Dichroic)`}
-                                                    type="monotone"
-                                                    dataKey={`${optic.id}_optic`}
-                                                    stroke={optic.color}
-                                                    strokeWidth={1}
-                                                    strokeDasharray="4 4"
-                                                    dot={false}
-                                                    isAnimationActive={false}
-                                                />
-                                            );
-                                        })}
-
-                                        {/* Imaging Splitters (Only in Detected Tab) */}
-                                        {activeTab === 'detected' && imagingSplitters.map(splitter => {
-                                            if (!splitter.visible) return null;
-                                            return (
-                                                <Line
-                                                    key={splitter.id}
-                                                    name={`${splitter.name} (${activeCameraView === 'cam1' ? 'T' : 'R'})`}
-                                                    type="monotone"
-                                                    dataKey={`${splitter.id}_splitter`}
-                                                    stroke="#3B82F6" // Blue-500
-                                                    strokeWidth={2}
-                                                    strokeDasharray="6 2"
-                                                    dot={false}
-                                                    isAnimationActive={true}
-                                                />
-                                            );
-                                        })}
-
-                                        {/* Active Filter Rendering (Only in Detected Tab) */}
-                                        {activeTab === 'detected' && (
-                                            <Line
-                                                name="Emission Filter"
+                                    {/* Excitation (Only in Raw Tab) */}
+                                    {fluorophores.map(dye => {
+                                        if (!dye.visible || !showExcitation || activeTab === 'detected') return null;
+                                        return (
+                                            <Area
+                                                key={`${dye.id}_ex`}
+                                                name={`${dye.name} Ex`}
                                                 type="monotone"
-                                                dataKey="active_filter"
-                                                stroke="#FFD700"
+                                                dataKey={`${dye.id}_ex`}
+                                                stroke={dye.color}
+                                                strokeWidth={1}
+                                                strokeDasharray="4 4"
+                                                fill={dye.color}
+                                                fillOpacity={0.1}
+                                                dot={false}
+                                                isAnimationActive={false}
+                                            />
+                                        );
+                                    })}
+
+                                    {/* Emission Primary */}
+                                    {fluorophores.map(dye => {
+                                        if (!dye.visible || !showEmission) return null;
+                                        return (
+                                            <Area
+                                                key={`${dye.id}_em`}
+                                                name={`${dye.name} (Em)`}
+                                                type="monotone"
+                                                dataKey={`${dye.id}_em`}
+                                                stroke={dye.color}
                                                 strokeWidth={2}
-                                                strokeDasharray="4 2"
+                                                fill={`url(#grad_${dye.id})`}
+                                                fillOpacity={0.4}
+                                                dot={false}
+                                                isAnimationActive={true}
+                                                animationDuration={1000}
+                                            />
+                                        );
+                                    })}
+
+                                    {/* Emission Secondary (Ghost for comparison) */}
+                                    {fluorophores.map(dye => {
+                                        if (!dye.visible || !showEmission || !isCompareMode) return null;
+                                        return (
+                                            <Line
+                                                key={`${dye.id}_em_secondary`}
+                                                name={`${dye.name} (Other Cam)`}
+                                                type="monotone"
+                                                dataKey={`${dye.id}_em_secondary`}
+                                                stroke={dye.color}
+                                                strokeWidth={1.5}
+                                                strokeDasharray="2 2"
+                                                strokeOpacity={0.5}
                                                 dot={false}
                                                 isAnimationActive={true}
                                             />
-                                        )}
+                                        );
+                                    })}
 
-                                        {/* Secondary Filter Rendering (Only in Detected Tab + Compare Mode) */}
-                                        {activeTab === 'detected' && isCompareMode && (
+                                    {/* Dichroics (Only in Detected Tab) */}
+                                    {activeTab === 'detected' && dichroics.map(optic => {
+                                        if (!optic.visible) return null;
+                                        return (
                                             <Line
-                                                name={`Emission Filter (${activeCameraView === 'cam1' ? 'Cam R' : 'Cam T'})`}
+                                                key={optic.id}
+                                                name={`${optic.name} (Dichroic)`}
                                                 type="monotone"
-                                                dataKey="secondary_filter"
-                                                stroke="#FFA500"
+                                                dataKey={`${optic.id}_optic`}
+                                                stroke={optic.color}
+                                                strokeWidth={1}
+                                                strokeDasharray="4 4"
+                                                dot={false}
+                                                isAnimationActive={false}
+                                            />
+                                        );
+                                    })}
+
+                                    {/* Imaging Splitters (Only in Detected Tab) */}
+                                    {activeTab === 'detected' && imagingSplitters.map(splitter => {
+                                        if (!splitter.visible) return null;
+                                        return (
+                                            <Line
+                                                key={splitter.id}
+                                                name={`${splitter.name} (${activeCameraView === 'cam1' ? 'T' : 'R'})`}
+                                                type="monotone"
+                                                dataKey={`${splitter.id}_splitter`}
+                                                stroke="#3B82F6" // Blue-500
                                                 strokeWidth={2}
-                                                strokeDasharray="2 4"
-                                                strokeOpacity={0.7}
+                                                strokeDasharray="6 2"
                                                 dot={false}
                                                 isAnimationActive={true}
                                             />
-                                        )}
+                                        );
+                                    })}
 
-                                    </ComposedChart>
-                                </div>
+                                    {/* Active Filter Rendering (Only in Detected Tab) */}
+                                    {activeTab === 'detected' && (
+                                        <Line
+                                            name="Emission Filter"
+                                            type="monotone"
+                                            dataKey="active_filter"
+                                            stroke="#FFD700"
+                                            strokeWidth={2}
+                                            strokeDasharray="4 2"
+                                            dot={false}
+                                            isAnimationActive={true}
+                                        />
+                                    )}
+
+                                    {/* Secondary Filter Rendering (Only in Detected Tab + Compare Mode) */}
+                                    {activeTab === 'detected' && isCompareMode && (
+                                        <Line
+                                            name={`Emission Filter (${activeCameraView === 'cam1' ? 'Cam R' : 'Cam T'})`}
+                                            type="monotone"
+                                            dataKey="secondary_filter"
+                                            stroke="#FFA500"
+                                            strokeWidth={2}
+                                            strokeDasharray="2 4"
+                                            strokeOpacity={0.7}
+                                            dot={false}
+                                            isAnimationActive={true}
+                                        />
+                                    )}
+
+                                </ComposedChart>
                             </ResponsiveContainer>
                         </div>
                         {/* Metrics Sidebar (Right Side) */}
