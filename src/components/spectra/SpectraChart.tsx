@@ -125,17 +125,6 @@ export function SpectraChart() {
             if (modalitiesRes.ok) {
                 const data = await modalitiesRes.json();
                 setModalities(data);
-
-                // Set default modality: "Far-red spectral demixing" for MN360 if available
-                const defaultName = "Far-red spectral demixing";
-                const found = data.find((m: any) => m.name === defaultName && m.product === 'MN360');
-                if (found) {
-                    // We need to call applyModality, but we can't call it here easily due to closure/async.
-                    // Better to set it via effect or direct state if possible, but applyModality has side effects.
-                    // Let's set selectedModalityId and let an effect handle it, or call a helper.
-                    // Since applyModality relies on other state (dichroics etc) which might be just set, 
-                    // we should probably do it in a useEffect or ensure state is ready.
-                }
             }
         } catch (e) {
             console.error(e);
