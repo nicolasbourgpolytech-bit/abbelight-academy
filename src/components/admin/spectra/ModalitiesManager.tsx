@@ -102,6 +102,7 @@ export function ModalitiesManager({ optics, dyes }: ModalitiesManagerProps) {
     const handleSave = async () => {
         if (!newName) return;
 
+        setIsLoading(true); // Disable buttons
         try {
             const url = '/api/spectra/modalities';
             const method = editId ? 'PUT' : 'POST';
@@ -125,9 +126,15 @@ export function ModalitiesManager({ optics, dyes }: ModalitiesManagerProps) {
             if (res.ok) {
                 resetForm();
                 fetchModalities();
+            } else {
+                const err = await res.json();
+                alert(`Failed to save: ${err.error || 'Unknown error'}`);
             }
         } catch (error) {
             console.error(error);
+            alert('An unexpected error occurred.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -258,8 +265,11 @@ export function ModalitiesManager({ optics, dyes }: ModalitiesManagerProps) {
 
                         </div>
                         <div className="flex justify-end gap-2">
-                            <button onClick={resetForm} className="px-3 py-1.5 text-sm text-gray-400 hover:text-white">Cancel</button>
-                            <button onClick={handleSave} className="flex items-center gap-2 bg-primary text-white px-3 py-1.5 rounded-lg text-sm"><Save size={14} /> {editId ? 'Update' : 'Save'}</button>
+                            <button onClick={resetForm} disabled={isLoading} className="px-3 py-1.5 text-sm text-gray-400 hover:text-white disabled:opacity-50">Cancel</button>
+                            <button onClick={handleSave} disabled={isLoading} className="flex items-center gap-2 bg-primary text-white px-3 py-1.5 rounded-lg text-sm disabled:opacity-50">
+                                {isLoading ? <span className="animate-spin text-xs">⏳</span> : <Save size={14} />}
+                                {editId ? 'Update' : 'Save'}
+                            </button>
                         </div>
                     </div>
                 )}
