@@ -52,7 +52,7 @@ export function SpectraChart() {
     const [activeTab, setActiveTab] = useState<'raw' | 'detected'>('raw');
 
     // Product Configuration
-    const [selectedProduct, setSelectedProduct] = useState<string>('MN180'); // Default to MN180
+    const [selectedProduct, setSelectedProduct] = useState<string>('MN360'); // Default to MN360
     const [dichroics, setDichroics] = useState<OpticalComponent[]>([]);
     const [emissionFilters, setEmissionFilters] = useState<OpticalComponent[]>([]);
     const [imagingSplitters, setImagingSplitters] = useState<OpticalComponent[]>([]);
@@ -125,6 +125,17 @@ export function SpectraChart() {
             if (modalitiesRes.ok) {
                 const data = await modalitiesRes.json();
                 setModalities(data);
+
+                // Set default modality: "Far-red spectral demixing" for MN360 if available
+                const defaultName = "Far-red spectral demixing";
+                const found = data.find((m: any) => m.name === defaultName && m.product === 'MN360');
+                if (found) {
+                    // We need to call applyModality, but we can't call it here easily due to closure/async.
+                    // Better to set it via effect or direct state if possible, but applyModality has side effects.
+                    // Let's set selectedModalityId and let an effect handle it, or call a helper.
+                    // Since applyModality relies on other state (dichroics etc) which might be just set, 
+                    // we should probably do it in a useEffect or ensure state is ready.
+                }
             }
         } catch (e) {
             console.error(e);
@@ -132,6 +143,16 @@ export function SpectraChart() {
             setIsLoading(false);
         }
     };
+
+    // Add effect to apply default modality when modalities are loaded
+    useEffect(() => {
+        if (modalities.length > 0 && selectedProduct === 'MN360' && !selectedModalityId) {
+            const defaultModality = modalities.find(m => m.name === "Far-red spectral demixing" && m.product === 'MN360');
+            if (defaultModality) {
+                applyModality(defaultModality.id);
+            }
+        }
+    }, [modalities, selectedProduct]);
 
     const toggleFluorophore = (id: string) => {
         setFluorophores(prev => prev.map(f =>
