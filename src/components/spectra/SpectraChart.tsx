@@ -39,6 +39,14 @@ type OpticalComponent = {
     data: { wavelength: number; value: number }[];
 };
 
+type Product = {
+    id: string;
+    name: string;
+    image_url: string;
+    description: string;
+    link: string;
+};
+
 // Generate range of wavelengths matching the data source
 const WAVELENGTHS = Array.from({ length: 501 }, (_, i) => 300 + i); // 300nm to 800nm
 
@@ -58,6 +66,7 @@ export function SpectraChart() {
 
     // Product Configuration
     const [selectedProduct, setSelectedProduct] = useState<string>('MN360'); // Default to MN360
+    const [products, setProducts] = useState<Product[]>([]);
     const [dichroics, setDichroics] = useState<OpticalComponent[]>([]);
     const [emissionFilters, setEmissionFilters] = useState<OpticalComponent[]>([]);
     const [imagingSplitters, setImagingSplitters] = useState<OpticalComponent[]>([]);
@@ -85,10 +94,11 @@ export function SpectraChart() {
 
     const fetchData = async () => {
         try {
-            const [spectraRes, opticsRes, modalitiesRes] = await Promise.all([
+            const [spectraRes, opticsRes, modalitiesRes, productsRes] = await Promise.all([
                 fetch('/api/spectra'),
                 fetch('/api/spectra/optics'),
-                fetch('/api/spectra/modalities')
+                fetch('/api/spectra/modalities'),
+                fetch('/api/products')
             ]);
 
             if (spectraRes.ok) {
@@ -440,184 +450,201 @@ export function SpectraChart() {
 
     const categories = ['UV', 'Blue', 'Green', 'Red', 'Far-red'];
 
+    const category = fluorophores.find(f => f.category === 'Blue') ? 'Blue' : 'UV';
+
     const hasSplitter = !['M45', 'MN180'].includes(selectedProduct);
+    const selectedProductData = products.find(p => p.name.includes(selectedProduct));
 
     if (!isMounted || isLoading) return <div className="h-full flex items-center justify-center text-white">Loading spectra...</div>;
 
     return (
         <div className="flex flex-col space-y-6">
             {/* Instrument Configuration */}
-            <div className="bg-white/5 border border-white/10 p-4 rounded-xl backdrop-blur-sm flex flex-wrap items-center gap-6">
+            <div className="flex gap-6">
+                {/* Product Image */}
+                {selectedProductData?.image_url && (
+                    <div className="w-48 h-full min-h-[140px] bg-white/5 border border-white/10 rounded-xl overflow-hidden shrink-0">
+                        <img
+                            src={selectedProductData.image_url}
+                            alt={selectedProductData.name}
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
+                )}
 
-                {/* Product Selector */}
-                <div className="space-y-1">
-                    <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Product System</label>
-                    <select
-                        value={selectedProduct}
-                        onChange={(e) => {
-                            const newProduct = e.target.value;
-                            setSelectedProduct(newProduct);
-                            setSelectedModalityId(''); // Reset modality on product change
+                <div className="flex-1 bg-white/5 border border-white/10 p-4 rounded-xl backdrop-blur-sm flex flex-wrap items-center gap-6">
 
-                            // Reset splitters and view for single-camera systems
-                            if (['M45', 'MN180'].includes(newProduct)) {
-                                setImagingSplitters(prev => prev.map(s => ({ ...s, visible: false })));
-                                setIsCompareMode(false);
-                                setActiveCameraView('cam1');
-                            }
-                        }}
-                        className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[140px]"
-                    >
-                        <option value="M45" className="bg-gray-900 text-white">SAFe M45</option>
-                        <option value="M90" className="bg-gray-900 text-white">SAFe M90</option>
-                        <option value="MN180" className="bg-gray-900 text-white">SAFe MN180</option>
-                        <option value="MN360" className="bg-gray-900 text-white">SAFe MN360</option>
-                    </select>
-                </div>
-
-                {/* Modality Selector */}
-                <div className="space-y-1">
-                    <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Imaging Modality</label>
-                    <select
-                        value={selectedModalityId}
-                        onChange={(e) => applyModality(e.target.value)}
-                        className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[180px]"
-                    >
-                        <option value="" className="bg-gray-900 text-white">Custom / None</option>
-                        {modalities.filter(m => m.product === selectedProduct).map(m => (
-                            <option key={m.id} value={m.id} className="bg-gray-900 text-white">{m.name}</option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="w-px h-8 bg-white/10 hidden md:block"></div>
-
-                {/* Filter Configuration */}
-                <div className="flex flex-wrap items-center gap-6">
-                    {/* Camera 1 Filter */}
+                    {/* Product Selector */}
                     <div className="space-y-1">
-                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">
-                            {['M90', 'MN360'].includes(selectedProduct) ? 'Transmission Camera (Cam T)' : 'Emission Filter'}
-                        </label>
+                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Product System</label>
                         <select
-                            value={cam1FilterId}
-                            onChange={(e) => setCam1FilterId(e.target.value)}
-                            className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[200px]"
+                            value={selectedProduct}
+                            onChange={(e) => {
+                                const newProduct = e.target.value;
+                                setSelectedProduct(newProduct);
+                                setSelectedModalityId(''); // Reset modality on product change
+
+                                // Reset splitters and view for single-camera systems
+                                if (['M45', 'MN180'].includes(newProduct)) {
+                                    setImagingSplitters(prev => prev.map(s => ({ ...s, visible: false })));
+                                    setIsCompareMode(false);
+                                    setActiveCameraView('cam1');
+                                }
+                            }}
+                            className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[140px]"
                         >
-                            {emissionFilters.map(f => (
-                                <option key={f.id} value={f.id} className="bg-gray-900 text-white">{f.name}</option>
-                            ))}
-                            {emissionFilters.length === 0 && <option value="" className="bg-gray-900 text-white">No filters available</option>}
+                            <option value="M45" className="bg-gray-900 text-white">SAFe M45</option>
+                            <option value="M90" className="bg-gray-900 text-white">SAFe M90</option>
+                            <option value="MN180" className="bg-gray-900 text-white">SAFe MN180</option>
+                            <option value="MN360" className="bg-gray-900 text-white">SAFe MN360</option>
                         </select>
                     </div>
 
-                    {/* Camera 2 Filter (Only for Dual Cam) */}
-                    {['M90', 'MN360'].includes(selectedProduct) && (
-                        <>
-                            <div className="space-y-1">
-                                <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Reflection Camera (Cam R)</label>
-                                <select
-                                    value={cam2FilterId}
-                                    onChange={(e) => setCam2FilterId(e.target.value)}
-                                    className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[200px]"
-                                >
-                                    {emissionFilters.map(f => (
-                                        <option key={f.id} value={f.id} className="bg-gray-900 text-white">{f.name}</option>
-                                    ))}
-                                    {emissionFilters.length === 0 && <option value="" className="bg-gray-900 text-white">No filters available</option>}
-                                </select>
-                            </div>
+                    {/* Modality Selector */}
+                    <div className="space-y-1">
+                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Imaging Modality</label>
+                        <select
+                            value={selectedModalityId}
+                            onChange={(e) => applyModality(e.target.value)}
+                            className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[180px]"
+                        >
+                            <option value="" className="bg-gray-900 text-white">Custom / None</option>
+                            {modalities.filter(m => m.product === selectedProduct).map(m => (
+                                <option key={m.id} value={m.id} className="bg-gray-900 text-white">{m.name}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                            <div className="w-px h-8 bg-white/10 hidden md:block"></div>
+                    <div className="w-px h-8 bg-white/10 hidden md:block"></div>
 
-                            {/* View Toggle & Compare */}
-                            <div className="space-y-1">
-                                <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Active Camera</label>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex bg-black/20 rounded-lg border border-white/5 p-0.5">
+                    {/* Filter Configuration */}
+                    <div className="flex flex-wrap items-center gap-6">
+                        {/* Camera 1 Filter */}
+                        <div className="space-y-1">
+                            <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">
+                                {['M90', 'MN360'].includes(selectedProduct) ? 'Transmission Camera (Cam T)' : 'Emission Filter'}
+                            </label>
+                            <select
+                                value={cam1FilterId}
+                                onChange={(e) => setCam1FilterId(e.target.value)}
+                                className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[200px]"
+                            >
+                                {emissionFilters.map(f => (
+                                    <option key={f.id} value={f.id} className="bg-gray-900 text-white">{f.name}</option>
+                                ))}
+                                {emissionFilters.length === 0 && <option value="" className="bg-gray-900 text-white">No filters available</option>}
+                            </select>
+                        </div>
+
+                        {/* Camera 2 Filter (Only for Dual Cam) */}
+                        {['M90', 'MN360'].includes(selectedProduct) && (
+                            <>
+                                <div className="space-y-1">
+                                    <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Reflection Camera (Cam R)</label>
+                                    <select
+                                        value={cam2FilterId}
+                                        onChange={(e) => setCam2FilterId(e.target.value)}
+                                        className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[200px]"
+                                    >
+                                        {emissionFilters.map(f => (
+                                            <option key={f.id} value={f.id} className="bg-gray-900 text-white">{f.name}</option>
+                                        ))}
+                                        {emissionFilters.length === 0 && <option value="" className="bg-gray-900 text-white">No filters available</option>}
+                                    </select>
+                                </div>
+
+                                <div className="w-px h-8 bg-white/10 hidden md:block"></div>
+
+                                {/* View Toggle & Compare */}
+                                <div className="space-y-1">
+                                    <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Active Camera</label>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex bg-black/20 rounded-lg border border-white/5 p-0.5">
+                                            <button
+                                                onClick={() => setActiveCameraView('cam1')}
+                                                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeCameraView === 'cam1' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                                            >
+                                                Cam T
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveCameraView('cam2')}
+                                                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeCameraView === 'cam2' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                                            >
+                                                Cam R
+                                            </button>
+                                        </div>
                                         <button
-                                            onClick={() => setActiveCameraView('cam1')}
-                                            className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeCameraView === 'cam1' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                                            onClick={() => setIsCompareMode(!isCompareMode)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${isCompareMode ? 'bg-white/10 text-white border-white/30' : 'text-gray-400 border-transparent hover:text-white'}`}
                                         >
-                                            Cam T
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveCameraView('cam2')}
-                                            className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeCameraView === 'cam2' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
-                                        >
-                                            Cam R
+                                            Compare
                                         </button>
                                     </div>
-                                    <button
-                                        onClick={() => setIsCompareMode(!isCompareMode)}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${isCompareMode ? 'bg-white/10 text-white border-white/30' : 'text-gray-400 border-transparent hover:text-white'}`}
-                                    >
-                                        Compare
-                                    </button>
                                 </div>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Optics & Splitters Configuration (New Row) */}
+                    {(dichroics.length > 0 || (hasSplitter && imagingSplitters.length > 0)) && (
+                        <>
+                            <div className="w-full h-px bg-white/10"></div>
+
+                            <div className="flex flex-wrap gap-x-8 gap-y-4 w-full">
+                                {/* SAFe Optics Chips */}
+                                {dichroics.length > 0 && (
+                                    <div className="space-y-2">
+                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">
+                                            Abbelight SAFe Excitation/Emission dichroic
+                                        </label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {dichroics.map(optic => (
+                                                <button
+                                                    key={optic.id}
+                                                    onClick={() => toggleOptic(optic.id)}
+                                                    className={`
+                                                    px-3 py-1.5 rounded-full text-xs font-medium transition-all border
+                                                    ${optic.visible
+                                                            ? 'bg-primary/20 text-primary border-primary/50 shadow-[0_0_10px_rgba(var(--primary-rgb),0.2)]'
+                                                            : 'bg-black/20 text-gray-400 border-white/5 hover:text-white hover:border-white/10'}
+                                                `}
+                                                >
+                                                    {optic.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Imaging Splitters Chips */}
+                                {hasSplitter && imagingSplitters.length > 0 && (
+                                    <div className="space-y-2">
+                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">
+                                            Imaging Splitters
+                                        </label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {imagingSplitters.map(splitter => (
+                                                <button
+                                                    key={splitter.id}
+                                                    onClick={() => toggleImagingSplitter(splitter.id)}
+                                                    className={`
+                                                    px-3 py-1.5 rounded-full text-xs font-medium transition-all border
+                                                    ${splitter.visible
+                                                            ? 'bg-blue-500/20 text-blue-300 border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.2)]'
+                                                            : 'bg-black/20 text-gray-400 border-white/5 hover:text-white hover:border-white/10'}
+                                                `}
+                                                >
+                                                    {splitter.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </>
                     )}
-                </div>
-
-                {/* Optics & Splitters Configuration (New Row) */}
-                {(dichroics.length > 0 || (hasSplitter && imagingSplitters.length > 0)) && (
-                    <>
-                        <div className="w-full h-px bg-white/10"></div>
-
-                        <div className="flex flex-wrap gap-x-8 gap-y-4 w-full">
-                            {/* SAFe Optics Chips */}
-                            {dichroics.length > 0 && (
-                                <div className="space-y-2">
-                                    <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">
-                                        Abbelight SAFe Excitation/Emission dichroic
-                                    </label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {dichroics.map(optic => (
-                                            <button
-                                                key={optic.id}
-                                                onClick={() => toggleOptic(optic.id)}
-                                                className={`
-                                                    px-3 py-1.5 rounded-full text-xs font-medium transition-all border
-                                                    ${optic.visible
-                                                        ? 'bg-primary/20 text-primary border-primary/50 shadow-[0_0_10px_rgba(var(--primary-rgb),0.2)]'
-                                                        : 'bg-black/20 text-gray-400 border-white/5 hover:text-white hover:border-white/10'}
-                                                `}
-                                            >
-                                                {optic.name}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Imaging Splitters Chips */}
-                            {hasSplitter && imagingSplitters.length > 0 && (
-                                <div className="space-y-2">
-                                    <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">
-                                        Imaging Splitters
-                                    </label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {imagingSplitters.map(splitter => (
-                                            <button
-                                                key={splitter.id}
-                                                onClick={() => toggleImagingSplitter(splitter.id)}
-                                                className={`
-                                                    px-3 py-1.5 rounded-full text-xs font-medium transition-all border
-                                                    ${splitter.visible
-                                                        ? 'bg-blue-500/20 text-blue-300 border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.2)]'
-                                                        : 'bg-black/20 text-gray-400 border-white/5 hover:text-white hover:border-white/10'}
-                                                `}
-                                            >
-                                                {splitter.name}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </>
                 )}
+                </div>
             </div>
 
             {/* Global Controls: Range & Toggles */}
