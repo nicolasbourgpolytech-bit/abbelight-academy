@@ -18,21 +18,20 @@ export function Hero({ articlesCount, webinarsCount, usersCount, modulesCount }:
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-20 bg-black">
             {/* Background Image with Blending */}
-            <div className="absolute inset-0 z-0">
-                <Image
-                    src="/hero-microscopy.jpg"
-                    alt="Nanoscopy Background"
-                    fill
-                    className="object-cover opacity-60"
-                    priority
-                />
-                {/* Gradient overlays for seamless blending */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black via-black/50 to-black/90" />
-                <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/40 to-black" />
+            <div className="absolute top-0 right-0 h-full w-[60%] z-0 pointer-events-none overflow-hidden">
+                <div className="relative h-full w-full [mask-image:linear-gradient(to_right,transparent,black_40%)]">
+                    <Image
+                        src="/hero-microscopy.jpg"
+                        alt="Nanoscopy Background"
+                        fill
+                        className="object-contain object-right opacity-80"
+                        priority
+                    />
+                </div>
             </div>
 
-            {/* Left Gradient Blob */}
-            <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[100px] pointer-events-none z-0" />
+            {/* Left Gradient Blob for extra depth behind text */}
+            <div className="absolute bottom-[-10%] left-[-10%] w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] pointer-events-none z-0" />
 
             <div className="z-10 text-center space-y-10 p-8 max-w-5xl animate-fade-in relative">
                 <div className="inline-block px-4 py-1.5 border border-primary/30 bg-primary/10 text-primary text-sm font-bold tracking-widest uppercase mb-6">
