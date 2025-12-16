@@ -17,14 +17,14 @@ export function Hero({ articlesCount, webinarsCount, usersCount, modulesCount }:
 
     return (
         <section className="relative min-h-screen flex items-center overflow-hidden bg-black px-8 md:px-20">
-            {/* Background Image with Blending and Rotation */}
-            <div className="absolute top-0 right-0 h-full w-full md:w-[75%] z-0 pointer-events-none overflow-hidden">
-                <div className="relative h-full w-full opacity-60 [mask-image:linear-gradient(to_right,transparent,black_10%)]">
+            {/* Background Image with Blending (No Rotation) */}
+            <div className="absolute top-0 right-0 h-full w-[90%] z-0 pointer-events-none overflow-hidden">
+                <div className="relative h-full w-full opacity-60 [mask-image:linear-gradient(to_right,transparent,black_20%)]">
                     <Image
                         src="/hero-microscopy.jpg"
                         alt="Nanoscopy Background"
                         fill
-                        className="object-cover object-center rotate-90 scale-125 translate-x-[10%]"
+                        className="object-contain object-right"
                         priority
                     />
                 </div>
