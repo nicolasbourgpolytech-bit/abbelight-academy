@@ -1,5 +1,6 @@
 import { Hero } from "@/components/landing/Hero";
 import { Stats } from "@/components/landing/Stats";
+import { ValueChain } from "@/components/landing/ValueChain";
 import { sql } from "@vercel/postgres";
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,7 @@ export default async function Home() {
   return (
     <main className="min-h-screen flex flex-col bg-background selection:bg-primary/30">
       <Hero />
+      <ValueChain />
       <Stats
         articlesCount={Number(articlesCount.rows[0].count)}
         webinarsCount={Number(webinarsCount.rows[0].count)}
