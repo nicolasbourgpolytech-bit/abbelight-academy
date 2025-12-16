@@ -19,7 +19,7 @@ export function Hero({ articlesCount, webinarsCount, usersCount, modulesCount }:
         <section className="relative min-h-screen flex items-center overflow-hidden bg-black px-8 md:px-20">
             {/* Background Image with Blending (No Rotation) */}
             <div className="absolute top-0 right-0 h-full w-[90%] z-0 pointer-events-none overflow-hidden">
-                <div className="relative h-full w-full opacity-60 [mask-image:linear-gradient(to_right,transparent_20%,black_60%)]">
+                <div className="relative h-full w-full opacity-80 [mask-image:linear-gradient(to_right,transparent_20%,black_60%)]">
                     <Image
                         src="/hero-microscopy.jpg"
                         alt="Nanoscopy Background"
