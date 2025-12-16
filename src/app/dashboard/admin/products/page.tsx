@@ -48,7 +48,10 @@ export default function ProductsAdminPage() {
             } else {
                 alert("Error: " + data.error);
             }
-        } catch (e) { alert("Failed to save product"); }
+        } catch (e: any) {
+            console.error(e);
+            alert("Failed to save product. Details: " + (e.message || e));
+        }
     };
 
     const handleDeleteProduct = async (id: number) => {
