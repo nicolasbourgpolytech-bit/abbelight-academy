@@ -40,9 +40,9 @@ export default function ProductsAdminPage() {
             if (res.ok) {
                 alert("Product saved!");
                 if (isUpdate) {
-                    setProducts(products.map(p => p.id === data.product.id ? data.product : p));
+                    setProducts(products.map(p => p.id === data.id ? data : p));
                 } else {
-                    setProducts([data.product, ...products]);
+                    setProducts([data, ...products]);
                 }
                 setIsEditingProduct(false);
             } else {
