@@ -18,18 +18,18 @@ export function Hero({ articlesCount, webinarsCount, usersCount, modulesCount }:
     return (
         <section className="relative min-h-screen flex items-center overflow-hidden bg-black px-8 md:px-20">
             {/* Background Image with Blending and Rotation */}
-            <div className="absolute top-0 right-[-15%] h-full w-[80%] md:w-[65%] z-0 pointer-events-none overflow-hidden">
-                <div className="relative h-full w-full opacity-60 [mask-image:linear-gradient(to_right,transparent,black_20%)]">
+            <div className="absolute top-0 right-0 h-full w-full md:w-[75%] z-0 pointer-events-none overflow-hidden">
+                <div className="relative h-full w-full opacity-60 [mask-image:linear-gradient(to_right,transparent,black_10%)]">
                     <Image
                         src="/hero-microscopy.jpg"
                         alt="Nanoscopy Background"
                         fill
-                        className="object-contain object-center rotate-90 scale-150 md:scale-110 translate-x-[20%]"
+                        className="object-cover object-center rotate-90 scale-125 translate-x-[10%]"
                         priority
                     />
                 </div>
                 {/* Extra blending layer */}
-                <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/20 to-black" />
+                <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/10 to-black/80" />
             </div>
 
             {/* Background Glows */}
