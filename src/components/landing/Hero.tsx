@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 interface HeroProps {
     articlesCount: number;
     webinarsCount: number;
@@ -15,18 +17,22 @@ export function Hero({ articlesCount, webinarsCount, usersCount, modulesCount }:
 
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-20 bg-black">
-            {/* Geometric Background Element (Right Side) */}
-            <div className="absolute top-0 right-0 w-[800px] h-[800px] translate-x-1/3 -translate-y-1/4 opacity-20 pointer-events-none">
-                <div className="absolute inset-0 border-[1px] border-secondary rounded-full animate-spin-slow" />
-                <div className="absolute inset-[40px] border-[1px] border-primary rounded-full animate-spin-slow duration-[25000ms]" />
-                <div className="absolute inset-[80px] border-[1px] border-accent rounded-full animate-spin-slow duration-[30000ms]" />
-                <div className="absolute inset-[120px] border-[1px] border-warning rounded-full animate-spin-slow duration-[35000ms]" />
-                {/* Dotted pattern rings */}
-                <div className="absolute inset-[200px] border-[4px] border-dotted border-white/20 rounded-full animate-spin-slow duration-[60000ms]" />
+            {/* Background Image with Blending */}
+            <div className="absolute inset-0 z-0">
+                <Image
+                    src="/hero-microscopy.jpg"
+                    alt="Nanoscopy Background"
+                    fill
+                    className="object-cover opacity-60"
+                    priority
+                />
+                {/* Gradient overlays for seamless blending */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black via-black/50 to-black/90" />
+                <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/40 to-black" />
             </div>
 
             {/* Left Gradient Blob */}
-            <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[100px] pointer-events-none z-0" />
 
             <div className="z-10 text-center space-y-10 p-8 max-w-5xl animate-fade-in relative">
                 <div className="inline-block px-4 py-1.5 border border-primary/30 bg-primary/10 text-primary text-sm font-bold tracking-widest uppercase mb-6">
