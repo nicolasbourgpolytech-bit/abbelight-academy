@@ -8,13 +8,17 @@ export async function GET() {
         const { rows } = await sql`SELECT * FROM products ORDER BY created_at DESC`;
         return NextResponse.json(rows);
     } catch (error) {
-        return NextResponse.json({ error }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
 
 export async function POST(request: Request) {
     try {
-        const { name, category, link, image_url, description } = await request.json();
+        const body = await request.json();
+        const { name, link, image_url, description } = body;
+        // Default category if undefined
+        const category = body.category || null;
+
         const { rows } = await sql`
       INSERT INTO products (name, category, link, image_url, description)
       VALUES (${name}, ${category}, ${link}, ${image_url}, ${description})
@@ -22,13 +26,18 @@ export async function POST(request: Request) {
     `;
         return NextResponse.json(rows[0]);
     } catch (error) {
-        return NextResponse.json({ error }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
 
 export async function PUT(request: Request) {
     try {
-        const { id, name, category, link, image_url, description } = await request.json();
+        const body = await request.json();
+        const { id, name, link, image_url, description } = body;
+        // Default category to null if undefined (though it should be preserved if not sent, technically, but for now we update all)
+        // Better: ensure standard update behavior
+        const category = body.category || null;
+
         const { rows } = await sql`
       UPDATE products
       SET name = ${name}, category = ${category}, link = ${link}, image_url = ${image_url}, description = ${description}
@@ -37,7 +46,7 @@ export async function PUT(request: Request) {
     `;
         return NextResponse.json(rows[0]);
     } catch (error) {
-        return NextResponse.json({ error }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
 

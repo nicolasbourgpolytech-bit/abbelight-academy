@@ -24,10 +24,17 @@ export default function ProductsAdminPage() {
         try {
             const isUpdate = !!editingProduct.id;
             const method = isUpdate ? 'PUT' : 'POST';
+
+            // Ensure category is set (default to SAFe instrument if missing from old data)
+            const productPayload = {
+                ...editingProduct,
+                category: editingProduct.category || "SAFe instrument"
+            };
+
             const res = await fetch('/api/products', {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(editingProduct),
+                body: JSON.stringify(productPayload),
             });
             const data = await res.json();
             if (res.ok) {
