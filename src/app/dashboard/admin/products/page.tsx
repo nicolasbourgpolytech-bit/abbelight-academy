@@ -101,7 +101,7 @@ export default function ProductsAdminPage() {
                             <h2 className="text-2xl font-bold text-white">Products List</h2>
                             <button
                                 onClick={() => {
-                                    setEditingProduct({ name: "", description: "", link: "", image_url: "", category: "Microscope" });
+                                    setEditingProduct({ name: "", description: "", link: "", image_url: "", category: "SAFe instrument" });
                                     setIsEditingProduct(true);
                                 }}
                                 className="bg-primary text-black px-4 py-2 rounded-lg font-bold text-sm hover:bg-white transition-colors flex items-center gap-2"
@@ -122,6 +122,7 @@ export default function ProductsAdminPage() {
                                     </div>
                                     <div className="flex-1">
                                         <h3 className="font-bold text-white mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
+                                        <p className="text-xs text-gray-400 mb-1">{product.category}</p>
                                         <p className="text-xs text-gray-500 mb-2 truncate">{product.link}</p>
                                         <div className="flex gap-2">
                                             <button
@@ -170,13 +171,14 @@ export default function ProductsAdminPage() {
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Category</label>
                                     <select
-                                        value={editingProduct?.category || "Microscope"}
+                                        value={editingProduct?.category || "SAFe instrument"}
                                         onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
                                         className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
                                     >
-                                        <option value="Microscope">Microscope</option>
-                                        <option value="Software">Software</option>
-                                        <option value="Accessory">Accessory</option>
+                                        <option value="SAFe instrument">SAFe instrument</option>
+                                        <option value="Smart Reagent">Smart Reagent</option>
+                                        <option value="NEO Software">NEO Software</option>
+                                        <option value="3rd party instrument">3rd party instrument</option>
                                     </select>
                                 </div>
                             </div>

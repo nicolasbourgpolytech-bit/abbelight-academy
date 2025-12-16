@@ -10,12 +10,13 @@ export async function GET(request: Request) {
 
         // Insert standard Abbelight products
         await sql`
-            INSERT INTO products (name, image_url, description)
+            INSERT INTO products (name, category, image_url, description)
             VALUES 
-            ('SAFe M45', '/product-images/safe-m45-v3.png', 'Single-camera add-on for 3D localization microscopy.'),
-            ('SAFe M90', '/product-images/safe-m90-v3.png', 'Dual-camera add-on for multicolor 3D localization microscopy.'),
-            ('SAFe MN180', '/product-images/safe-mn180-v3.png', 'Turnkey system for single-color 3D nanoscopy.'),
-            ('SAFe MN360', '/product-images/safe-mn360-v3.png', 'Turnkey system for multicolor 3D nanoscopy.')
+            ('SAFe M45', 'SAFe instrument', '/product-images/safe-m45-v3.png', 'Single-camera add-on for 3D localization microscopy.'),
+            ('SAFe M90', 'SAFe instrument', '/product-images/safe-m90-v3.png', 'Dual-camera add-on for multicolor 3D localization microscopy.'),
+            ('SAFe MN180', 'SAFe instrument', '/product-images/safe-mn180-v3.png', 'Turnkey system for single-color 3D nanoscopy.'),
+            ('SAFe MN360', 'SAFe instrument', '/product-images/safe-mn360-v3.png', 'Turnkey system for multicolor 3D nanoscopy.'),
+            ('Abbelight Smart Kit buffer', 'Smart Reagent', '/product-images/abbelight_smart_kit_buffer.png', 'Smart Kit super-resolution buffer solution.')
         `;
 
         const { rows } = await sql`SELECT * FROM products`;

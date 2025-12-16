@@ -44,11 +44,15 @@ export async function GET(request: Request) {
     await sql`CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
+        category VARCHAR(255),
         link TEXT,
         image_url TEXT,
         description TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )`;
+
+    // Add category column if it doesn't exist (for existing tables)
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR(255)`;
 
     return NextResponse.json({ message: "Database updated successfully!" }, { status: 200 });
   } catch (error) {

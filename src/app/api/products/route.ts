@@ -14,10 +14,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
-        const { name, link, image_url, description } = await request.json();
+        const { name, category, link, image_url, description } = await request.json();
         const { rows } = await sql`
-      INSERT INTO products (name, link, image_url, description)
-      VALUES (${name}, ${link}, ${image_url}, ${description})
+      INSERT INTO products (name, category, link, image_url, description)
+      VALUES (${name}, ${category}, ${link}, ${image_url}, ${description})
       RETURNING *
     `;
         return NextResponse.json(rows[0]);
@@ -28,10 +28,10 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
     try {
-        const { id, name, link, image_url, description } = await request.json();
+        const { id, name, category, link, image_url, description } = await request.json();
         const { rows } = await sql`
       UPDATE products
-      SET name = ${name}, link = ${link}, image_url = ${image_url}, description = ${description}
+      SET name = ${name}, category = ${category}, link = ${link}, image_url = ${image_url}, description = ${description}
       WHERE id = ${id}
       RETURNING *
     `;
