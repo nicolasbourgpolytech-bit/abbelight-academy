@@ -19,7 +19,7 @@ export function Hero({ articlesCount, webinarsCount, usersCount, modulesCount }:
         <section className="relative min-h-screen flex items-center overflow-hidden bg-black px-8 md:px-20">
             {/* Background Image with Blending (No Rotation) */}
             <div className="absolute top-0 right-0 h-full w-[90%] z-0 pointer-events-none overflow-hidden">
-                <div className="relative h-full w-full opacity-60 [mask-image:linear-gradient(to_right,transparent_5%,black_40%)]">
+                <div className="relative h-full w-full opacity-60 [mask-image:linear-gradient(to_right,transparent_20%,black_60%)]">
                     <Image
                         src="/hero-microscopy.jpg"
                         alt="Nanoscopy Background"
@@ -73,7 +73,7 @@ export function Hero({ articlesCount, webinarsCount, usersCount, modulesCount }:
             </div>
 
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center animate-bounce z-20">
-                <span className="text-gray-500 text-sm tracking-widest uppercase mb-2">Scroll Down</span>
+                <span className="text-white text-sm tracking-widest uppercase mb-2 drop-shadow-md font-semibold">Scroll Down</span>
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -84,7 +84,7 @@ export function Hero({ articlesCount, webinarsCount, usersCount, modulesCount }:
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="text-primary w-8 h-8"
+                    className="text-primary w-8 h-8 drop-shadow-md"
                 >
                     <path d="m6 9 6 6 6-6" />
                 </svg>
