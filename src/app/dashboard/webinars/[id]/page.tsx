@@ -146,24 +146,40 @@ export default function WebinarDetailPage({ params }: { params: Promise<{ id: st
                         <div>
                             <h3 className="text-lg font-bold text-white mb-4">Featured Products</h3>
                             <div className="flex flex-col gap-3">
-                                {products.map((prod: any, idx: number) => (
-                                    <a key={idx} href={prod.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-xl transition-colors group">
-                                        <div className="w-32 h-32 bg-white/10 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center text-gray-500 font-bold border border-white/5 shadow-2xl">
-                                            {prod.image_url ? (
-                                                <img src={prod.image_url} alt={prod.name} className="w-full h-full object-contain p-1" />
-                                            ) : (
-                                                prod.name?.[0]
-                                            )}
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="font-bold text-sm text-white group-hover:text-primary transition-colors leading-tight">{prod.name}</div>
-                                            <div className="text-xs text-primary mt-1 flex items-center gap-1">
-                                                View Product
-                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                {products.map((prod: any, idx: number) => {
+                                    const hasLink = prod.link && prod.link.length > 0;
+                                    const Wrapper = hasLink ? 'a' : 'div';
+                                    const props = hasLink ? {
+                                        href: prod.link,
+                                        target: "_blank",
+                                        rel: "noopener noreferrer",
+                                        className: "flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-xl transition-colors group cursor-pointer"
+                                    } : {
+                                        className: "flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-xl"
+                                    };
+
+                                    return (
+                                        // @ts-ignore
+                                        <Wrapper key={idx} {...props}>
+                                            <div className="w-32 h-32 bg-white/10 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center text-gray-500 font-bold border border-white/5 shadow-2xl">
+                                                {prod.image_url ? (
+                                                    <img src={prod.image_url} alt={prod.name} className="w-full h-full object-contain p-1" />
+                                                ) : (
+                                                    prod.name?.[0]
+                                                )}
                                             </div>
-                                        </div>
-                                    </a>
-                                ))}
+                                            <div className="flex-1">
+                                                <div className={`font-bold text-sm text-white ${hasLink ? 'group-hover:text-primary' : ''} transition-colors leading-tight`}>{prod.name}</div>
+                                                {hasLink && (
+                                                    <div className="text-xs text-primary mt-1 flex items-center gap-1">
+                                                        View Product
+                                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </Wrapper>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
