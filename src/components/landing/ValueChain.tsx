@@ -50,12 +50,13 @@ export function ValueChain() {
         <section className="relative z-10 py-24 bg-zinc-950 border-t border-white/10">
             <div className="max-w-7xl mx-auto px-6">
                 {/* Section Header */}
-                <div className="text-center mb-16 space-y-4">
+                <div className="text-center mb-16 space-y-6">
                     <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-white">
-                        <span className="text-primary">A COMPLETE</span> & <span className="text-primary">INNOVATIVE</span> PORTFOLIO
+                        <span className="text-primary">MASTER</span> THE ENTIRE <span className="text-primary">VALUE CHAIN</span>
                     </h2>
-                    <p className="text-xl text-gray-400">
-                        The ultimate multimodal bioimaging platforms
+                    <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
+                        Abbelight covers the <span className="text-white font-semibold">entire workflow</span> of nanoscopy. The Academy is here to transmit our expert knowledge to you. <br />
+                        Our shared goal: making <span className="text-secondary font-semibold">SMLM</span> the ultimate tool in life sciences.
                     </p>
                 </div>
 

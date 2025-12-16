@@ -1,4 +1,18 @@
-export function Hero() {
+interface HeroProps {
+    articlesCount: number;
+    webinarsCount: number;
+    usersCount: number;
+    modulesCount: number;
+}
+
+export function Hero({ articlesCount, webinarsCount, usersCount, modulesCount }: HeroProps) {
+    const stats = [
+        { label: "Scientific Articles", value: `${articlesCount}+`, color: "text-primary" },
+        { label: "Exclusive Webinars", value: `${webinarsCount}+`, color: "text-secondary" },
+        { label: "Active Researchers", value: `${usersCount}+`, color: "text-accent" },
+        { label: "Learning Paths", value: `${modulesCount}`, color: "text-warning" },
+    ];
+
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-20 bg-black">
             {/* Geometric Background Element (Right Side) */}
@@ -31,7 +45,24 @@ export function Hero() {
                     Train, learn, and excel with Abbelight technology.
                 </p>
 
-                <div className="flex flex-col items-center mt-20 animate-bounce">
+                {/* Stats Grid integrated into Hero */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-12 w-full">
+                    {stats.map((stat) => (
+                        <div
+                            key={stat.label}
+                            className="bg-zinc-900/50 backdrop-blur-sm border border-white/10 p-6 rounded-lg text-center hover:border-white/30 transition-all duration-300"
+                        >
+                            <div className={`text-4xl font-bold mb-2 ${stat.color}`}>
+                                {stat.value}
+                            </div>
+                            <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                                {stat.label}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="flex flex-col items-center mt-12 animate-bounce">
                     <span className="text-gray-500 text-sm tracking-widest uppercase mb-2">Scroll Down</span>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
