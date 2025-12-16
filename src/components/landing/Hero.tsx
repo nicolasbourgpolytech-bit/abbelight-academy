@@ -31,20 +31,26 @@ export function Hero() {
                     Train, learn, and excel with Abbelight technology.
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mt-12">
-                    <button className="px-10 py-4 bg-primary text-black rounded-none text-lg font-bold hover:bg-white transition-colors duration-300 shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)]">
-                        START LEARNING
-                    </button>
-                    <button className="px-10 py-4 bg-transparent text-white border border-white/20 hover:border-white rounded-none text-lg font-bold transition-all duration-300">
-                        BROWSE LIBRARY
-                    </button>
+                <div className="flex flex-col items-center mt-20 animate-bounce">
+                    <span className="text-gray-500 text-sm tracking-widest uppercase mb-2">Scroll Down</span>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-primary w-8 h-8"
+                    >
+                        <path d="m6 9 6 6 6-6" />
+                    </svg>
                 </div>
             </div>
 
-            {/* Bottom Scroll Lines */}
-            <div className="absolute bottom-0 left-0 w-full flex justify-center pb-10">
-                <div className="w-[1px] h-24 bg-gradient-to-b from-transparent via-white/50 to-transparent" />
-            </div>
+
         </section>
     );
 }
