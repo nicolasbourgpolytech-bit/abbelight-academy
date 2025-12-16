@@ -16,7 +16,8 @@ export async function GET(request: Request) {
             ('SAFe M90', 'SAFe instrument', '/product-images/safe-m90-v3.png', 'Dual-camera add-on for multicolor 3D localization microscopy.'),
             ('SAFe MN180', 'SAFe instrument', '/product-images/safe-mn180-v3.png', 'Turnkey system for single-color 3D nanoscopy.'),
             ('SAFe MN360', 'SAFe instrument', '/product-images/safe-mn360-v3.png', 'Turnkey system for multicolor 3D nanoscopy.'),
-            ('Abbelight Smart Kit buffer', 'Smart Reagent', '/product-images/abbelight_smart_kit_buffer.png', 'Smart Kit super-resolution buffer solution.')
+            ('Abbelight Smart Kit buffer', 'Smart Reagent', '/product-images/abbelight_smart_kit_buffer.png', 'Smart Kit super-resolution buffer solution.'),
+            ('Abbelight Smart OmniCell kit', 'Smart Reagent', '/product-images/abbelight_smart_omnicell_kit.png', 'Smart OmniCell Kit for dSTORM imaging.')
         `;
 
         const { rows } = await sql`SELECT * FROM products`;
