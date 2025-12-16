@@ -6,16 +6,42 @@ export async function GET(request: Request) {
     const id = searchParams.get('id');
 
     try {
+        // Fetch all products to enrich the response with latest data (links, images)
+        const productsResult = await sql`SELECT * FROM products`;
+        const allProducts = productsResult.rows;
+
+        const enrichWebinar = (web: any) => {
+            let associated = [];
+            // Handle parsing if it comes as string (should be object from pg driver usually, but safe guard)
+            try {
+                associated = typeof web.associated_products === 'string'
+                    ? JSON.parse(web.associated_products)
+                    : web.associated_products || [];
+            } catch (e) { associated = []; }
+
+            // Merge with fresh product data matched by NAME
+            const enrichedProducts = associated.map((p: any) => {
+                const freshProduct = allProducts.find((fp: any) => fp.name === p.name);
+                return freshProduct ? { ...p, ...freshProduct } : p;
+            });
+
+            return {
+                ...web,
+                associated_products: enrichedProducts
+            };
+        };
+
         if (id) {
             const { rows } = await sql`SELECT * FROM webinars WHERE id = ${id}`;
             if (rows.length === 0) {
                 return NextResponse.json({ error: 'Webinar not found' }, { status: 404 });
             }
-            return NextResponse.json({ webinar: rows[0] }, { status: 200 });
+            return NextResponse.json({ webinar: enrichWebinar(rows[0]) }, { status: 200 });
         }
 
         const { rows } = await sql`SELECT * FROM webinars ORDER BY id DESC;`;
-        return NextResponse.json({ webinars: rows }, { status: 200 });
+        const enrichedRows = rows.map(enrichWebinar);
+        return NextResponse.json({ webinars: enrichedRows }, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error }, { status: 500 });
     }
