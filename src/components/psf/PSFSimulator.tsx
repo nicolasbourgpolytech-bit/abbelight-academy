@@ -122,12 +122,36 @@ function drawMatrix(
 export default function PSFSimulator() {
     const { state, runSimulation, error: pyodideError } = usePyodide();
     const [params, setParams] = useState<SimulationParams>(DEFAULT_PARAMS);
+
+    // Local string state for inputs
+    const [inputValues, setInputValues] = useState({
+        NA: DEFAULT_PARAMS.NA.toString(),
+        M_obj: DEFAULT_PARAMS.M_obj.toString(),
+        n_imm: DEFAULT_PARAMS.n_imm.toString(),
+        n_sample: DEFAULT_PARAMS.n_sample.toString(),
+        cam_pixel_um: DEFAULT_PARAMS.cam_pixel_um.toString(),
+    });
+
     const [simResult, setSimResult] = useState<any>(null);
     const [calculating, setCalculating] = useState(false);
     const [lastError, setLastError] = useState<string | null>(null);
 
     const psfCanvasRef = useRef<HTMLCanvasElement>(null);
     const bfpCanvasRef = useRef<HTMLCanvasElement>(null);
+
+    // Sync inputValues to params when valid number is typed
+    const handleInputChange = (key: keyof typeof inputValues, val: string) => {
+        setInputValues(prev => ({ ...prev, [key]: val }));
+
+        const num = parseFloat(val);
+        if (!isNaN(num) && val.trim() !== "" && !val.endsWith(".")) {
+            setParams(prev => {
+                // Key needs casting because inputValues keys match SimulationParams keys partially
+                if (prev[key as keyof SimulationParams] === num) return prev;
+                return { ...prev, [key]: num };
+            });
+        }
+    };
 
     // Run simulation when params change (debounced?)
     // For sliders like defocus, we want fast updates.
@@ -252,12 +276,7 @@ export default function PSFSimulator() {
     }, [simResult]);
 
     // Handlers
-    const handleChangeRaw = (key: keyof SimulationParams, val: string) => {
-        const num = parseFloat(val);
-        if (!isNaN(num)) {
-            setParams(p => ({ ...p, [key]: num }));
-        }
-    };
+    // handleChangeRaw removed in favor of handleInputChange above
 
     return (
         <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
