@@ -357,19 +357,37 @@ export default function PSFSimulator() {
     }, [simResult, params]);
 
     // Compute Profiles
-    const profileData = useMemo(() => {
-        if (!simResult) return [];
+    // Compute Profiles & Stats
+    const profileAnalysis = useMemo(() => {
+        if (!simResult?.img) return null;
         const img = simResult.img;
-        if (!img || img.length === 0) return [];
-        const midY = Math.floor(img.length / 2);
-        const row = img[midY];
-        if (!row) return [];
+        if (img.length === 0) return null;
 
-        return row.map((val: number, i: number) => ({
+        const height = img.length;
+        const width = img[0].length;
+
+        const cx = crosshair ? crosshair.x : Math.floor(width / 2);
+        const cy = crosshair ? crosshair.y : Math.floor(height / 2);
+
+        // 1. Horizontal Profile (along X, at Y=cy)
+        const row = img[cy] ? Array.from(img[cy]) : new Array(width).fill(0);
+        const hStats = calculateGaussStats(row as number[]);
+
+        // 2. Vertical Profile (along Y, at X=cx)
+        const col = new Array(height);
+        for (let y = 0; y < height; y++) {
+            col[y] = img[y] ? img[y][cx] : 0;
+        }
+        const vStats = calculateGaussStats(col);
+
+        // Chart Data (showing Horizontal for now as primary)
+        const data = row.map((val: number, i: number) => ({
             x: i,
             intensity: val
         }));
-    }, [simResult]);
+
+        return { data, hStats, vStats, cx, cy };
+    }, [simResult, crosshair]);
 
     // Handlers
     // handleChangeRaw removed in favor of handleInputChange above
