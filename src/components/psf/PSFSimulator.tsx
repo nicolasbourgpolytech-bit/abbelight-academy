@@ -623,7 +623,7 @@ export default function PSFSimulator() {
 
                     {/* 2. Vertical Profile (Top-Right) */}
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-4 relative flex flex-col min-h-0">
-                        <span className="absolute top-2 -right-2 rotate-90 origin-top-right text-xs font-mono text-gray-500 uppercase tracking-widest whitespace-nowrap">
+                        <span className="absolute top-2 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">
                             Y-Profile (x={profileAnalysis?.cx ?? '-'})
                         </span>
                         <div className="flex-1 w-full min-h-0">
