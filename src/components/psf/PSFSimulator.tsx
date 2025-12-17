@@ -236,18 +236,23 @@ export default function PSFSimulator() {
                     ctx.setLineDash([]);
 
                     // Add Labels
-                    ctx.font = "10px monospace";
+                    ctx.font = "bold 12px sans-serif";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
 
-                    // Sub-critical (Inside)
-                    ctx.fillStyle = "rgba(6, 182, 212, 0.8)"; // Cyan-ish
-                    ctx.fillText("Sub-critical", wB / 2, hB / 2);
+                    const drawTextWithOutline = (text: string, x: number, y: number, color: string) => {
+                        ctx.lineWidth = 3;
+                        ctx.strokeStyle = 'black'; // Black outline
+                        ctx.strokeText(text, x, y);
+                        ctx.fillStyle = color; // High contrast fill
+                        ctx.fillText(text, x, y);
+                    };
 
-                    // Super-critical (Outside)
-                    // Draw slightly above the circle? Or at the top edge.
-                    // r_crit_pix is radius.
-                    const r_label = (r_crit_pix + (wB / 2)) / 2; // Midpoint between crit and max?
+                    // Sub-critical (Inside) -> Cyan
+                    drawTextWithOutline("Sub-critical", wB / 2, hB / 2, "#06b6d4");
+
+                    // Super-critical (Outside) -> Magenta/Pink
+                    drawTextWithOutline("Super-critical", wB / 2, 20, "#e879f9");
                     // actually user snippet puts it at (crit + max)/2
 
                     ctx.fillStyle = "rgba(236, 72, 153, 0.8)"; // Pink-ish
