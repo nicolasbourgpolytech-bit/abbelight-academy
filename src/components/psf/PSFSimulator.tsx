@@ -197,6 +197,9 @@ export default function PSFSimulator() {
     const { state, runSimulation, error: pyodideError } = usePyodide();
     const [params, setParams] = useState<SimulationParams>(DEFAULT_PARAMS);
 
+    // Tab State
+    const [activeTab, setActiveTab] = useState<"psf" | "bfp">("psf");
+
     // Local string state for inputs
     const [inputValues, setInputValues] = useState({
         NA: DEFAULT_PARAMS.NA.toString(),
@@ -211,15 +214,22 @@ export default function PSFSimulator() {
     const [lastError, setLastError] = useState<string | null>(null);
 
     // Interactive Crosshair State (Indices in simulation array)
-    // defaults to null, meaning center
     const [crosshair, setCrosshair] = useState<{ x: number, y: number } | null>(null);
 
+    // Single Main Canvas Ref
     const psfCanvasRef = useRef<HTMLCanvasElement>(null);
-    const bfpCanvasRef = useRef<HTMLCanvasElement>(null);
 
-    // Handle clicks on PSF canvas to set crosshair
+    // Handle clicks on Canvas
     const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!simResult?.img) return;
+        if (!simResult) return;
+
+        // Select Data based on Tab
+        let dataGrid: number[][] | undefined;
+        if (activeTab === "psf") dataGrid = simResult.img;
+        else dataGrid = simResult.bfp;
+
+        if (!dataGrid) return;
+
         const canvas = psfCanvasRef.current;
         if (!canvas) return;
 
@@ -227,12 +237,9 @@ export default function PSFSimulator() {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        // Map to img coordinates
-        // canvas.width is the resolution, clientWidth is display
-        const imgW = simResult.img[0].length;
-        const imgH = simResult.img.length;
+        const imgW = dataGrid[0].length;
+        const imgH = dataGrid.length;
 
-        // Assuming canvas resolution matches imgW/imgH (enforced in drawMatrix)
         const scaleX = imgW / rect.width;
         const scaleY = imgH / rect.height;
 
@@ -251,17 +258,13 @@ export default function PSFSimulator() {
         const num = parseFloat(val);
         if (!isNaN(num) && val.trim() !== "" && !val.endsWith(".")) {
             setParams(prev => {
-                // Key needs casting because inputValues keys match SimulationParams keys partially
                 if (prev[key as keyof SimulationParams] === num) return prev;
                 return { ...prev, [key]: num };
             });
         }
     };
 
-    // Run simulation when params change (debounced?)
-    // For sliders like defocus, we want fast updates.
-    // We'll use a separate effect for running.
-
+    // Run simulation
     useEffect(() => {
         if (state === "READY" && !calculating) {
             const run = async () => {
@@ -277,136 +280,147 @@ export default function PSFSimulator() {
                     setCalculating(false);
                 }
             };
-            // Debounce slightly
             const timer = setTimeout(run, 50);
             return () => clearTimeout(timer);
         }
-    }, [state, params]); // Adding runSimulation to deps might cause issues if it's not stable, assuming it is.
+    }, [state, params]);
 
-    // Effect to Draw
+    // Reset crosshair on tab switch
     useEffect(() => {
-        // ... (Drawing logic remains same, just ensuring we don't break it)
+        setCrosshair(null);
+    }, [activeTab]);
+
+    // Effect to Draw Main Canvas
+    useEffect(() => {
         if (!simResult) return;
+        if (!psfCanvasRef.current) return;
 
         const color = wavelengthToColor(params.lambda_vac);
+        const canvas = psfCanvasRef.current;
 
-        // 1. Draw PSF
-        const img = simResult.img;
-        if (psfCanvasRef.current) {
-            // Flatten img (Array of Arrays)
-            const height = img.length;
-            const width = img[0]?.length || 0;
-            if (width > 0) {
-                const flatImg = new Float64Array(width * height);
-                for (let y = 0; y < height; y++) {
-                    const row = img[y];
-                    for (let x = 0; x < width; x++) {
-                        flatImg[y * width + x] = row[x];
-                    }
-                }
+        // Select Data
+        let dataGrid: number[][] | undefined;
+        let isBfp = false;
 
-                drawMatrix(psfCanvasRef.current, flatImg, width, height, color);
+        if (activeTab === "psf") {
+            dataGrid = simResult.img;
+            isBfp = false;
+        } else {
+            dataGrid = simResult.bfp;
+            isBfp = true;
+        }
+
+        if (!dataGrid || dataGrid.length === 0) {
+            const ctx = canvas.getContext('2d');
+            ctx?.clearRect(0, 0, canvas.width, canvas.height);
+            return;
+        }
+
+        const height = dataGrid.length;
+        const width = dataGrid[0].length;
+
+        // Flatten
+        const flatData = new Float64Array(width * height);
+        for (let y = 0; y < height; y++) {
+            const row = dataGrid[y];
+            for (let x = 0; x < width; x++) {
+                flatData[y * width + x] = row[x];
             }
         }
 
+        drawMatrix(canvas, flatData, width, height, color);
 
-        // 2. Draw BFP
-        const bfp = simResult.bfp; // Array of Arrays
-        if (bfpCanvasRef.current) {
-            const hB = bfp.length;
-            const wB = bfp[0]?.length || 0;
-            if (wB > 0) {
-                const flatBfp = new Float64Array(wB * hB);
-                for (let y = 0; y < hB; y++) {
-                    const row = bfp[y];
-                    for (let x = 0; x < wB; x++) {
-                        flatBfp[y * wB + x] = row[x];
-                    }
-                }
-                drawMatrix(bfpCanvasRef.current, flatBfp, wB, hB, color);
+        // BFP Overlays
+        if (isBfp && params.NA > params.n_sample) {
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                const ratio = params.n_sample / params.NA;
+                const r_pix_max = width / 2;
+                const r_crit_pix = r_pix_max * ratio;
 
-                // Draw Critical Angle Overlay
-                const ctx = bfpCanvasRef.current.getContext('2d');
-                if (ctx && params.NA > params.n_sample) {
-                    const radius_max_phys = simResult.ext_bfp[1]; // Max extent
-                    // R_crit = R_max * (n_sample / NA)
-                    const ratio = params.n_sample / params.NA;
-                    // In pixels, R_max corresponds to width/2
-                    const r_pix_max = wB / 2;
-                    const r_crit_pix = r_pix_max * ratio;
+                ctx.beginPath();
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.arc(width / 2, height / 2, r_crit_pix, 0, 2 * Math.PI);
+                ctx.stroke();
+                ctx.setLineDash([]);
 
-                    ctx.beginPath();
-                    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([5, 5]);
-                    ctx.arc(wB / 2, hB / 2, r_crit_pix, 0, 2 * Math.PI);
-                    ctx.stroke();
-                    ctx.setLineDash([]);
+                ctx.font = "bold 12px sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
 
-                    // Add Labels
-                    ctx.font = "bold 12px sans-serif";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
+                const drawTextWithOutline = (text: string, x: number, y: number, color: string) => {
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = 'black';
+                    ctx.strokeText(text, x, y);
+                    ctx.fillStyle = color;
+                    ctx.fillText(text, x, y);
+                };
 
-                    const drawTextWithOutline = (text: string, x: number, y: number, color: string) => {
-                        ctx.lineWidth = 3;
-                        ctx.strokeStyle = 'black'; // Black outline
-                        ctx.strokeText(text, x, y);
-                        ctx.fillStyle = color; // High contrast fill
-                        ctx.fillText(text, x, y);
-                    };
-
-                    // Sub-critical (Inside) -> Cyan
-                    drawTextWithOutline("Sub-critical", wB / 2, hB / 2, "#06b6d4");
-
-                    // Super-critical (Outside) -> Magenta/Pink
-                    drawTextWithOutline("Super-critical", wB / 2, 20, "#e879f9");
-
-                }
+                drawTextWithOutline("Sub-critical", width / 2, height / 2, "#06b6d4");
+                drawTextWithOutline("Super-critical", width / 2, 20, "#e879f9");
             }
         }
 
-    }, [simResult, params]);
+    }, [simResult, activeTab, params]);
 
-    // Compute Profiles
     // Compute Profiles & Stats
     const profileAnalysis = useMemo(() => {
-        if (!simResult?.img) return null;
-        const img = simResult.img;
-        if (img.length === 0) return null;
+        if (!simResult) return null;
 
-        const height = img.length;
-        const width = img[0].length;
+        // Select Data
+        let dataGrid: number[][] | undefined;
+        if (activeTab === "psf") dataGrid = simResult.img;
+        else dataGrid = simResult.bfp;
+
+        if (!dataGrid || dataGrid.length === 0) return null;
+
+        const height = dataGrid.length;
+        const width = dataGrid[0].length;
 
         const cx = crosshair ? crosshair.x : Math.floor(width / 2);
         const cy = crosshair ? crosshair.y : Math.floor(height / 2);
 
-        // 1. Horizontal Profile (along X, at Y=cy)
-        const row = img[cy] ? Array.from(img[cy]) : new Array(width).fill(0);
-        const hStats = calculateGaussStats(row as number[]);
+        // 1. Horizontal Profile
+        const row = dataGrid[cy] ? Array.from(dataGrid[cy]) : new Array(width).fill(0);
 
-        // 2. Vertical Profile (along Y, at X=cx)
+        // 2. Vertical Profile
         const col = new Array(height);
         for (let y = 0; y < height; y++) {
-            col[y] = img[y] ? img[y][cx] : 0;
+            col[y] = dataGrid[y] ? dataGrid[y][cx] : 0;
         }
-        const vStats = calculateGaussStats(col);
 
-        // Generate Fit Curve (for Horizontal Primary)
-        const hFit = generateGaussCurve(width, hStats);
+        // Stats & Fit
+        let hStats = null;
+        let vStats = null;
+        let hFitData: any[] = [];
+        let vFitData: any[] = [];
 
-        // Chart Data (showing Horizontal for now as primary)
-        const data = row.map((val: number, i: number) => ({
+        if (activeTab === "psf") {
+            hStats = calculateGaussStats(row as number[]);
+            vStats = calculateGaussStats(col);
+            hFitData = generateGaussCurve(width, hStats);
+
+            // For vertical, we generate standard array then map it
+            const vFitRaw = generateGaussCurve(height, vStats);
+            vFitData = vFitRaw;
+        }
+
+        const hData = row.map((val: number, i: number) => ({
             x: i,
             intensity: val,
-            fit: hFit[i]?.fit || 0
+            fit: hFitData[i]?.fit || null
         }));
 
-        return { data, hStats, vStats, cx, cy, width, height };
-    }, [simResult, crosshair]);
+        const vData = col.map((val: number, i: number) => ({
+            y: i,
+            intensity: val,
+            fit: vFitData[i]?.fit || null
+        }));
 
-    // Handlers
-    // handleChangeRaw removed in favor of handleInputChange above
+        return { hData, vData, hStats, vStats, cx, cy, width, height };
+    }, [simResult, crosshair, activeTab]);
 
     return (
         <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
@@ -483,7 +497,6 @@ export default function PSFSimulator() {
                                 className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
                             />
                         </div>
-                        {/* FOV input removed as requested */}
                     </div>
 
                     <div className="space-y-2">
@@ -495,7 +508,6 @@ export default function PSFSimulator() {
                             onChange={e => setParams(p => ({ ...p, lambda_vac: parseFloat(e.target.value) * 1e-9 }))}
                             className="w-full accent-primary h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
                         />
-                        {/* Spectrum Gradient Bar */}
                         <div className="h-2 rounded w-full" style={{ background: SPECTRUM_GRADIENT }}></div>
                     </div>
                 </div>
@@ -504,7 +516,6 @@ export default function PSFSimulator() {
 
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-white">Aberrations</h3>
-
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <div className="flex justify-between">
@@ -513,13 +524,12 @@ export default function PSFSimulator() {
                             </div>
                             <input
                                 type="range"
-                                min="-2000" max="2000" step="50" // nanometers -> converts to meters
+                                min="-2000" max="2000" step="50"
                                 value={params.z_defocus * 1e9}
                                 onChange={e => setParams(p => ({ ...p, z_defocus: parseFloat(e.target.value) * 1e-9 }))}
                                 className="w-full accent-primary h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
                             />
                         </div>
-
                         <div className="space-y-2">
                             <label className="text-xs text-gray-400">Astigmatism</label>
                             <div className="flex p-1 bg-white/5 rounded-lg">
@@ -542,26 +552,50 @@ export default function PSFSimulator() {
 
             </div>
 
-            {/* Main Visuals */}
+            {/* Main Content Area */}
             <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-[300px]">
-                    {/* PSF View */}
-                    <div className="bg-black border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center relative group aspect-square">
-                        <span className="absolute top-4 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">PSF (Image Plane)</span>
-                        <div className="relative w-full h-full">
+
+                {/* Tabs */}
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setActiveTab('psf')}
+                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'psf' ? 'bg-black text-white border border-white/20' : 'bg-transparent text-gray-500 hover:text-gray-300'
+                            }`}
+                    >
+                        PSF Image plane
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('bfp')}
+                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'bfp' ? 'bg-black text-white border border-white/20' : 'bg-transparent text-gray-500 hover:text-gray-300'
+                            }`}
+                    >
+                        BFP Image plane
+                    </button>
+                </div>
+
+                {/* Grid Layout */}
+                <div className="grid grid-cols-[1fr_240px] grid-rows-[1fr_240px] gap-4 w-full h-full min-h-0">
+
+                    {/* 1. Main Canvas (Top-Left) */}
+                    <div className="bg-black border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center relative overflow-hidden group">
+                        <span className="absolute top-4 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest pointer-events-none">
+                            {activeTab === 'psf' ? 'PSF (Image Plane)' : 'Back Focal Plane'}
+                        </span>
+
+                        <div className="relative h-full aspect-square">
                             <canvas
                                 ref={psfCanvasRef}
                                 onClick={handleCanvasClick}
-                                className="w-full h-full aspect-square image-pixelated cursor-crosshair block"
+                                className="w-full h-full image-pixelated cursor-crosshair block"
                                 style={{ imageRendering: 'pixelated' }}
                             />
 
-                            {/* CSS Crosshair Overlay */}
+                            {/* Crosshair Overlay */}
                             {profileAnalysis && (
                                 <>
                                     {/* Horizontal Line */}
                                     <div
-                                        className="absolute w-full border-t border-white/50 border-dashed pointer-events-none"
+                                        className="absolute w-full border-t border-white/50 border-dashed pointer-events-none transition-all duration-75"
                                         style={{
                                             top: `${((profileAnalysis.cy + 0.5) / profileAnalysis.height) * 100}%`,
                                             left: 0
@@ -569,7 +603,7 @@ export default function PSFSimulator() {
                                     />
                                     {/* Vertical Line */}
                                     <div
-                                        className="absolute h-full border-l border-white/50 border-dashed pointer-events-none"
+                                        className="absolute h-full border-l border-white/50 border-dashed pointer-events-none transition-all duration-75"
                                         style={{
                                             left: `${((profileAnalysis.cx + 0.5) / profileAnalysis.width) * 100}%`,
                                             top: 0
@@ -579,108 +613,112 @@ export default function PSFSimulator() {
                             )}
                         </div>
 
-                        {/* Dynamic Scale Overlay */}
-                        <div className="absolute bottom-4 left-4 text-[10px] font-mono text-gray-500 bg-black/50 px-2 py-1 rounded z-10 pointer-events-none">
-                            Size: {(params.display_fov_um || 300).toFixed(0)} µm
+                        <div className="absolute bottom-4 left-4 text-[10px] font-mono text-gray-500 bg-black/50 px-2 py-1 rounded pointer-events-none">
+                            {activeTab === 'psf'
+                                ? `Size: ${(params.display_fov_um || 300).toFixed(0)} µm`
+                                : `NA: ${params.NA.toFixed(2)}`
+                            }
                         </div>
                     </div>
 
-                    {/* BFP View */}
-                    <div className="bg-black border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center relative aspect-square">
-                        <span className="absolute top-4 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">Back Focal Plane</span>
-                        <canvas
-                            ref={bfpCanvasRef}
-                            className="w-full h-full aspect-square"
-                        />
-                        <div className="absolute bottom-4 right-4 text-[10px] text-gray-500 text-right">
-                            Dashed: Critical Angle <br />
-                            (NA {">"} n_sample)
-                        </div>
-                    </div>
-                </div>
-
-                {/* Profile Graph & Stats */}
-                <div className="flex flex-col lg:flex-row gap-4 h-48">
-                    {/* Graph */}
-                    <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 relative min-w-0">
-                        <span className="absolute top-2 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">
-                            X-Profile (y={profileAnalysis?.cy ?? 'C'})
+                    {/* 2. Vertical Profile (Top-Right) */}
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 relative flex flex-col min-h-0">
+                        <span className="absolute top-2 -right-2 rotate-90 origin-top-right text-xs font-mono text-gray-500 uppercase tracking-widest whitespace-nowrap">
+                            Y-Profile (x={profileAnalysis?.cx ?? '-'})
                         </span>
-                        <div className="w-full h-full pt-4">
+                        <div className="flex-1 w-full min-h-0">
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={profileAnalysis?.data || []}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                                    <XAxis dataKey="x" hide />
-                                    <YAxis hide domain={[0, 'auto']} />
+                                <LineChart layout="vertical" data={profileAnalysis?.vData || []}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" horizontal={false} />
+                                    {/* X Axis is Value (Intensity) */}
+                                    <XAxis type="number" hide domain={[0, 'auto']} />
+                                    {/* Y Axis is Index, reversed to match image top-down */}
+                                    <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#111', borderColor: '#333', fontSize: '12px' }}
+                                        contentStyle={{ backgroundColor: '#111', borderColor: '#333', fontSize: '10px' }}
                                         itemStyle={{ color: '#fff' }}
+                                        cursor={{ stroke: '#555' }}
                                     />
-                                    {/* Fit Line (Dashed) */}
-                                    <Line
-                                        type="monotone"
-                                        dataKey="fit"
-                                        stroke="#888"
-                                        strokeWidth={2}
-                                        strokeDasharray="5 5"
-                                        dot={false}
-                                        isAnimationActive={false}
-                                        name="Gaussian Fit"
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="intensity"
-                                        stroke={wavelengthToColor(params.lambda_vac)}
-                                        strokeWidth={2}
-                                        dot={false}
-                                        isAnimationActive={false}
-                                        name="Data"
-                                    />
+                                    {activeTab === 'psf' && (
+                                        <Line dataKey="fit" type="monotone" stroke="#888" strokeWidth={1} strokeDasharray="3 3" dot={false} isAnimationActive={false} />
+                                    )}
+                                    <Line dataKey="intensity" type="monotone" stroke={wavelengthToColor(params.lambda_vac)} strokeWidth={2} dot={false} isAnimationActive={false} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
                     </div>
 
-                    {/* Stats Panel */}
-                    <div className="w-full lg:w-64 bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col justify-center gap-3">
-                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-white/10 pb-1">
-                            Gaussian Fit (Pixels)
-                        </h4>
-
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                            <div className="text-gray-500">Parameter</div>
-                            <div className="text-right text-gray-500 font-mono">Value</div>
-
-                            <div className="text-cyan-400">Sigma X</div>
-                            <div className="text-right font-mono text-white">
-                                {profileAnalysis?.hStats?.sigma.toFixed(2) ?? '-'}
-                            </div>
-
-                            <div className="text-pink-400">Sigma Y</div>
-                            <div className="text-right font-mono text-white">
-                                {profileAnalysis?.vStats?.sigma.toFixed(2) ?? '-'}
-                            </div>
-
-                            <div className="col-span-2 h-px bg-white/10 my-1" />
-
-                            <div className="text-gray-400">FWHM X</div>
-                            <div className="text-right font-mono text-white">
-                                {profileAnalysis?.hStats?.fwhm.toFixed(2) ?? '-'}
-                            </div>
-                            <div className="text-gray-400">FWHM Y</div>
-                            <div className="text-right font-mono text-white">
-                                {profileAnalysis?.vStats?.fwhm.toFixed(2) ?? '-'}
-                            </div>
+                    {/* 3. Horizontal Profile (Bottom-Left) */}
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 relative flex flex-col min-h-0">
+                        <span className="absolute top-2 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">
+                            X-Profile (y={profileAnalysis?.cy ?? '-'})
+                        </span>
+                        <div className="flex-1 w-full min-h-0 pt-2">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={profileAnalysis?.hData || []}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                                    <XAxis dataKey="x" hide />
+                                    <YAxis hide domain={[0, 'auto']} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#111', borderColor: '#333', fontSize: '10px' }}
+                                        itemStyle={{ color: '#fff' }}
+                                        cursor={{ stroke: '#555' }}
+                                    />
+                                    {activeTab === 'psf' && (
+                                        <Line dataKey="fit" type="monotone" stroke="#888" strokeWidth={1} strokeDasharray="3 3" dot={false} isAnimationActive={false} />
+                                    )}
+                                    <Line dataKey="intensity" type="monotone" stroke={wavelengthToColor(params.lambda_vac)} strokeWidth={2} dot={false} isAnimationActive={false} />
+                                </LineChart>
+                            </ResponsiveContainer>
                         </div>
                     </div>
+
+                    {/* 4. Stats Panel (Bottom-Right) */}
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col justify-center gap-3">
+                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-white/10 pb-1">
+                            {activeTab === 'psf' ? "Gaussian Fit (Pixels)" : "Analysis"}
+                        </h4>
+
+                        {activeTab === 'psf' ? (
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                                <div className="text-gray-500">Parameter</div>
+                                <div className="text-right text-gray-500 font-mono">Value</div>
+
+                                <div className="text-cyan-400">Sigma X</div>
+                                <div className="text-right font-mono text-white">
+                                    {profileAnalysis?.hStats?.sigma.toFixed(2) ?? '-'}
+                                </div>
+
+                                <div className="text-pink-400">Sigma Y</div>
+                                <div className="text-right font-mono text-white">
+                                    {profileAnalysis?.vStats?.sigma.toFixed(2) ?? '-'}
+                                </div>
+
+                                <div className="col-span-2 h-px bg-white/10 my-1" />
+
+                                <div className="text-gray-400">FWHM X</div>
+                                <div className="text-right font-mono text-white">
+                                    {profileAnalysis?.hStats?.fwhm.toFixed(2) ?? '-'}
+                                </div>
+                                <div className="text-gray-400">FWHM Y</div>
+                                <div className="text-right font-mono text-white">
+                                    {profileAnalysis?.vStats?.fwhm.toFixed(2) ?? '-'}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-xs text-gray-500 italic text-center">
+                                Fitting disabled for BFP. <br />
+                                Use crosshair to inspect intensity profiles.
+                            </div>
+                        )}
+                    </div>
+
                 </div>
             </div>
 
             {/* DEBUG SECTION */}
             <div className="fixed bottom-0 right-0 p-2 bg-black/80 text-[10px] text-gray-500 pointer-events-none z-50">
                 State: {state} | Result: {simResult ? "Yes" : "No"} | Computing: {calculating ? "Yes" : "No"}
-                <br />
-                {simResult && `Image: ${simResult.img?.length}x${simResult.img?.[0]?.length}`}
             </div>
         </div>
     );
