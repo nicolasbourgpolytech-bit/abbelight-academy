@@ -551,14 +551,39 @@ export default function PSFSimulator() {
                     {/* PSF View */}
                     <div className="bg-black border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center relative group aspect-square">
                         <span className="absolute top-4 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">PSF (Image Plane)</span>
-                        <canvas
-                            ref={psfCanvasRef}
-                            onClick={handleCanvasClick}
-                            className="w-full h-full aspect-square image-pixelated cursor-crosshair"
-                            style={{ imageRendering: 'pixelated' }}
-                        />
+                        <div className="relative w-full h-full">
+                            <canvas
+                                ref={psfCanvasRef}
+                                onClick={handleCanvasClick}
+                                className="w-full h-full aspect-square image-pixelated cursor-crosshair block"
+                                style={{ imageRendering: 'pixelated' }}
+                            />
+
+                            {/* CSS Crosshair Overlay */}
+                            {profileAnalysis && (
+                                <>
+                                    {/* Horizontal Line */}
+                                    <div
+                                        className="absolute w-full h-px bg-white/50 pointer-events-none"
+                                        style={{
+                                            top: `${(profileAnalysis.cy / profileAnalysis.height) * 100}%`,
+                                            left: 0
+                                        }}
+                                    />
+                                    {/* Vertical Line */}
+                                    <div
+                                        className="absolute h-full w-px bg-white/50 pointer-events-none"
+                                        style={{
+                                            left: `${(profileAnalysis.cx / profileAnalysis.width) * 100}%`,
+                                            top: 0
+                                        }}
+                                    />
+                                </>
+                            )}
+                        </div>
+
                         {/* Dynamic Scale Overlay */}
-                        <div className="absolute bottom-4 left-4 text-[10px] font-mono text-gray-500 bg-black/50 px-2 py-1 rounded">
+                        <div className="absolute bottom-4 left-4 text-[10px] font-mono text-gray-500 bg-black/50 px-2 py-1 rounded z-10 pointer-events-none">
                             Size: {(params.display_fov_um || 300).toFixed(0)} µm
                         </div>
                     </div>
@@ -594,6 +619,17 @@ export default function PSFSimulator() {
                                         contentStyle={{ backgroundColor: '#111', borderColor: '#333', fontSize: '12px' }}
                                         itemStyle={{ color: '#fff' }}
                                     />
+                                    {/* Fit Line (Dashed) */}
+                                    <Line
+                                        type="monotone"
+                                        dataKey="fit"
+                                        stroke="#888"
+                                        strokeWidth={2}
+                                        strokeDasharray="5 5"
+                                        dot={false}
+                                        isAnimationActive={false}
+                                        name="Gaussian Fit"
+                                    />
                                     <Line
                                         type="monotone"
                                         dataKey="intensity"
@@ -601,6 +637,7 @@ export default function PSFSimulator() {
                                         strokeWidth={2}
                                         dot={false}
                                         isAnimationActive={false}
+                                        name="Data"
                                     />
                                 </LineChart>
                             </ResponsiveContainer>
