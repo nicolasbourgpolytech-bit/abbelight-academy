@@ -312,8 +312,8 @@ export default function PSFSimulator() {
                             <label className="text-xs text-gray-400">NA</label>
                             <input
                                 type="text"
-                                value={params.NA}
-                                onChange={e => handleChangeRaw('NA', e.target.value)}
+                                value={inputValues.NA}
+                                onChange={e => handleInputChange('NA', e.target.value)}
                                 className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
                             />
                         </div>
@@ -321,8 +321,8 @@ export default function PSFSimulator() {
                             <label className="text-xs text-gray-400">Mag (M)</label>
                             <input
                                 type="text"
-                                value={params.M_obj}
-                                onChange={e => handleChangeRaw('M_obj', e.target.value)}
+                                value={inputValues.M_obj}
+                                onChange={e => handleInputChange('M_obj', e.target.value)}
                                 className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
                             />
                         </div>
@@ -330,8 +330,8 @@ export default function PSFSimulator() {
                             <label className="text-xs text-gray-400">n Immersion</label>
                             <input
                                 type="text"
-                                value={params.n_imm}
-                                onChange={e => handleChangeRaw('n_imm', e.target.value)}
+                                value={inputValues.n_imm}
+                                onChange={e => handleInputChange('n_imm', e.target.value)}
                                 className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
                             />
                         </div>
@@ -339,8 +339,8 @@ export default function PSFSimulator() {
                             <label className="text-xs text-gray-400">n Sample</label>
                             <input
                                 type="text"
-                                value={params.n_sample}
-                                onChange={e => handleChangeRaw('n_sample', e.target.value)}
+                                value={inputValues.n_sample}
+                                onChange={e => handleInputChange('n_sample', e.target.value)}
                                 className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
                             />
                         </div>
@@ -348,20 +348,12 @@ export default function PSFSimulator() {
                             <label className="text-xs text-gray-400">Pixel Size (µm)</label>
                             <input
                                 type="text"
-                                value={params.cam_pixel_um}
-                                onChange={e => handleChangeRaw('cam_pixel_um', e.target.value)}
+                                value={inputValues.cam_pixel_um}
+                                onChange={e => handleInputChange('cam_pixel_um', e.target.value)}
                                 className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
                             />
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-400">FOV (µm)</label>
-                            <input
-                                type="text"
-                                value={params.display_fov_um || 300}
-                                onChange={e => handleChangeRaw('display_fov_um', e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
-                            />
-                        </div>
+                        {/* FOV input removed as requested */}
                     </div>
 
                     <div className="space-y-2">
@@ -373,7 +365,8 @@ export default function PSFSimulator() {
                             onChange={e => setParams(p => ({ ...p, lambda_vac: parseFloat(e.target.value) * 1e-9 }))}
                             className="w-full accent-primary h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
                         />
-                        <div className="h-2 rounded w-full" style={{ backgroundColor: wavelengthToColor(params.lambda_vac) }}></div>
+                        {/* Spectrum Gradient Bar */}
+                        <div className="h-2 rounded w-full" style={{ background: SPECTRUM_GRADIENT }}></div>
                     </div>
                 </div>
 
