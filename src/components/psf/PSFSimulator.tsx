@@ -173,40 +173,53 @@ export default function PSFSimulator() {
         }
 
         if (psfCanvasRef.current) {
-            drawMatrix(psfCanvasRef.current, flatImg, width, height, color);
-        }
-
-        // 2. Draw BFP
-        const bfp = simResult.bfp;
-        const hB = bfp.length;
-        const wB = bfp[0].length;
-        const flatBfp = new Float64Array(wB * hB);
-        for (let y = 0; y < hB; y++) {
-            for (let x = 0; x < wB; x++) {
-                flatBfp[y * wB + x] = bfp[y][x];
+            // Flatten img (Array of Arrays)
+            const height = img.length;
+            const width = img[0]?.length || 0;
+            if (width > 0) {
+                const flatImg = new Float64Array(width * height);
+                for (let y = 0; y < height; y++) {
+                    const row = img[y];
+                    for (let x = 0; x < width; x++) {
+                        flatImg[y * width + x] = row[x];
+                    }
+                }
+                drawMatrix(psfCanvasRef.current, flatImg, width, height, color);
             }
         }
 
+        // 2. Draw BFP
+        const bfp = simResult.bfp; // Array of Arrays
         if (bfpCanvasRef.current) {
-            drawMatrix(bfpCanvasRef.current, flatBfp, wB, hB, color);
+            const hB = bfp.length;
+            const wB = bfp[0]?.length || 0;
+            if (wB > 0) {
+                const flatBfp = new Float64Array(wB * hB);
+                for (let y = 0; y < hB; y++) {
+                    const row = bfp[y];
+                    for (let x = 0; x < wB; x++) {
+                        flatBfp[y * wB + x] = row[x];
+                    }
+                }
+                drawMatrix(bfpCanvasRef.current, flatBfp, wB, hB, color);
 
-            // Draw Critical Angle Overlay
-            const ctx = bfpCanvasRef.current.getContext('2d');
-            if (ctx && params.NA > params.n_sample) {
-                const ext_bfp = simResult.ext_bfp; // [min, max, min, max]
-                const radius_max_phys = ext_bfp[1]; // Max extent
-                // R_crit = R_max * (n_sample / NA)
-                const ratio = params.n_sample / params.NA;
-                // In pixels, R_max corresponds to width/2
-                const r_pix_max = wB / 2;
-                const r_crit_pix = r_pix_max * ratio;
+                // Draw Critical Angle Overlay
+                const ctx = bfpCanvasRef.current.getContext('2d');
+                if (ctx && params.NA > params.n_sample) {
+                    const radius_max_phys = simResult.ext_bfp[1]; // Max extent
+                    // R_crit = R_max * (n_sample / NA)
+                    const ratio = params.n_sample / params.NA;
+                    // In pixels, R_max corresponds to width/2
+                    const r_pix_max = wB / 2;
+                    const r_crit_pix = r_pix_max * ratio;
 
-                ctx.beginPath();
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-                ctx.setLineDash([5, 5]);
-                ctx.arc(wB / 2, hB / 2, r_crit_pix, 0, 2 * Math.PI);
-                ctx.stroke();
-                ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+                    ctx.setLineDash([5, 5]);
+                    ctx.arc(wB / 2, hB / 2, r_crit_pix, 0, 2 * Math.PI);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
             }
         }
 
@@ -332,8 +345,8 @@ export default function PSFSimulator() {
                                         key={opt}
                                         onClick={() => setParams(p => ({ ...p, astigmatism: opt as any }))}
                                         className={`flex-1 text-xs py-1.5 rounded-md transition-colors ${params.astigmatism === opt
-                                                ? "bg-primary text-black font-medium shadow-sm"
-                                                : "text-gray-400 hover:text-white"
+                                            ? "bg-primary text-black font-medium shadow-sm"
+                                            : "text-gray-400 hover:text-white"
                                             }`}
                                     >
                                         {opt}
