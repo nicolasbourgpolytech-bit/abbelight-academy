@@ -117,51 +117,65 @@ function drawMatrix(
     ctx.putImageData(imgData, 0, 0);
 }
 
-// Simple Gaussian Statistics Estimator (Moment Matching)
+// Peak-based Gaussian Stats (Better for PSF/Airy disks than moments)
 // Returns center (index), sigma (pixels), and FWHM (pixels)
 function calculateGaussStats(data: number[]) {
     if (!data || data.length === 0) return null;
 
     let min = Infinity, max = -Infinity;
-    let minIdx = -1, maxIdx = -1;
-    let sum = 0;
+    let maxIdx = -1;
 
-    // 1. Basic Stats
+    // 1. Basic Stats & Peak Finding
     for (let i = 0; i < data.length; i++) {
         const v = data[i];
-        if (v < min) { min = v; minIdx = i; }
+        if (v < min) min = v;
         if (v > max) { max = v; maxIdx = i; }
     }
 
-    // 2. Moments (Background subtracted)
-    // We treat 'min' as the baseline background
+    // Background and Amplitude
     const bg = min;
-    let sumW = 0;
-    let sumWX = 0;
+    const amplitude = max - bg;
+    const halfMax = bg + amplitude / 2;
 
-    for (let i = 0; i < data.length; i++) {
-        const w = data[i] - bg;
-        sumW += w;
-        sumWX += w * i;
+    if (amplitude <= 0) return { min, max, bg, center: maxIdx, sigma: 0, fwhm: 0, amplitude: 0 };
+
+    // 2. FWHM Calculation (Linear Interpolation)
+    // Find left crossing
+    let leftX = maxIdx;
+    for (let i = maxIdx; i >= 0; i--) {
+        if (data[i] < halfMax) {
+            // Interpolate between i and i+1
+            const y0 = data[i];
+            const y1 = data[i + 1];
+            // y = y0 + (y1 - y0) * (x - x0) -> halfMax = y0 + (y1 - y0) * (leftX - i)
+            // leftX - i = (halfMax - y0) / (y1 - y0)
+            leftX = i + (halfMax - y0) / (y1 - y0);
+            break;
+        }
     }
 
-    if (sumW <= 0) return { min, max, center: maxIdx, sigma: 0, fwhm: 0 };
-
-    const center = sumWX / sumW;
-
-    let sumVar = 0;
-    for (let i = 0; i < data.length; i++) {
-        const w = data[i] - bg;
-        sumVar += w * (i - center) ** 2;
+    // Find right crossing
+    let rightX = maxIdx;
+    for (let i = maxIdx; i < data.length; i++) {
+        if (data[i] < halfMax) {
+            const y1 = data[i];     // < HM
+            const y0 = data[i - 1]; // >= HM
+            rightX = (i - 1) + (halfMax - y0) / (y1 - y0);
+            break;
+        }
     }
 
-    const variance = sumVar / sumW;
-    const sigma = Math.sqrt(variance);
-    const fwhm = 2.355 * sigma; // 2 * sqrt(2*ln(2))
+    // Fallbacks if peak is at edge
+    if (leftX === maxIdx) leftX = 0;
+    if (rightX === maxIdx) rightX = data.length - 1;
 
-    // Estimate Amplitude (Area = A * sigma * sqrt(2*pi))
-    // sumW is the sum of (data - bg), approximating the integral
-    const amplitude = sumW / (sigma * Math.sqrt(2 * Math.PI));
+    const fwhm = rightX - leftX;
+
+    // For Gaussian: FWHM = 2.355 * sigma
+    const sigma = fwhm / 2.355;
+
+    // Refine Center (Midpoint of FWHM is often more stable than maxIdx for sub-pixel)
+    const center = (leftX + rightX) / 2;
 
     return { min, max, bg, center, sigma, fwhm, amplitude };
 }
@@ -292,399 +306,383 @@ export default function PSFSimulator() {
                 }
 
                 drawMatrix(psfCanvasRef.current, flatImg, width, height, color);
-
-                // Draw Crosshair Overlay
-                const cx = crosshair ? crosshair.x : Math.floor(width / 2);
-                const cy = crosshair ? crosshair.y : Math.floor(height / 2);
-
-                const ctx = psfCanvasRef.current.getContext('2d');
-                if (ctx) {
-                    ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    // Vertical
-                    ctx.moveTo(cx + 0.5, 0);
-                    ctx.lineTo(cx + 0.5, height);
-                    // Horizontal
-                    ctx.moveTo(0, cy + 0.5);
-                    ctx.lineTo(width, cy + 0.5);
-                    ctx.stroke();
-                }
             }
         }
+    }
+        }
 
-        // 2. Draw BFP
-        const bfp = simResult.bfp; // Array of Arrays
-        if (bfpCanvasRef.current) {
-            const hB = bfp.length;
-            const wB = bfp[0]?.length || 0;
-            if (wB > 0) {
-                const flatBfp = new Float64Array(wB * hB);
-                for (let y = 0; y < hB; y++) {
-                    const row = bfp[y];
-                    for (let x = 0; x < wB; x++) {
-                        flatBfp[y * wB + x] = row[x];
-                    }
-                }
-                drawMatrix(bfpCanvasRef.current, flatBfp, wB, hB, color);
-
-                // Draw Critical Angle Overlay
-                const ctx = bfpCanvasRef.current.getContext('2d');
-                if (ctx && params.NA > params.n_sample) {
-                    const radius_max_phys = simResult.ext_bfp[1]; // Max extent
-                    // R_crit = R_max * (n_sample / NA)
-                    const ratio = params.n_sample / params.NA;
-                    // In pixels, R_max corresponds to width/2
-                    const r_pix_max = wB / 2;
-                    const r_crit_pix = r_pix_max * ratio;
-
-                    ctx.beginPath();
-                    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([5, 5]);
-                    ctx.arc(wB / 2, hB / 2, r_crit_pix, 0, 2 * Math.PI);
-                    ctx.stroke();
-                    ctx.setLineDash([]);
-
-                    // Add Labels
-                    ctx.font = "bold 12px sans-serif";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-
-                    const drawTextWithOutline = (text: string, x: number, y: number, color: string) => {
-                        ctx.lineWidth = 3;
-                        ctx.strokeStyle = 'black'; // Black outline
-                        ctx.strokeText(text, x, y);
-                        ctx.fillStyle = color; // High contrast fill
-                        ctx.fillText(text, x, y);
-                    };
-
-                    // Sub-critical (Inside) -> Cyan
-                    drawTextWithOutline("Sub-critical", wB / 2, hB / 2, "#06b6d4");
-
-                    // Super-critical (Outside) -> Magenta/Pink
-                    drawTextWithOutline("Super-critical", wB / 2, 20, "#e879f9");
-
-                }
+// 2. Draw BFP
+const bfp = simResult.bfp; // Array of Arrays
+if (bfpCanvasRef.current) {
+    const hB = bfp.length;
+    const wB = bfp[0]?.length || 0;
+    if (wB > 0) {
+        const flatBfp = new Float64Array(wB * hB);
+        for (let y = 0; y < hB; y++) {
+            const row = bfp[y];
+            for (let x = 0; x < wB; x++) {
+                flatBfp[y * wB + x] = row[x];
             }
         }
+        drawMatrix(bfpCanvasRef.current, flatBfp, wB, hB, color);
+
+        // Draw Critical Angle Overlay
+        const ctx = bfpCanvasRef.current.getContext('2d');
+        if (ctx && params.NA > params.n_sample) {
+            const radius_max_phys = simResult.ext_bfp[1]; // Max extent
+            // R_crit = R_max * (n_sample / NA)
+            const ratio = params.n_sample / params.NA;
+            // In pixels, R_max corresponds to width/2
+            const r_pix_max = wB / 2;
+            const r_crit_pix = r_pix_max * ratio;
+
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.arc(wB / 2, hB / 2, r_crit_pix, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Add Labels
+            ctx.font = "bold 12px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            const drawTextWithOutline = (text: string, x: number, y: number, color: string) => {
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = 'black'; // Black outline
+                ctx.strokeText(text, x, y);
+                ctx.fillStyle = color; // High contrast fill
+                ctx.fillText(text, x, y);
+            };
+
+            // Sub-critical (Inside) -> Cyan
+            drawTextWithOutline("Sub-critical", wB / 2, hB / 2, "#06b6d4");
+
+            // Super-critical (Outside) -> Magenta/Pink
+            drawTextWithOutline("Super-critical", wB / 2, 20, "#e879f9");
+
+        }
+    }
+}
 
     }, [simResult, params]);
 
-    // Compute Profiles
-    // Compute Profiles & Stats
-    const profileAnalysis = useMemo(() => {
-        if (!simResult?.img) return null;
-        const img = simResult.img;
-        if (img.length === 0) return null;
+// Compute Profiles
+// Compute Profiles & Stats
+const profileAnalysis = useMemo(() => {
+    if (!simResult?.img) return null;
+    const img = simResult.img;
+    if (img.length === 0) return null;
 
-        const height = img.length;
-        const width = img[0].length;
+    const height = img.length;
+    const width = img[0].length;
 
-        const cx = crosshair ? crosshair.x : Math.floor(width / 2);
-        const cy = crosshair ? crosshair.y : Math.floor(height / 2);
+    const cx = crosshair ? crosshair.x : Math.floor(width / 2);
+    const cy = crosshair ? crosshair.y : Math.floor(height / 2);
 
-        // 1. Horizontal Profile (along X, at Y=cy)
-        const row = img[cy] ? Array.from(img[cy]) : new Array(width).fill(0);
-        const hStats = calculateGaussStats(row as number[]);
+    // 1. Horizontal Profile (along X, at Y=cy)
+    const row = img[cy] ? Array.from(img[cy]) : new Array(width).fill(0);
+    const hStats = calculateGaussStats(row as number[]);
 
-        // 2. Vertical Profile (along Y, at X=cx)
-        const col = new Array(height);
-        for (let y = 0; y < height; y++) {
-            col[y] = img[y] ? img[y][cx] : 0;
-        }
-        const vStats = calculateGaussStats(col);
+    // 2. Vertical Profile (along Y, at X=cx)
+    const col = new Array(height);
+    for (let y = 0; y < height; y++) {
+        col[y] = img[y] ? img[y][cx] : 0;
+    }
+    const vStats = calculateGaussStats(col);
 
-        // Generate Fit Curve (for Horizontal Primary)
-        const hFit = generateGaussCurve(width, hStats);
+    // Generate Fit Curve (for Horizontal Primary)
+    const hFit = generateGaussCurve(width, hStats);
 
-        // Chart Data (showing Horizontal for now as primary)
-        const data = row.map((val: number, i: number) => ({
-            x: i,
-            intensity: val,
-            fit: hFit[i]?.fit || 0
-        }));
+    // Chart Data (showing Horizontal for now as primary)
+    const data = row.map((val: number, i: number) => ({
+        x: i,
+        intensity: val,
+        fit: hFit[i]?.fit || 0
+    }));
 
-        return { data, hStats, vStats, cx, cy, width, height };
-    }, [simResult, crosshair]);
+    return { data, hStats, vStats, cx, cy, width, height };
+}, [simResult, crosshair]);
 
-    // Handlers
-    // handleChangeRaw removed in favor of handleInputChange above
+// Handlers
+// handleChangeRaw removed in favor of handleInputChange above
 
-    return (
-        <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
-            {/* Sidebar Controls */}
-            <div className="w-full lg:w-80 shrink-0 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
+return (
+    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
+        {/* Sidebar Controls */}
+        <div className="w-full lg:w-80 shrink-0 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
 
-                {state === "LOADING" && (
-                    <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl text-primary animate-pulse text-xs">
-                        Loading Simulation Engine (Pyodide)...
+            {state === "LOADING" && (
+                <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl text-primary animate-pulse text-xs">
+                    Loading Simulation Engine (Pyodide)...
+                </div>
+            )}
+            {state === "ERROR" && (
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs">
+                    <strong>System Error:</strong><br />
+                    {pyodideError || "Failed to load Simulator."}
+                </div>
+            )}
+            {lastError && (
+                <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-500 text-xs break-words">
+                    <strong>Simulation Error:</strong><br />
+                    {lastError}
+                </div>
+            )}
+
+            <div className="space-y-4">
+                <h3 className="text-lg font-bold text-white flex justify-between items-center">
+                    System
+                    {calculating && <span className="text-xs text-primary animate-pulse">Computing...</span>}
+                </h3>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                        <label className="text-xs text-gray-400">NA</label>
+                        <input
+                            type="text"
+                            value={inputValues.NA}
+                            onChange={e => handleInputChange('NA', e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
+                        />
                     </div>
-                )}
-                {state === "ERROR" && (
-                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs">
-                        <strong>System Error:</strong><br />
-                        {pyodideError || "Failed to load Simulator."}
+                    <div className="space-y-1">
+                        <label className="text-xs text-gray-400">Mag (M)</label>
+                        <input
+                            type="text"
+                            value={inputValues.M_obj}
+                            onChange={e => handleInputChange('M_obj', e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
+                        />
                     </div>
-                )}
-                {lastError && (
-                    <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-500 text-xs break-words">
-                        <strong>Simulation Error:</strong><br />
-                        {lastError}
+                    <div className="space-y-1">
+                        <label className="text-xs text-gray-400">n Immersion</label>
+                        <input
+                            type="text"
+                            value={inputValues.n_imm}
+                            onChange={e => handleInputChange('n_imm', e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
+                        />
                     </div>
-                )}
+                    <div className="space-y-1">
+                        <label className="text-xs text-gray-400">n Sample</label>
+                        <input
+                            type="text"
+                            value={inputValues.n_sample}
+                            onChange={e => handleInputChange('n_sample', e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs text-gray-400">Pixel Size (µm)</label>
+                        <input
+                            type="text"
+                            value={inputValues.cam_pixel_um}
+                            onChange={e => handleInputChange('cam_pixel_um', e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
+                        />
+                    </div>
+                    {/* FOV input removed as requested */}
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-xs text-gray-400">Wavelength (nm): {(params.lambda_vac * 1e9).toFixed(0)}</label>
+                    <input
+                        type="range"
+                        min="400" max="700" step="10"
+                        value={params.lambda_vac * 1e9}
+                        onChange={e => setParams(p => ({ ...p, lambda_vac: parseFloat(e.target.value) * 1e-9 }))}
+                        className="w-full accent-primary h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                    />
+                    {/* Spectrum Gradient Bar */}
+                    <div className="h-2 rounded w-full" style={{ background: SPECTRUM_GRADIENT }}></div>
+                </div>
+            </div>
+
+            <div className="w-full h-px bg-white/10" />
+
+            <div className="space-y-4">
+                <h3 className="text-lg font-bold text-white">Aberrations</h3>
 
                 <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-white flex justify-between items-center">
-                        System
-                        {calculating && <span className="text-xs text-primary animate-pulse">Computing...</span>}
-                    </h3>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-400">NA</label>
-                            <input
-                                type="text"
-                                value={inputValues.NA}
-                                onChange={e => handleInputChange('NA', e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
-                            />
+                    <div className="space-y-2">
+                        <div className="flex justify-between">
+                            <label className="text-xs text-gray-400">Defocus (µm)</label>
+                            <span className="text-xs font-mono text-primary">{(params.z_defocus * 1e6).toFixed(2)}</span>
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-400">Mag (M)</label>
-                            <input
-                                type="text"
-                                value={inputValues.M_obj}
-                                onChange={e => handleInputChange('M_obj', e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-400">n Immersion</label>
-                            <input
-                                type="text"
-                                value={inputValues.n_imm}
-                                onChange={e => handleInputChange('n_imm', e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-400">n Sample</label>
-                            <input
-                                type="text"
-                                value={inputValues.n_sample}
-                                onChange={e => handleInputChange('n_sample', e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-400">Pixel Size (µm)</label>
-                            <input
-                                type="text"
-                                value={inputValues.cam_pixel_um}
-                                onChange={e => handleInputChange('cam_pixel_um', e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
-                            />
-                        </div>
-                        {/* FOV input removed as requested */}
+                        <input
+                            type="range"
+                            min="-2000" max="2000" step="50" // nanometers -> converts to meters
+                            value={params.z_defocus * 1e9}
+                            onChange={e => setParams(p => ({ ...p, z_defocus: parseFloat(e.target.value) * 1e-9 }))}
+                            className="w-full accent-primary h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                        />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs text-gray-400">Wavelength (nm): {(params.lambda_vac * 1e9).toFixed(0)}</label>
-                        <input
-                            type="range"
-                            min="400" max="700" step="10"
-                            value={params.lambda_vac * 1e9}
-                            onChange={e => setParams(p => ({ ...p, lambda_vac: parseFloat(e.target.value) * 1e-9 }))}
-                            className="w-full accent-primary h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                        />
-                        {/* Spectrum Gradient Bar */}
-                        <div className="h-2 rounded w-full" style={{ background: SPECTRUM_GRADIENT }}></div>
-                    </div>
-                </div>
-
-                <div className="w-full h-px bg-white/10" />
-
-                <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-white">Aberrations</h3>
-
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <label className="text-xs text-gray-400">Defocus (µm)</label>
-                                <span className="text-xs font-mono text-primary">{(params.z_defocus * 1e6).toFixed(2)}</span>
-                            </div>
-                            <input
-                                type="range"
-                                min="-2000" max="2000" step="50" // nanometers -> converts to meters
-                                value={params.z_defocus * 1e9}
-                                onChange={e => setParams(p => ({ ...p, z_defocus: parseFloat(e.target.value) * 1e-9 }))}
-                                className="w-full accent-primary h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs text-gray-400">Astigmatism</label>
-                            <div className="flex p-1 bg-white/5 rounded-lg">
-                                {["None", "Weak", "Strong"].map((opt) => (
-                                    <button
-                                        key={opt}
-                                        onClick={() => setParams(p => ({ ...p, astigmatism: opt as any }))}
-                                        className={`flex-1 text-xs py-1.5 rounded-md transition-colors ${params.astigmatism === opt
-                                            ? "bg-primary text-black font-medium shadow-sm"
-                                            : "text-gray-400 hover:text-white"
-                                            }`}
-                                    >
-                                        {opt}
-                                    </button>
-                                ))}
-                            </div>
+                        <label className="text-xs text-gray-400">Astigmatism</label>
+                        <div className="flex p-1 bg-white/5 rounded-lg">
+                            {["None", "Weak", "Strong"].map((opt) => (
+                                <button
+                                    key={opt}
+                                    onClick={() => setParams(p => ({ ...p, astigmatism: opt as any }))}
+                                    className={`flex-1 text-xs py-1.5 rounded-md transition-colors ${params.astigmatism === opt
+                                        ? "bg-primary text-black font-medium shadow-sm"
+                                        : "text-gray-400 hover:text-white"
+                                        }`}
+                                >
+                                    {opt}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>
-
             </div>
 
-            {/* Main Visuals */}
-            <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-[300px]">
-                    {/* PSF View */}
-                    <div className="bg-black border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center relative group aspect-square">
-                        <span className="absolute top-4 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">PSF (Image Plane)</span>
-                        <div className="relative w-full h-full">
-                            <canvas
-                                ref={psfCanvasRef}
-                                onClick={handleCanvasClick}
-                                className="w-full h-full aspect-square image-pixelated cursor-crosshair block"
-                                style={{ imageRendering: 'pixelated' }}
-                            />
+        </div>
 
-                            {/* CSS Crosshair Overlay */}
-                            {profileAnalysis && (
-                                <>
-                                    {/* Horizontal Line */}
-                                    <div
-                                        className="absolute w-full h-px bg-white/50 pointer-events-none"
-                                        style={{
-                                            top: `${(profileAnalysis.cy / profileAnalysis.height) * 100}%`,
-                                            left: 0
-                                        }}
-                                    />
-                                    {/* Vertical Line */}
-                                    <div
-                                        className="absolute h-full w-px bg-white/50 pointer-events-none"
-                                        style={{
-                                            left: `${(profileAnalysis.cx / profileAnalysis.width) * 100}%`,
-                                            top: 0
-                                        }}
-                                    />
-                                </>
-                            )}
-                        </div>
-
-                        {/* Dynamic Scale Overlay */}
-                        <div className="absolute bottom-4 left-4 text-[10px] font-mono text-gray-500 bg-black/50 px-2 py-1 rounded z-10 pointer-events-none">
-                            Size: {(params.display_fov_um || 300).toFixed(0)} µm
-                        </div>
-                    </div>
-
-                    {/* BFP View */}
-                    <div className="bg-black border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center relative aspect-square">
-                        <span className="absolute top-4 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">Back Focal Plane</span>
+        {/* Main Visuals */}
+        <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-[300px]">
+                {/* PSF View */}
+                <div className="bg-black border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center relative group aspect-square">
+                    <span className="absolute top-4 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">PSF (Image Plane)</span>
+                    <div className="relative w-full h-full">
                         <canvas
-                            ref={bfpCanvasRef}
-                            className="w-full h-full aspect-square"
+                            ref={psfCanvasRef}
+                            onClick={handleCanvasClick}
+                            className="w-full h-full aspect-square image-pixelated cursor-crosshair block"
+                            style={{ imageRendering: 'pixelated' }}
                         />
-                        <div className="absolute bottom-4 right-4 text-[10px] text-gray-500 text-right">
-                            Dashed: Critical Angle <br />
-                            (NA {">"} n_sample)
-                        </div>
+
+                        {/* CSS Crosshair Overlay */}
+                        {profileAnalysis && (
+                            <>
+                                {/* Horizontal Line */}
+                                <div
+                                    className="absolute w-full h-px bg-white/50 pointer-events-none"
+                                    style={{
+                                        top: `${(profileAnalysis.cy / profileAnalysis.height) * 100}%`,
+                                        left: 0
+                                    }}
+                                />
+                                {/* Vertical Line */}
+                                <div
+                                    className="absolute h-full w-px bg-white/50 pointer-events-none"
+                                    style={{
+                                        left: `${(profileAnalysis.cx / profileAnalysis.width) * 100}%`,
+                                        top: 0
+                                    }}
+                                />
+                            </>
+                        )}
+                    </div>
+
+                    {/* Dynamic Scale Overlay */}
+                    <div className="absolute bottom-4 left-4 text-[10px] font-mono text-gray-500 bg-black/50 px-2 py-1 rounded z-10 pointer-events-none">
+                        Size: {(params.display_fov_um || 300).toFixed(0)} µm
                     </div>
                 </div>
 
-                {/* Profile Graph & Stats */}
-                <div className="flex flex-col lg:flex-row gap-4 h-48">
-                    {/* Graph */}
-                    <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 relative min-w-0">
-                        <span className="absolute top-2 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">
-                            X-Profile (y={profileAnalysis?.cy ?? 'C'})
-                        </span>
-                        <div className="w-full h-full pt-4">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={profileAnalysis?.data || []}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                                    <XAxis dataKey="x" hide />
-                                    <YAxis hide domain={[0, 'auto']} />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: '#111', borderColor: '#333', fontSize: '12px' }}
-                                        itemStyle={{ color: '#fff' }}
-                                    />
-                                    {/* Fit Line (Dashed) */}
-                                    <Line
-                                        type="monotone"
-                                        dataKey="fit"
-                                        stroke="#888"
-                                        strokeWidth={2}
-                                        strokeDasharray="5 5"
-                                        dot={false}
-                                        isAnimationActive={false}
-                                        name="Gaussian Fit"
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="intensity"
-                                        stroke={wavelengthToColor(params.lambda_vac)}
-                                        strokeWidth={2}
-                                        dot={false}
-                                        isAnimationActive={false}
-                                        name="Data"
-                                    />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-
-                    {/* Stats Panel */}
-                    <div className="w-full lg:w-64 bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col justify-center gap-3">
-                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-white/10 pb-1">
-                            Gaussian Fit (Pixels)
-                        </h4>
-
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                            <div className="text-gray-500">Parameter</div>
-                            <div className="text-right text-gray-500 font-mono">Value</div>
-
-                            <div className="text-cyan-400">Sigma X</div>
-                            <div className="text-right font-mono text-white">
-                                {profileAnalysis?.hStats?.sigma.toFixed(2) ?? '-'}
-                            </div>
-
-                            <div className="text-pink-400">Sigma Y</div>
-                            <div className="text-right font-mono text-white">
-                                {profileAnalysis?.vStats?.sigma.toFixed(2) ?? '-'}
-                            </div>
-
-                            <div className="col-span-2 h-px bg-white/10 my-1" />
-
-                            <div className="text-gray-400">FWHM X</div>
-                            <div className="text-right font-mono text-white">
-                                {profileAnalysis?.hStats?.fwhm.toFixed(2) ?? '-'}
-                            </div>
-                            <div className="text-gray-400">FWHM Y</div>
-                            <div className="text-right font-mono text-white">
-                                {profileAnalysis?.vStats?.fwhm.toFixed(2) ?? '-'}
-                            </div>
-                        </div>
+                {/* BFP View */}
+                <div className="bg-black border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center relative aspect-square">
+                    <span className="absolute top-4 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">Back Focal Plane</span>
+                    <canvas
+                        ref={bfpCanvasRef}
+                        className="w-full h-full aspect-square"
+                    />
+                    <div className="absolute bottom-4 right-4 text-[10px] text-gray-500 text-right">
+                        Dashed: Critical Angle <br />
+                        (NA {">"} n_sample)
                     </div>
                 </div>
             </div>
 
-            {/* DEBUG SECTION */}
-            <div className="fixed bottom-0 right-0 p-2 bg-black/80 text-[10px] text-gray-500 pointer-events-none z-50">
-                State: {state} | Result: {simResult ? "Yes" : "No"} | Computing: {calculating ? "Yes" : "No"}
-                <br />
-                {simResult && `Image: ${simResult.img?.length}x${simResult.img?.[0]?.length}`}
+            {/* Profile Graph & Stats */}
+            <div className="flex flex-col lg:flex-row gap-4 h-48">
+                {/* Graph */}
+                <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 relative min-w-0">
+                    <span className="absolute top-2 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">
+                        X-Profile (y={profileAnalysis?.cy ?? 'C'})
+                    </span>
+                    <div className="w-full h-full pt-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={profileAnalysis?.data || []}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                                <XAxis dataKey="x" hide />
+                                <YAxis hide domain={[0, 'auto']} />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#111', borderColor: '#333', fontSize: '12px' }}
+                                    itemStyle={{ color: '#fff' }}
+                                />
+                                {/* Fit Line (Dashed) */}
+                                <Line
+                                    type="monotone"
+                                    dataKey="fit"
+                                    stroke="#888"
+                                    strokeWidth={2}
+                                    strokeDasharray="5 5"
+                                    dot={false}
+                                    isAnimationActive={false}
+                                    name="Gaussian Fit"
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="intensity"
+                                    stroke={wavelengthToColor(params.lambda_vac)}
+                                    strokeWidth={2}
+                                    dot={false}
+                                    isAnimationActive={false}
+                                    name="Data"
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Stats Panel */}
+                <div className="w-full lg:w-64 bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col justify-center gap-3">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-white/10 pb-1">
+                        Gaussian Fit (Pixels)
+                    </h4>
+
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                        <div className="text-gray-500">Parameter</div>
+                        <div className="text-right text-gray-500 font-mono">Value</div>
+
+                        <div className="text-cyan-400">Sigma X</div>
+                        <div className="text-right font-mono text-white">
+                            {profileAnalysis?.hStats?.sigma.toFixed(2) ?? '-'}
+                        </div>
+
+                        <div className="text-pink-400">Sigma Y</div>
+                        <div className="text-right font-mono text-white">
+                            {profileAnalysis?.vStats?.sigma.toFixed(2) ?? '-'}
+                        </div>
+
+                        <div className="col-span-2 h-px bg-white/10 my-1" />
+
+                        <div className="text-gray-400">FWHM X</div>
+                        <div className="text-right font-mono text-white">
+                            {profileAnalysis?.hStats?.fwhm.toFixed(2) ?? '-'}
+                        </div>
+                        <div className="text-gray-400">FWHM Y</div>
+                        <div className="text-right font-mono text-white">
+                            {profileAnalysis?.vStats?.fwhm.toFixed(2) ?? '-'}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    );
+
+        {/* DEBUG SECTION */}
+        <div className="fixed bottom-0 right-0 p-2 bg-black/80 text-[10px] text-gray-500 pointer-events-none z-50">
+            State: {state} | Result: {simResult ? "Yes" : "No"} | Computing: {calculating ? "Yes" : "No"}
+            <br />
+            {simResult && `Image: ${simResult.img?.length}x${simResult.img?.[0]?.length}`}
+        </div>
+    </div>
+);
 }
