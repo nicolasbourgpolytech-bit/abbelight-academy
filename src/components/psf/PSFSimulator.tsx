@@ -229,7 +229,8 @@ export default function PSFSimulator() {
                     const r_crit_pix = r_pix_max * ratio;
 
                     ctx.beginPath();
-                    ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+                    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+                    ctx.lineWidth = 2;
                     ctx.setLineDash([5, 5]);
                     ctx.arc(wB / 2, hB / 2, r_crit_pix, 0, 2 * Math.PI);
                     ctx.stroke();
