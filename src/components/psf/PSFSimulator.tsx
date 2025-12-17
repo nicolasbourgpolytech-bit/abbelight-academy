@@ -115,10 +115,11 @@ function drawMatrix(
 // --- Components ---
 
 export default function PSFSimulator() {
-    const { state, runSimulation } = usePyodide();
+    const { state, runSimulation, error: pyodideError } = usePyodide();
     const [params, setParams] = useState<SimulationParams>(DEFAULT_PARAMS);
     const [simResult, setSimResult] = useState<any>(null);
     const [calculating, setCalculating] = useState(false);
+    const [lastError, setLastError] = useState<string | null>(null);
 
     const psfCanvasRef = useRef<HTMLCanvasElement>(null);
     const bfpCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -131,11 +132,13 @@ export default function PSFSimulator() {
         if (state === "READY" && !calculating) {
             const run = async () => {
                 setCalculating(true);
+                setLastError(null);
                 try {
                     const res = await runSimulation(params, {});
                     setSimResult(res);
-                } catch (e) {
-                    console.error(e);
+                } catch (e: any) {
+                    console.error("Simulation failed:", e);
+                    setLastError(e.message || String(e));
                 } finally {
                     setCalculating(false);
                 }
@@ -148,30 +151,13 @@ export default function PSFSimulator() {
 
     // Effect to Draw
     useEffect(() => {
+        // ... (Drawing logic remains same, just ensuring we don't break it)
         if (!simResult) return;
 
         const color = wavelengthToColor(params.lambda_vac);
 
         // 1. Draw PSF
-        // img is a 2D array (list of lists in JS from Python list conversion? Or typed array?)
-        // Pyodide toJs with 'false' proxies returns nested Map/Arrays.
-        // If we used default converter:
-        // 'img' is likely a JS Array of Arrays (rows).
-        // Let's flatten it.
-
         const img = simResult.img;
-        // Checks to handle Pyodide return types safely
-        // Better to flatten in Python or handle here. 
-        // Assuming img is array of arrays.
-        const height = img.length;
-        const width = img[0].length;
-        const flatImg = new Float64Array(width * height);
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                flatImg[y * width + x] = img[y][x];
-            }
-        }
-
         if (psfCanvasRef.current) {
             // Flatten img (Array of Arrays)
             const height = img.length;
@@ -229,8 +215,10 @@ export default function PSFSimulator() {
     const profileData = useMemo(() => {
         if (!simResult) return [];
         const img = simResult.img;
+        if (!img || img.length === 0) return [];
         const midY = Math.floor(img.length / 2);
         const row = img[midY];
+        if (!row) return [];
 
         return row.map((val: number, i: number) => ({
             x: i,
@@ -252,18 +240,28 @@ export default function PSFSimulator() {
             <div className="w-full lg:w-80 shrink-0 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
 
                 {state === "LOADING" && (
-                    <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl text-primary animate-pulse">
-                        Loading Simulation Engine...
+                    <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl text-primary animate-pulse text-xs">
+                        Loading Simulation Engine (Pyodide)...
                     </div>
                 )}
                 {state === "ERROR" && (
-                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400">
-                        Failed to load Simulator. Refresh page.
+                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs">
+                        <strong>System Error:</strong><br />
+                        {pyodideError || "Failed to load Simulator."}
+                    </div>
+                )}
+                {lastError && (
+                    <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-500 text-xs break-words">
+                        <strong>Simulation Error:</strong><br />
+                        {lastError}
                     </div>
                 )}
 
                 <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-white">System Parameters</h3>
+                    <h3 className="text-lg font-bold text-white flex justify-between items-center">
+                        System
+                        {calculating && <span className="text-xs text-primary animate-pulse">Computing...</span>}
+                    </h3>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
@@ -412,6 +410,13 @@ export default function PSFSimulator() {
                         </ResponsiveContainer>
                     </div>
                 </div>
+            </div>
+
+            {/* DEBUG SECTION */}
+            <div className="fixed bottom-0 right-0 p-2 bg-black/80 text-[10px] text-gray-500 pointer-events-none z-50">
+                State: {state} | Result: {simResult ? "Yes" : "No"} | Computing: {calculating ? "Yes" : "No"}
+                <br />
+                {simResult && `Image: ${simResult.img?.length}x${simResult.img?.[0]?.length}`}
             </div>
         </div>
     );
