@@ -10,6 +10,7 @@ export type PyodideState = "LOADING" | "READY" | "ERROR";
 
 export function usePyodide() {
     const [state, setState] = useState<PyodideState>("LOADING");
+    const [error, setError] = useState<string | null>(null);
     const pyodideRef = useRef<any>(null);
     const simulatorModuleRef = useRef<any>(null);
 
@@ -69,9 +70,12 @@ export function usePyodide() {
                 pyodideRef.current = pyodide;
                 if (mounted) setState("READY");
 
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Failed to load Pyodide:", err);
-                if (mounted) setState("ERROR");
+                if (mounted) {
+                    setState("ERROR");
+                    setError(err.message || String(err));
+                }
             }
         };
 
