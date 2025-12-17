@@ -159,7 +159,22 @@ function calculateGaussStats(data: number[]) {
     const sigma = Math.sqrt(variance);
     const fwhm = 2.355 * sigma; // 2 * sqrt(2*ln(2))
 
-    return { min, max, bg, center, sigma, fwhm };
+    // Estimate Amplitude (Area = A * sigma * sqrt(2*pi))
+    // sumW is the sum of (data - bg), approximating the integral
+    const amplitude = sumW / (sigma * Math.sqrt(2 * Math.PI));
+
+    return { min, max, bg, center, sigma, fwhm, amplitude };
+}
+
+function generateGaussCurve(length: number, stats: any) {
+    if (!stats) return [];
+    const { bg, center, sigma, amplitude } = stats;
+    const curve = [];
+    for (let i = 0; i < length; i++) {
+        const val = bg + amplitude * Math.exp(-0.5 * ((i - center) / sigma) ** 2);
+        curve.push({ x: i, fit: val });
+    }
+    return curve;
 }
 
 // --- Components ---
