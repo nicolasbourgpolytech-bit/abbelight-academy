@@ -117,6 +117,51 @@ function drawMatrix(
     ctx.putImageData(imgData, 0, 0);
 }
 
+// Simple Gaussian Statistics Estimator (Moment Matching)
+// Returns center (index), sigma (pixels), and FWHM (pixels)
+function calculateGaussStats(data: number[]) {
+    if (!data || data.length === 0) return null;
+
+    let min = Infinity, max = -Infinity;
+    let minIdx = -1, maxIdx = -1;
+    let sum = 0;
+
+    // 1. Basic Stats
+    for (let i = 0; i < data.length; i++) {
+        const v = data[i];
+        if (v < min) { min = v; minIdx = i; }
+        if (v > max) { max = v; maxIdx = i; }
+    }
+
+    // 2. Moments (Background subtracted)
+    // We treat 'min' as the baseline background
+    const bg = min;
+    let sumW = 0;
+    let sumWX = 0;
+
+    for (let i = 0; i < data.length; i++) {
+        const w = data[i] - bg;
+        sumW += w;
+        sumWX += w * i;
+    }
+
+    if (sumW <= 0) return { min, max, center: maxIdx, sigma: 0, fwhm: 0 };
+
+    const center = sumWX / sumW;
+
+    let sumVar = 0;
+    for (let i = 0; i < data.length; i++) {
+        const w = data[i] - bg;
+        sumVar += w * (i - center) ** 2;
+    }
+
+    const variance = sumVar / sumW;
+    const sigma = Math.sqrt(variance);
+    const fwhm = 2.355 * sigma; // 2 * sqrt(2*ln(2))
+
+    return { min, max, bg, center, sigma, fwhm };
+}
+
 // --- Components ---
 
 export default function PSFSimulator() {
