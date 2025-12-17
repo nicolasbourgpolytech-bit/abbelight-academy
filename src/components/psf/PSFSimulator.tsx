@@ -207,6 +207,26 @@ export default function PSFSimulator() {
                     ctx.arc(wB / 2, hB / 2, r_crit_pix, 0, 2 * Math.PI);
                     ctx.stroke();
                     ctx.setLineDash([]);
+
+                    // Add Labels
+                    ctx.font = "10px monospace";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+
+                    // Sub-critical (Inside)
+                    ctx.fillStyle = "rgba(6, 182, 212, 0.8)"; // Cyan-ish
+                    ctx.fillText("Sub-critical", wB / 2, hB / 2);
+
+                    // Super-critical (Outside)
+                    // Draw slightly above the circle? Or at the top edge.
+                    // r_crit_pix is radius.
+                    const r_label = (r_crit_pix + (wB / 2)) / 2; // Midpoint between crit and max?
+                    // actually user snippet puts it at (crit + max)/2
+
+                    ctx.fillStyle = "rgba(236, 72, 153, 0.8)"; // Pink-ish
+                    // Check if Super-critical region exists (it must if NA > n_sample)
+                    // Place it near the top of the ring
+                    ctx.fillText("Super-critical", wB / 2, 10);
                 }
             }
         }
