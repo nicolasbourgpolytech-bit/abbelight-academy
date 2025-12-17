@@ -31,7 +31,7 @@ const DEFAULT_PARAMS: SimulationParams = {
     astigmatism: "None",
     cam_pixel_um: 6.5,
     oversampling: 3,
-    display_fov_um: 300
+    display_fov_um: 40
 };
 
 // --- Helpers ---
