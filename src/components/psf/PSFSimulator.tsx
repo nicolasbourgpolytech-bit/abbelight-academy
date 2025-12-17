@@ -19,6 +19,9 @@ interface SimulationParams {
     display_fov_um: number;
 }
 
+// Helper for rainbow gradient
+const SPECTRUM_GRADIENT = "linear-gradient(to right, #440099, #0000FF, #00FFFF, #00FF00, #FFFF00, #FF7F00, #FF0000)";
+
 // --- Constants ---
 const DEFAULT_PARAMS: SimulationParams = {
     NA: 1.49,
@@ -31,7 +34,7 @@ const DEFAULT_PARAMS: SimulationParams = {
     astigmatism: "None",
     cam_pixel_um: 6.5,
     oversampling: 3,
-    display_fov_um: 40
+    display_fov_um: 300
 };
 
 // --- Helpers ---
