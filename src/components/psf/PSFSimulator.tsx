@@ -330,7 +330,7 @@ export default function PSFSimulator() {
 
         drawMatrix(canvas, flatData, width, height, color);
 
-        // BFP Overlays
+        // BFP Circle Overlay (Text moved to JSX)
         if (isBfp && params.NA > params.n_sample) {
             const ctx = canvas.getContext('2d');
             if (ctx) {
@@ -345,21 +345,6 @@ export default function PSFSimulator() {
                 ctx.arc(width / 2, height / 2, r_crit_pix, 0, 2 * Math.PI);
                 ctx.stroke();
                 ctx.setLineDash([]);
-
-                ctx.font = "bold 12px sans-serif";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-
-                const drawTextWithOutline = (text: string, x: number, y: number, color: string) => {
-                    ctx.lineWidth = 3;
-                    ctx.strokeStyle = 'black';
-                    ctx.strokeText(text, x, y);
-                    ctx.fillStyle = color;
-                    ctx.fillText(text, x, y);
-                };
-
-                drawTextWithOutline("Sub-critical", width / 2, height / 2, "#06b6d4");
-                drawTextWithOutline("Super-critical", width / 2, 20, "#e879f9");
             }
         }
 
@@ -443,22 +428,19 @@ export default function PSFSimulator() {
                     </div>
                 )}
 
-                <div className="glass-card !p-6 space-y-6">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-widest border-b border-white/10 pb-2 flex justify-between items-center">
-                        System
-                        {calculating && <span className="text-[10px] text-brand-cyan animate-pulse">Running...</span>}
+                {/* 1. Objective Lens Parameters */}
+                <div className="glass-card !p-6 space-y-4">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-widest border-b border-white/10 pb-2">
+                        Objective lens parameters
                     </h3>
-
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
                         {[
                             { label: "NA", key: "NA" },
                             { label: "Mag (X)", key: "M_obj" },
                             { label: "n Imm", key: "n_imm" },
-                            { label: "n Sample", key: "n_sample" },
-                            { label: "Pixel (µm)", key: "cam_pixel_um" },
                         ].map(({ label, key }) => (
                             <div key={key} className="space-y-1">
-                                <label className="text-[10px] text-gray-500 uppercase tracking-wider">{label}</label>
+                                <label className="text-xs text-gray-500 uppercase tracking-wider">{label}</label>
                                 <input
                                     type="text"
                                     value={inputValues[key as keyof typeof inputValues]}
@@ -468,17 +450,54 @@ export default function PSFSimulator() {
                             </div>
                         ))}
                     </div>
+                </div>
 
-                    <div className="space-y-2 pt-2">
-                        <label className="text-[10px] text-gray-500 uppercase tracking-wider">Wavelength: {(params.lambda_vac * 1e9).toFixed(0)} nm</label>
-                        <input
-                            type="range"
-                            min="400" max="700" step="10"
-                            value={params.lambda_vac * 1e9}
-                            onChange={e => setParams(p => ({ ...p, lambda_vac: parseFloat(e.target.value) * 1e-9 }))}
-                            className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
-                        />
-                        <div className="h-1 w-full opacity-80" style={{ background: SPECTRUM_GRADIENT }}></div>
+                {/* 2. Sample parameters */}
+                <div className="glass-card !p-6 space-y-4">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-widest border-b border-white/10 pb-2">
+                        Sample parameters
+                    </h3>
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">n Sample</label>
+                            <input
+                                type="text"
+                                value={inputValues.n_sample}
+                                onChange={e => handleInputChange('n_sample', e.target.value)}
+                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                            />
+                        </div>
+
+                        <div className="space-y-2 pt-2">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Wavelength: {(params.lambda_vac * 1e9).toFixed(0)} nm</label>
+                            <input
+                                type="range"
+                                min="400" max="700" step="10"
+                                value={params.lambda_vac * 1e9}
+                                onChange={e => setParams(p => ({ ...p, lambda_vac: parseFloat(e.target.value) * 1e-9 }))}
+                                className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
+                            />
+                            <div className="h-1 w-full opacity-80" style={{ background: SPECTRUM_GRADIENT }}></div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Camera parameters */}
+                <div className="glass-card !p-6 space-y-4">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-widest border-b border-white/10 pb-2 flex justify-between items-center">
+                        Camera parameters
+                        {calculating && <span className="text-[10px] text-brand-cyan animate-pulse">Running...</span>}
+                    </h3>
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Pixel pitch (µm)</label>
+                            <input
+                                type="text"
+                                value={inputValues.cam_pixel_um}
+                                onChange={e => handleInputChange('cam_pixel_um', e.target.value)}
+                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -487,8 +506,8 @@ export default function PSFSimulator() {
                     <div className="space-y-6">
                         <div className="space-y-2">
                             <div className="flex justify-between">
-                                <label className="text-[10px] text-gray-500 uppercase tracking-wider">Defocus</label>
-                                <span className="text-[10px] font-mono text-brand-cyan">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
+                                <label className="text-xs text-gray-500 uppercase tracking-wider">Defocus</label>
+                                <span className="text-xs font-mono text-brand-cyan">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
                             </div>
                             <input
                                 type="range"
@@ -499,7 +518,7 @@ export default function PSFSimulator() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] text-gray-500 uppercase tracking-wider">Astigmatism</label>
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Astigmatism</label>
                             <div className="flex border border-white/20">
                                 {["None", "Weak", "Strong"].map((opt) => (
                                     <button
@@ -579,6 +598,22 @@ export default function PSFSimulator() {
                                     />
                                 </>
                             )}
+
+                            {/* BFP Labels - Pure HTML/CSS for crisp text */}
+                            {activeTab === 'bfp' && params.NA > params.n_sample && (
+                                <>
+                                    {/* UAF (Sub-critical) - Center */}
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-brand-cyan font-bold text-sm pointer-events-none drop-shadow-md select-none">
+                                        UAF
+                                    </div>
+
+                                    {/* SAF (Super-critical) - Top Edge */}
+                                    <div className="absolute top-[10%] left-1/2 -translate-x-1/2 text-[10px] md:text-xs font-bold text-brand-magenta pointer-events-none drop-shadow-md select-none uppercase tracking-widest">
+                                        SAF
+                                    </div>
+                                </>
+                            )}
+
                         </div>
 
                         <div className="absolute bottom-4 left-4 text-[10px] font-mono text-brand-cyan bg-black/80 px-2 py-1 border border-brand-cyan/20 pointer-events-none">
@@ -686,9 +721,8 @@ export default function PSFSimulator() {
 
             {/* DEBUG SECTION */}
             <div className="fixed bottom-0 right-0 p-1 bg-black/90 text-[10px] text-gray-600 pointer-events-none z-50 font-mono">
-                PSF Sim v2.1 | Status: {state}
+                PSF Sim v2.2 | Status: {state}
             </div>
         </div>
     );
 }
-
