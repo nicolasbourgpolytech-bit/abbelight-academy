@@ -102,8 +102,10 @@ export function usePyodide() {
         // Expose params to Python
         // We'll use a temporary dictionary for safer data passing
         const globals = py.toPy({
-            ...microscopeParams,
-            ...simParams
+            globals_dict: {
+                ...microscopeParams,
+                ...simParams
+            }
         });
 
         // This script instantiates the microscope (if params changed/first run) and then runs simulation
