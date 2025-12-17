@@ -395,13 +395,17 @@ export default function PSFSimulator() {
         }
         const vStats = calculateGaussStats(col);
 
+        // Generate Fit Curve (for Horizontal Primary)
+        const hFit = generateGaussCurve(width, hStats);
+
         // Chart Data (showing Horizontal for now as primary)
         const data = row.map((val: number, i: number) => ({
             x: i,
-            intensity: val
+            intensity: val,
+            fit: hFit[i]?.fit || 0
         }));
 
-        return { data, hStats, vStats, cx, cy };
+        return { data, hStats, vStats, cx, cy, width, height };
     }, [simResult, crosshair]);
 
     // Handlers
