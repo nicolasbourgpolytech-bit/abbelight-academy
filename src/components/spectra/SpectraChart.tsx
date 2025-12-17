@@ -549,7 +549,7 @@ export function SpectraChart() {
             <div className="flex gap-6">
                 {/* Product Image */}
                 {selectedProductData?.image_url && (
-                    <div className="w-48 h-full min-h-[140px] bg-white/5 border border-white/10 rounded-xl overflow-hidden shrink-0">
+                    <div className="w-48 h-full min-h-[140px] bg-black/40 border border-white/10 overflow-hidden shrink-0">
                         <img
                             src={selectedProductData.image_url}
                             alt={selectedProductData.name}
@@ -558,7 +558,7 @@ export function SpectraChart() {
                     </div>
                 )}
 
-                <div className="flex-1 bg-white/5 border border-white/10 p-4 rounded-xl backdrop-blur-sm flex flex-wrap items-center gap-6">
+                <div className="flex-1 glass-card p-6 rounded-none flex flex-wrap items-center gap-6">
 
                     {/* Product Selector */}
                     <div className="space-y-1">
@@ -577,7 +577,7 @@ export function SpectraChart() {
                                     setActiveCameraView('cam1');
                                 }
                             }}
-                            className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[140px]"
+                            className="bg-black/40 border border-white/10 px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[140px]"
                         >
                             <option value="M45" className="bg-gray-900 text-white">SAFe M45</option>
                             <option value="M90" className="bg-gray-900 text-white">SAFe M90</option>
@@ -592,7 +592,7 @@ export function SpectraChart() {
                         <select
                             value={selectedModalityId}
                             onChange={(e) => applyModality(e.target.value)}
-                            className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[180px]"
+                            className="bg-black/40 border border-white/10 px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[180px]"
                         >
                             <option value="" className="bg-gray-900 text-white">Custom / None</option>
                             {modalities.filter(m => m.product === selectedProduct).map(m => (
@@ -616,7 +616,7 @@ export function SpectraChart() {
                                     setCam1FilterId(e.target.value);
                                     setSelectedModalityId('');
                                 }}
-                                className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[200px]"
+                                className="bg-black/40 border border-white/10 px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[200px]"
                             >
                                 {emissionFilters.map(f => (
                                     <option key={f.id} value={f.id} className="bg-gray-900 text-white">{f.name}</option>
@@ -636,7 +636,7 @@ export function SpectraChart() {
                                             setCam2FilterId(e.target.value);
                                             setSelectedModalityId('');
                                         }}
-                                        className="bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[200px]"
+                                        className="bg-black/40 border border-white/10 px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary/50 min-w-[200px]"
                                     >
                                         {emissionFilters.map(f => (
                                             <option key={f.id} value={f.id} className="bg-gray-900 text-white">{f.name}</option>
@@ -651,23 +651,23 @@ export function SpectraChart() {
                                 <div className="space-y-1">
                                     <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Active Camera</label>
                                     <div className="flex items-center gap-3">
-                                        <div className="flex bg-black/20 rounded-lg border border-white/5 p-0.5">
+                                        <div className="flex bg-black/40 border border-white/5 p-0.5">
                                             <button
                                                 onClick={() => setActiveCameraView('cam1')}
-                                                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeCameraView === 'cam1' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                                                className={`px-3 py-1 text-xs font-medium transition-all ${activeCameraView === 'cam1' ? 'bg-primary text-black shadow-sm' : 'text-gray-400 hover:text-white'}`}
                                             >
                                                 Cam T
                                             </button>
                                             <button
                                                 onClick={() => setActiveCameraView('cam2')}
-                                                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeCameraView === 'cam2' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                                                className={`px-3 py-1 text-xs font-medium transition-all ${activeCameraView === 'cam2' ? 'bg-primary text-black shadow-sm' : 'text-gray-400 hover:text-white'}`}
                                             >
                                                 Cam R
                                             </button>
                                         </div>
                                         <button
                                             onClick={() => setIsCompareMode(!isCompareMode)}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${isCompareMode ? 'bg-white/10 text-white border-white/30' : 'text-gray-400 border-transparent hover:text-white'}`}
+                                            className={`px-3 py-1.5 text-xs font-medium border transition-all ${isCompareMode ? 'bg-white/10 text-white border-white/30' : 'text-gray-400 border-transparent hover:text-white'}`}
                                         >
                                             Compare
                                         </button>
@@ -695,7 +695,7 @@ export function SpectraChart() {
                                                     key={optic.id}
                                                     onClick={() => toggleOptic(optic.id)}
                                                     className={`
-                                                    px-3 py-1.5 rounded-full text-xs font-medium transition-all border
+                                                    px-3 py-1.5 text-xs font-medium transition-all border
                                                     ${optic.visible
                                                             ? 'bg-primary/20 text-primary border-primary/50 shadow-[0_0_10px_rgba(var(--primary-rgb),0.2)]'
                                                             : 'bg-black/20 text-gray-400 border-white/5 hover:text-white hover:border-white/10'}
@@ -720,9 +720,9 @@ export function SpectraChart() {
                                                     key={splitter.id}
                                                     onClick={() => toggleImagingSplitter(splitter.id)}
                                                     className={`
-                                                    px-3 py-1.5 rounded-full text-xs font-medium transition-all border
+                                                    px-3 py-1.5 text-xs font-medium transition-all border
                                                     ${splitter.visible
-                                                            ? 'bg-blue-500/20 text-blue-300 border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.2)]'
+                                                            ? 'bg-secondary/20 text-secondary border-secondary/50 shadow-[0_0_10px_rgba(var(--secondary-rgb),0.2)]'
                                                             : 'bg-black/20 text-gray-400 border-white/5 hover:text-white hover:border-white/10'}
                                                 `}
                                                 >
@@ -740,13 +740,13 @@ export function SpectraChart() {
             </div>
 
             {/* Global Controls: Range & Toggles */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-white/5 border border-white/10 p-3 rounded-xl backdrop-blur-sm">
+            <div className="glass-card p-3 rounded-none flex flex-wrap items-center justify-between gap-4">
 
                 {/* Left: Range & Toggles */}
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">Range:</span>
-                        <div className="flex items-center gap-2 bg-black/20 rounded-lg px-2 py-1 border border-white/5">
+                        <div className="flex items-center gap-2 bg-black/40 px-2 py-1 border border-white/10">
                             <input
                                 type="number"
                                 value={minWavelength}
@@ -771,32 +771,32 @@ export function SpectraChart() {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setShowExcitation(!showExcitation)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${showExcitation ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-white/5 text-gray-400 border border-transparent hover:bg-white/10'}`}
+                            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium transition-all ${showExcitation ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-white/5 text-gray-400 border border-transparent hover:bg-white/10'}`}
                         >
-                            <div className={`w-2 h-2 rounded-full ${showExcitation ? 'bg-primary' : 'bg-gray-500'}`}></div>
+                            <div className={`w-2 h-2 rounded-none ${showExcitation ? 'bg-primary' : 'bg-gray-500'}`}></div>
                             Excitation
                         </button>
                         <button
                             onClick={() => setShowEmission(!showEmission)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${showEmission ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-white/5 text-gray-400 border border-transparent hover:bg-white/10'}`}
+                            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium transition-all ${showEmission ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-white/5 text-gray-400 border border-transparent hover:bg-white/10'}`}
                         >
-                            <div className={`w-2 h-2 rounded-full ${showEmission ? 'bg-primary' : 'bg-gray-500'}`}></div>
+                            <div className={`w-2 h-2 rounded-none ${showEmission ? 'bg-primary' : 'bg-gray-500'}`}></div>
                             Emission
                         </button>
                     </div>
                 </div>
 
                 {/* Right: Tab Switcher */}
-                <div className="flex bg-black/20 p-1 rounded-lg border border-white/5">
+                <div className="flex bg-black/40 p-1 border border-white/10">
                     <button
                         onClick={() => setActiveTab('raw')}
-                        className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${activeTab === 'raw' ? 'bg-primary text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        className={`px-4 py-1.5 text-xs font-semibold transition-all ${activeTab === 'raw' ? 'bg-primary text-black' : 'text-gray-400 hover:text-white'}`}
                     >
                         Raw Spectra
                     </button>
                     <button
                         onClick={() => setActiveTab('detected')}
-                        className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${activeTab === 'detected' ? 'bg-primary text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        className={`px-4 py-1.5 text-xs font-semibold transition-all ${activeTab === 'detected' ? 'bg-primary text-black' : 'text-gray-400 hover:text-white'}`}
                     >
                         Detected Spectra
                     </button>
@@ -806,7 +806,7 @@ export function SpectraChart() {
                 <button
                     onClick={handleExport}
                     disabled={isExporting}
-                    className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold bg-white text-black hover:bg-gray-200 transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-1.5 text-xs font-semibold bg-white text-black hover:bg-gray-200 transition-all disabled:opacity-50"
                 >
                     {isExporting ? (
                         <span>Exporting...</span>
@@ -828,21 +828,21 @@ export function SpectraChart() {
                 <div className="w-full lg:w-72 flex flex-col gap-3 pr-1">
 
                     {/* Dye Type Filters */}
-                    <div className="bg-white/5 border border-white/10 rounded-xl p-3 backdrop-blur-sm shrink-0 space-y-2">
+                    <div className="glass-card p-3 shrink-0 space-y-2 rounded-none">
                         <div className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Filter Types</div>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setShowOrganicDyes(!showOrganicDyes)}
-                                className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg text-xs font-medium transition-all ${showOrganicDyes ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-white/5 text-gray-500 border border-transparent hover:bg-white/10'}`}
+                                className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-xs font-medium transition-all border ${showOrganicDyes ? 'bg-primary/20 text-primary border-primary/30' : 'bg-white/5 text-gray-500 border-transparent hover:bg-white/10'}`}
                             >
-                                <span className="w-2 h-2 rounded-full bg-blue-400" />
+                                <span className="w-2 h-2 rounded-none bg-primary" />
                                 Dyes
                             </button>
                             <button
                                 onClick={() => setShowFluorescentProteins(!showFluorescentProteins)}
-                                className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg text-xs font-medium transition-all ${showFluorescentProteins ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-white/5 text-gray-500 border border-transparent hover:bg-white/10'}`}
+                                className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-xs font-medium transition-all border ${showFluorescentProteins ? 'bg-secondary/20 text-secondary border-secondary/30' : 'bg-white/5 text-gray-500 border-transparent hover:bg-white/10'}`}
                             >
-                                <span className="w-2 h-2 rounded-full bg-green-400" />
+                                <span className="w-2 h-2 rounded-none bg-secondary" />
                                 Proteins
                             </button>
                         </div>
@@ -858,13 +858,13 @@ export function SpectraChart() {
                         const isOpen = openCategories.includes(category);
 
                         return (
-                            <div key={category} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm shrink-0">
+                            <div key={category} className="glass-card p-0 overflow-hidden shrink-0 rounded-none border-white/10">
                                 <button
                                     onClick={() => toggleCategory(category)}
                                     className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors"
                                 >
                                     <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${category === 'UV' ? 'bg-purple-400' : category === 'Blue' ? 'bg-blue-400' : category === 'Green' ? 'bg-green-400' : category === 'Red' ? 'bg-red-500' : 'bg-pink-600'}`} />
+                                        <div className={`w-2 h-2 rounded-none ${category === 'UV' ? 'bg-purple-400' : category === 'Blue' ? 'bg-blue-400' : category === 'Green' ? 'bg-green-400' : category === 'Red' ? 'bg-red-500' : 'bg-pink-600'}`} />
                                         <span className="font-semibold text-sm">{category}</span>
                                         <span className="text-xs text-gray-500">({categoryDyes.length})</span>
                                     </div>
@@ -885,14 +885,14 @@ export function SpectraChart() {
                                                 key={dye.id}
                                                 onClick={() => toggleFluorophore(dye.id)}
                                                 className={`
-                                                    w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all text-xs
+                                                    w-full flex items-center gap-2 px-3 py-2 text-left transition-all text-xs
                                                     ${dye.visible
-                                                        ? 'bg-primary/20 text-white'
+                                                        ? 'bg-primary/20 text-white border-l-2 border-primary'
                                                         : 'text-gray-400 hover:bg-white/5 hover:text-white'}
                                                 `}
                                             >
                                                 <div
-                                                    className="w-2 h-2 rounded-full shrink-0"
+                                                    className="w-2 h-2 rounded-none shrink-0"
                                                     style={{ backgroundColor: dye.color }}
                                                 />
                                                 <span className="truncate flex-1">{dye.name}</span>
@@ -915,7 +915,7 @@ export function SpectraChart() {
 
                 {/* Chart & Metrics Area */}
                 <div className="flex-1 w-full flex flex-col gap-4">
-                    <div className="w-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 relative group flex flex-col lg:flex-row h-[600px] gap-4">
+                    <div className="w-full glass-card p-4 rounded-none relative group flex flex-col lg:flex-row h-[600px] gap-4">
                         {/* Background Grid Pattern - Apply to whole box? Or just chart? Probably whole box looks nice, or maybe just chart area. Let's keep it on parent for cohesion. */}
                         <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none rounded-2xl" />
 
@@ -961,7 +961,7 @@ export function SpectraChart() {
                                                 const filters = payload.filter((p: any) => p.dataKey.includes('active_filter') || p.dataKey.includes('secondary_filter'));
 
                                                 return (
-                                                    <div className="bg-black/95 border border-white/20 p-3 rounded-lg shadow-2xl backdrop-blur-md text-xs min-w-[200px]">
+                                                    <div className="bg-black/95 border border-white/20 p-3 rounded-none shadow-2xl backdrop-blur-md text-xs min-w-[200px]">
                                                         <p className="text-gray-400 font-mono mb-2 border-b border-white/10 pb-1">{label} nm</p>
 
                                                         {/* Fluorophores */}
@@ -971,7 +971,7 @@ export function SpectraChart() {
                                                                 {fluorophores.map((entry: any) => (
                                                                     <div key={entry.name} className="flex justify-between items-center gap-4">
                                                                         <div className="flex items-center gap-2">
-                                                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                                                            <div className="w-2 h-2 rounded-none" style={{ backgroundColor: entry.color }} />
                                                                             <span className="text-gray-200">{entry.name}</span>
                                                                         </div>
                                                                         <span className="font-mono text-gray-400">{(entry.value * 100).toFixed(0)}%</span>
@@ -1229,15 +1229,15 @@ export function SpectraChart() {
                                                         }
 
                                                         return (
-                                                            <div key={dye.id} className="bg-white/5 rounded-lg p-2 border border-white/5 hover:border-white/10 transition-colors">
+                                                            <div key={dye.id} className="bg-white/5 rounded-none p-2 border border-white/5 hover:border-white/10 transition-colors">
                                                                 <div className="flex items-center gap-2 mb-1.5">
-                                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: dye.color }}></div>
+                                                                    <div className="w-2 h-2 rounded-none" style={{ backgroundColor: dye.color }}></div>
                                                                     <span className="text-xs font-medium text-gray-200 truncate">{dye.name}</span>
                                                                 </div>
 
                                                                 <div className="flex items-center gap-2 mb-2">
                                                                     {/* Cam T (Always Left) */}
-                                                                    <div className={`flex-1 bg-black/30 rounded px-2 py-1 flex justify-between items-center ${activeCameraView === 'cam1' || !isDual ? 'opacity-100' : 'opacity-60'}`}>
+                                                                    <div className={`flex-1 bg-black/30 rounded-none px-2 py-1 flex justify-between items-center ${activeCameraView === 'cam1' || !isDual ? 'opacity-100' : 'opacity-60'}`}>
                                                                         <span className="text-[9px] text-gray-500 uppercase">CAM T</span>
                                                                         <span className={`text-sm font-bold ${Number(p1) > 50 ? 'text-green-400' : Number(p1) > 20 ? 'text-yellow-400' : 'text-red-400'}`}>
                                                                             {p1}%
@@ -1246,7 +1246,7 @@ export function SpectraChart() {
 
                                                                     {/* Cam R (Always Right, if Dual) */}
                                                                     {isDual && p2 && (
-                                                                        <div className={`flex-1 bg-black/30 rounded px-2 py-1 flex justify-between items-center ${activeCameraView === 'cam2' ? 'opacity-100' : 'opacity-60'}`}>
+                                                                        <div className={`flex-1 bg-black/30 rounded-none px-2 py-1 flex justify-between items-center ${activeCameraView === 'cam2' ? 'opacity-100' : 'opacity-60'}`}>
                                                                             <span className="text-[9px] text-gray-500 uppercase">CAM R</span>
                                                                             <span className={`text-sm font-bold ${Number(p2) > 50 ? 'text-green-400' : Number(p2) > 20 ? 'text-yellow-400' : 'text-red-400'}`}>
                                                                                 {p2}%
@@ -1262,7 +1262,7 @@ export function SpectraChart() {
                                                                             <span>Split Ratio (Cam T)</span>
                                                                             <span>{splitRatioT.toFixed(0)}%</span>
                                                                         </div>
-                                                                        <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden flex">
+                                                                        <div className="h-1.5 w-full bg-white/10 rounded-none overflow-hidden flex">
                                                                             <div
                                                                                 className="h-full bg-blue-500 transition-all duration-500"
                                                                                 style={{ width: `${splitRatioT}%` }}
