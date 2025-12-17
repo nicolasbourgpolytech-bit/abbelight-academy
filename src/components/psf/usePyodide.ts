@@ -201,5 +201,5 @@ export function usePyodide() {
         }
     };
 
-    return { state, runSimulation };
+    return { state, runSimulation, error };
 }
