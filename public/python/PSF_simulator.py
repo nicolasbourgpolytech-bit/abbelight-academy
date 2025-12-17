@@ -424,13 +424,12 @@ class OpticalFourierMicroscope:
             pixelated_img = scipy.ndimage.zoom(intensity, (zoom_y, zoom_x), order=1)
             return pixelated_img, extent_cam
 
-    def simulate_isotropic(self, z_defocus=0.0, astigmatism=0.0, phase_mask=None, oversampling=8, cam_pixel_um=6.5):
+    def simulate_isotropic(self, z_defocus=0.0, astigmatism=0.0, phase_mask=None, oversampling=8, cam_pixel_um=6.5, display_fov_um=None):
         """
-        Simulate an isotropic (free) dipole by summing intensities of three orthogonal dipoles (X, Y, Z).
-        Optimized with batched FFT.
+        Simulate an isotropic (free) dipole.
         
         Args:
-            astigmatism: Coefficient for vertical astigmatism (Zernike Z2,2). Resulting phase = astig * rho^2 * cos(2*phi).
+            display_fov_um: Optional. If set, crops the final image to this field of view (in micrometers) centered on the axis.
         """
         # 1. Get Green's Tensor (Shape: 2, 3, N, N)
         if hasattr(self, 'G_bfp'):
@@ -519,27 +518,17 @@ class OpticalFourierMicroscope:
         bfp_total = np.sum(np.abs(E_bfp_stack)**2, axis=(0, 1))
         
         # EXTRACT PHASE (Z-Dipole, P-Polarization dominant) for visualization
-        # Dipole Z is index 2. Polarization P is roughly Radial... let's take a component.
-        # Or just take the phase of the first component of Z dipole?
-        # Z dipole field at BFP ~ sin(theta) * Tp (p-pol).
-        # Let's return the phase of E_bfp_stack[2, 0] (Ex component of Z dipole)
-        # Or better: Phase of the Dot product with a reference?
-        # Simplest: Phase of one component of Z dipole.
         complex_z = E_bfp_stack[2, 0] # Z-dipole, X-polarization component
-        # If it's zero (e.g. at center), phase is noise. 
         bfp_phase_vis = np.angle(complex_z)
         
         # Calculate Dimensions
         fov_obj = (self.lambda_vac * original_npix) / (2 * self.NA)
         fov_cam_um = fov_obj * self.M_total * 1e6
         
-        print(f"DEBUG: FOV Obj={fov_obj*1e6:.2f}um, M={self.M_total:.2f}, FOV Cam={fov_cam_um:.2f}um")
-        
         half_fov = fov_cam_um / 2
         extent_cam = [-half_fov, half_fov, -half_fov, half_fov]
         
         # BFP Extent (Physical mm)
-        # R_obj_bfp = self.f_obj * self.NA # Geometric Approx
         R_obj_bfp = self.f_obj * self.NA
         M_pupil = self.f_4f_1 / self.f_tube
         R_max_phys = R_obj_bfp * M_pupil * 1000.0
@@ -547,7 +536,34 @@ class OpticalFourierMicroscope:
         extent_bfp = [-R_max_phys, R_max_phys, -R_max_phys, R_max_phys]
         
         # 7. Resample to Camera Pixels
-        # Crucial step: Downsample/Interpolate I_iso_high to match cam_pixel_um
         img_iso_cam, ext_cam_iso = self.resample_to_camera(I_iso_high, extent_cam, cam_pixel_um)
         
+        # 8. CROP to Display FOV (if requested)
+        if display_fov_um is not None and display_fov_um > 0:
+            # Current extent: ext_cam_iso = [min_x, max_x, min_y, max_y]
+            # Width = max_x - min_x
+            current_width = ext_cam_iso[1] - ext_cam_iso[0]
+            current_height = ext_cam_iso[3] - ext_cam_iso[2]
+            
+            # Pixels
+            Ny, Nx = img_iso_cam.shape
+            
+            # Pixels to keep
+            # crop_um / pixel_um
+            # display_fov_um should be total width? User said +/- 150 -> Total 300.
+            # Assuming display_fov_um is TOTAL width.
+            
+            target_px_x = int(display_fov_um / cam_pixel_um)
+            target_px_y = int(display_fov_um / cam_pixel_um)
+            
+            if target_px_x < Nx:
+                 start_x = (Nx - target_px_x) // 2
+                 start_y = (Ny - target_px_y) // 2
+                 
+                 img_iso_cam = img_iso_cam[start_y:start_y+target_px_y, start_x:start_x+target_px_x]
+                 
+                 # Update extent
+                 new_half = (display_fov_um) / 2
+                 ext_cam_iso = [-new_half, new_half, -new_half, new_half]
+                 
         return img_iso_cam, bfp_total, ext_cam_iso, extent_bfp, bfp_phase_vis

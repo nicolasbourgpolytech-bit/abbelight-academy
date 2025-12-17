@@ -16,6 +16,7 @@ interface SimulationParams {
     astigmatism: "None" | "Weak" | "Strong";
     cam_pixel_um: number;
     oversampling: number;
+    display_fov_um: number;
 }
 
 // --- Constants ---
@@ -29,7 +30,8 @@ const DEFAULT_PARAMS: SimulationParams = {
     z_defocus: 0,
     astigmatism: "None",
     cam_pixel_um: 6.5,
-    oversampling: 3
+    oversampling: 3,
+    display_fov_um: 300
 };
 
 // --- Helpers ---
@@ -235,6 +237,10 @@ export default function PSFSimulator() {
     };
 
     return (
+    // ...
+    // ...
+
+    return (
         <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
             {/* Sidebar Controls */}
             <div className="w-full lg:w-80 shrink-0 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
@@ -297,6 +303,24 @@ export default function PSFSimulator() {
                                 type="text"
                                 value={params.n_sample}
                                 onChange={e => handleChangeRaw('n_sample', e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs text-gray-400">Pixel Size (µm)</label>
+                            <input
+                                type="text"
+                                value={params.cam_pixel_um}
+                                onChange={e => handleChangeRaw('cam_pixel_um', e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs text-gray-400">FOV (µm)</label>
+                            <input
+                                type="text"
+                                value={params.display_fov_um || 300}
+                                onChange={e => handleChangeRaw('display_fov_um', e.target.value)}
                                 className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
                             />
                         </div>
@@ -368,7 +392,10 @@ export default function PSFSimulator() {
                             className="max-w-full max-h-full aspect-square image-pixelated"
                             style={{ imageRendering: 'pixelated' }}
                         />
-                        {/* Scale Bar could go here */}
+                        {/* Dynamic Scale Overlay */}
+                        <div className="absolute bottom-4 left-4 text-[10px] font-mono text-gray-500 bg-black/50 px-2 py-1 rounded">
+                            Size: {(params.display_fov_um || 300).toFixed(0)} µm
+                        </div>
                     </div>
 
                     {/* BFP View */}
