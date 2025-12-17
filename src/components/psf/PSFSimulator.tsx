@@ -423,123 +423,91 @@ export default function PSFSimulator() {
     }, [simResult, crosshair, activeTab]);
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
+        <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)] font-sans">
             {/* Sidebar Controls */}
             <div className="w-full lg:w-80 shrink-0 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
 
                 {state === "LOADING" && (
-                    <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl text-primary animate-pulse text-xs">
-                        Loading Simulation Engine (Pyodide)...
+                    <div className="p-4 bg-primary/10 border border-primary text-primary animate-pulse text-xs uppercase tracking-widest font-bold">
+                        Loading Engine...
                     </div>
                 )}
                 {state === "ERROR" && (
-                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs">
-                        <strong>System Error:</strong><br />
-                        {pyodideError || "Failed to load Simulator."}
+                    <div className="p-4 bg-red-900/20 border border-red-500 text-red-500 text-xs font-mono">
+                        <strong>ERROR:</strong> {pyodideError || "Simulator failed."}
                     </div>
                 )}
                 {lastError && (
-                    <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-500 text-xs break-words">
-                        <strong>Simulation Error:</strong><br />
+                    <div className="p-4 bg-yellow-900/20 border border-yellow-500 text-yellow-500 text-xs font-mono break-words">
                         {lastError}
                     </div>
                 )}
 
-                <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-white flex justify-between items-center">
+                <div className="glass-card !p-6 space-y-6">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-widest border-b border-white/10 pb-2 flex justify-between items-center">
                         System
-                        {calculating && <span className="text-xs text-primary animate-pulse">Computing...</span>}
+                        {calculating && <span className="text-[10px] text-brand-cyan animate-pulse">Running...</span>}
                     </h3>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-400">NA</label>
-                            <input
-                                type="text"
-                                value={inputValues.NA}
-                                onChange={e => handleInputChange('NA', e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-400">Mag (M)</label>
-                            <input
-                                type="text"
-                                value={inputValues.M_obj}
-                                onChange={e => handleInputChange('M_obj', e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-400">n Immersion</label>
-                            <input
-                                type="text"
-                                value={inputValues.n_imm}
-                                onChange={e => handleInputChange('n_imm', e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-400">n Sample</label>
-                            <input
-                                type="text"
-                                value={inputValues.n_sample}
-                                onChange={e => handleInputChange('n_sample', e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-400">Pixel Size (µm)</label>
-                            <input
-                                type="text"
-                                value={inputValues.cam_pixel_um}
-                                onChange={e => handleInputChange('cam_pixel_um', e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-primary/50 outline-none"
-                            />
-                        </div>
+                        {[
+                            { label: "NA", key: "NA" },
+                            { label: "Mag (X)", key: "M_obj" },
+                            { label: "n Imm", key: "n_imm" },
+                            { label: "n Sample", key: "n_sample" },
+                            { label: "Pixel (µm)", key: "cam_pixel_um" },
+                        ].map(({ label, key }) => (
+                            <div key={key} className="space-y-1">
+                                <label className="text-[10px] text-gray-500 uppercase tracking-wider">{label}</label>
+                                <input
+                                    type="text"
+                                    value={inputValues[key as keyof typeof inputValues]}
+                                    onChange={e => handleInputChange(key as any, e.target.value)}
+                                    className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                                />
+                            </div>
+                        ))}
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-xs text-gray-400">Wavelength (nm): {(params.lambda_vac * 1e9).toFixed(0)}</label>
+                    <div className="space-y-2 pt-2">
+                        <label className="text-[10px] text-gray-500 uppercase tracking-wider">Wavelength: {(params.lambda_vac * 1e9).toFixed(0)} nm</label>
                         <input
                             type="range"
                             min="400" max="700" step="10"
                             value={params.lambda_vac * 1e9}
                             onChange={e => setParams(p => ({ ...p, lambda_vac: parseFloat(e.target.value) * 1e-9 }))}
-                            className="w-full accent-primary h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                            className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
                         />
-                        <div className="h-2 rounded w-full" style={{ background: SPECTRUM_GRADIENT }}></div>
+                        <div className="h-1 w-full opacity-80" style={{ background: SPECTRUM_GRADIENT }}></div>
                     </div>
                 </div>
 
-                <div className="w-full h-px bg-white/10" />
-
-                <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-white">Aberrations</h3>
-                    <div className="space-y-4">
+                <div className="glass-card !p-6 space-y-6">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-widest border-b border-white/10 pb-2">Aberrations</h3>
+                    <div className="space-y-6">
                         <div className="space-y-2">
                             <div className="flex justify-between">
-                                <label className="text-xs text-gray-400">Defocus (µm)</label>
-                                <span className="text-xs font-mono text-primary">{(params.z_defocus * 1e6).toFixed(2)}</span>
+                                <label className="text-[10px] text-gray-500 uppercase tracking-wider">Defocus</label>
+                                <span className="text-[10px] font-mono text-brand-cyan">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
                             </div>
                             <input
                                 type="range"
                                 min="-2000" max="2000" step="50"
                                 value={params.z_defocus * 1e9}
                                 onChange={e => setParams(p => ({ ...p, z_defocus: parseFloat(e.target.value) * 1e-9 }))}
-                                className="w-full accent-primary h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                                className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs text-gray-400">Astigmatism</label>
-                            <div className="flex p-1 bg-white/5 rounded-lg">
+                            <label className="text-[10px] text-gray-500 uppercase tracking-wider">Astigmatism</label>
+                            <div className="flex border border-white/20">
                                 {["None", "Weak", "Strong"].map((opt) => (
                                     <button
                                         key={opt}
                                         onClick={() => setParams(p => ({ ...p, astigmatism: opt as any }))}
-                                        className={`flex-1 text-xs py-1.5 rounded-md transition-colors ${params.astigmatism === opt
-                                            ? "bg-primary text-black font-medium shadow-sm"
-                                            : "text-gray-400 hover:text-white"
+                                        className={`flex-1 text-[10px] py-2 uppercase tracking-wide transition-all ${params.astigmatism === opt
+                                            ? "bg-brand-cyan text-black font-bold"
+                                            : "bg-transparent text-gray-500 hover:text-white"
                                             }`}
                                     >
                                         {opt}
@@ -556,20 +524,20 @@ export default function PSFSimulator() {
             <div className="flex-1 flex flex-col gap-4 overflow-hidden">
 
                 {/* Tabs */}
-                <div className="flex gap-2">
+                <div className="flex border-b border-white/10">
                     <button
                         onClick={() => setActiveTab('psf')}
-                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'psf' ? 'bg-black text-white border border-white/20' : 'bg-transparent text-gray-500 hover:text-gray-300'
+                        className={`px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === 'psf' ? 'border-brand-cyan text-white' : 'border-transparent text-gray-600 hover:text-gray-400'
                             }`}
                     >
-                        PSF Image plane
+                        PSF Image Plane
                     </button>
                     <button
                         onClick={() => setActiveTab('bfp')}
-                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'bfp' ? 'bg-black text-white border border-white/20' : 'bg-transparent text-gray-500 hover:text-gray-300'
+                        className={`px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === 'bfp' ? 'border-brand-magenta text-white' : 'border-transparent text-gray-600 hover:text-gray-400'
                             }`}
                     >
-                        BFP Image plane
+                        BFP Image Plane
                     </button>
                 </div>
 
@@ -577,16 +545,16 @@ export default function PSFSimulator() {
                 <div className="grid grid-cols-[1fr_240px] grid-rows-[1fr_240px] gap-4 w-full h-full min-h-0">
 
                     {/* 1. Main Canvas (Top-Left) */}
-                    <div className="bg-black border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center relative overflow-hidden group">
-                        <span className="absolute top-4 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest pointer-events-none">
-                            {activeTab === 'psf' ? 'PSF (Image Plane)' : 'Back Focal Plane'}
+                    <div className="glass-card !p-0 flex flex-col items-center justify-center relative overflow-hidden group border border-white/10">
+                        <span className="absolute top-4 left-4 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
+                            {activeTab === 'psf' ? 'Primary View' : 'Fourier Plane'}
                         </span>
 
-                        <div className="relative h-full aspect-square">
+                        <div className="relative h-full aspect-square p-4">
                             <canvas
                                 ref={psfCanvasRef}
                                 onClick={handleCanvasClick}
-                                className="w-full h-full image-pixelated cursor-crosshair block"
+                                className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
                                 style={{ imageRendering: 'pixelated' }}
                             />
 
@@ -595,7 +563,7 @@ export default function PSFSimulator() {
                                 <>
                                     {/* Horizontal Line */}
                                     <div
-                                        className="absolute w-full border-t border-white/50 border-dashed pointer-events-none transition-all duration-75"
+                                        className="absolute w-full border-t border-brand-cyan/30 border-dashed pointer-events-none transition-all duration-75"
                                         style={{
                                             top: `${((profileAnalysis.cy + 0.5) / profileAnalysis.height) * 100}%`,
                                             left: 0
@@ -603,7 +571,7 @@ export default function PSFSimulator() {
                                     />
                                     {/* Vertical Line */}
                                     <div
-                                        className="absolute h-full border-l border-white/50 border-dashed pointer-events-none transition-all duration-75"
+                                        className="absolute h-full border-l border-brand-magenta/30 border-dashed pointer-events-none transition-all duration-75"
                                         style={{
                                             left: `${((profileAnalysis.cx + 0.5) / profileAnalysis.width) * 100}%`,
                                             top: 0
@@ -613,34 +581,32 @@ export default function PSFSimulator() {
                             )}
                         </div>
 
-                        <div className="absolute bottom-4 left-4 text-[10px] font-mono text-gray-500 bg-black/50 px-2 py-1 rounded pointer-events-none">
+                        <div className="absolute bottom-4 left-4 text-[10px] font-mono text-brand-cyan bg-black/80 px-2 py-1 border border-brand-cyan/20 pointer-events-none">
                             {activeTab === 'psf'
-                                ? `Size: ${(params.display_fov_um || 300).toFixed(0)} µm`
-                                : `NA: ${params.NA.toFixed(2)}`
+                                ? `FOV: ${(params.display_fov_um || 300).toFixed(0)} µm`
+                                : `NA Limit: ${params.NA.toFixed(2)}`
                             }
                         </div>
                     </div>
 
                     {/* 2. Vertical Profile (Top-Right) */}
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 relative flex flex-col min-h-0">
-                        <span className="absolute top-2 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">
-                            Y-Profile (x={profileAnalysis?.cx ?? '-'})
+                    <div className="glass-card !p-4 relative flex flex-col min-h-0 border-l border-brand-magenta/20">
+                        <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-magenta uppercase tracking-widest">
+                            Y-Axis Intensity
                         </span>
-                        <div className="flex-1 w-full min-h-0">
+                        <div className="flex-1 w-full min-h-0 pt-4">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart layout="vertical" data={profileAnalysis?.vData || []}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" horizontal={false} />
-                                    {/* X Axis is Value (Intensity) */}
+                                    <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" horizontal={false} />
                                     <XAxis type="number" hide domain={[0, 'auto']} />
-                                    {/* Y Axis is Index, reversed to match image top-down */}
                                     <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#111', borderColor: '#333', fontSize: '10px' }}
+                                        contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
                                         itemStyle={{ color: '#fff' }}
-                                        cursor={{ stroke: '#555' }}
+                                        cursor={{ stroke: '#333' }}
                                     />
                                     {activeTab === 'psf' && (
-                                        <Line dataKey="fit" type="monotone" stroke="#888" strokeWidth={1} strokeDasharray="3 3" dot={false} isAnimationActive={false} />
+                                        <Line dataKey="fit" type="monotone" stroke="#444" strokeWidth={1} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
                                     )}
                                     <Line dataKey="intensity" type="monotone" stroke={wavelengthToColor(params.lambda_vac)} strokeWidth={2} dot={false} isAnimationActive={false} />
                                 </LineChart>
@@ -649,23 +615,23 @@ export default function PSFSimulator() {
                     </div>
 
                     {/* 3. Horizontal Profile (Bottom-Left) */}
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 relative flex flex-col min-h-0">
-                        <span className="absolute top-2 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">
-                            X-Profile (y={profileAnalysis?.cy ?? '-'})
+                    <div className="glass-card !p-4 relative flex flex-col min-h-0 border-t border-brand-cyan/20">
+                        <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-cyan uppercase tracking-widest">
+                            X-Axis Intensity
                         </span>
                         <div className="flex-1 w-full min-h-0 pt-2">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={profileAnalysis?.hData || []}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                                    <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" vertical={false} />
                                     <XAxis dataKey="x" hide />
                                     <YAxis hide domain={[0, 'auto']} />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#111', borderColor: '#333', fontSize: '10px' }}
+                                        contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
                                         itemStyle={{ color: '#fff' }}
-                                        cursor={{ stroke: '#555' }}
+                                        cursor={{ stroke: '#333' }}
                                     />
                                     {activeTab === 'psf' && (
-                                        <Line dataKey="fit" type="monotone" stroke="#888" strokeWidth={1} strokeDasharray="3 3" dot={false} isAnimationActive={false} />
+                                        <Line dataKey="fit" type="monotone" stroke="#444" strokeWidth={1} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
                                     )}
                                     <Line dataKey="intensity" type="monotone" stroke={wavelengthToColor(params.lambda_vac)} strokeWidth={2} dot={false} isAnimationActive={false} />
                                 </LineChart>
@@ -674,41 +640,43 @@ export default function PSFSimulator() {
                     </div>
 
                     {/* 4. Stats Panel (Bottom-Right) */}
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col justify-center gap-3">
-                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-white/10 pb-1">
-                            {activeTab === 'psf' ? "Gaussian Fit (Pixels)" : "Analysis"}
+                    <div className="glass-card !p-4 flex flex-col justify-center gap-2">
+                        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/10 pb-1">
+                            {activeTab === 'psf' ? "Gaussian Fit" : "Cursor Info"}
                         </h4>
 
                         {activeTab === 'psf' ? (
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                                <div className="text-gray-500">Parameter</div>
-                                <div className="text-right text-gray-500 font-mono">Value</div>
+                            <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                                <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
+                                <div className="text-right text-gray-600 text-[10px] uppercase">Pixels</div>
 
-                                <div className="text-cyan-400">Sigma X</div>
+                                <div className="text-brand-cyan font-mono">σ (X)</div>
                                 <div className="text-right font-mono text-white">
                                     {profileAnalysis?.hStats?.sigma.toFixed(2) ?? '-'}
                                 </div>
 
-                                <div className="text-pink-400">Sigma Y</div>
+                                <div className="text-brand-magenta font-mono">σ (Y)</div>
                                 <div className="text-right font-mono text-white">
                                     {profileAnalysis?.vStats?.sigma.toFixed(2) ?? '-'}
                                 </div>
 
-                                <div className="col-span-2 h-px bg-white/10 my-1" />
+                                <div className="col-span-2 h-px bg-white/5 my-1" />
 
-                                <div className="text-gray-400">FWHM X</div>
+                                <div className="text-gray-500 font-mono">FWHM X</div>
                                 <div className="text-right font-mono text-white">
                                     {profileAnalysis?.hStats?.fwhm.toFixed(2) ?? '-'}
                                 </div>
-                                <div className="text-gray-400">FWHM Y</div>
+                                <div className="text-gray-500 font-mono">FWHM Y</div>
                                 <div className="text-right font-mono text-white">
                                     {profileAnalysis?.vStats?.fwhm.toFixed(2) ?? '-'}
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-xs text-gray-500 italic text-center">
-                                Fitting disabled for BFP. <br />
-                                Use crosshair to inspect intensity profiles.
+                            <div className="flex flex-col items-center justify-center h-full text-center space-y-2">
+                                <div className="text-xl text-gray-700">✛</div>
+                                <div className="text-[10px] text-gray-500 uppercase tracking-wide">
+                                    Click BFP to view <br /> profiles
+                                </div>
                             </div>
                         )}
                     </div>
@@ -717,9 +685,10 @@ export default function PSFSimulator() {
             </div>
 
             {/* DEBUG SECTION */}
-            <div className="fixed bottom-0 right-0 p-2 bg-black/80 text-[10px] text-gray-500 pointer-events-none z-50">
-                State: {state} | Result: {simResult ? "Yes" : "No"} | Computing: {calculating ? "Yes" : "No"}
+            <div className="fixed bottom-0 right-0 p-1 bg-black/90 text-[10px] text-gray-600 pointer-events-none z-50 font-mono">
+                PSF Sim v2.1 | Status: {state}
             </div>
         </div>
     );
 }
+
