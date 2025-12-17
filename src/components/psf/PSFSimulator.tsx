@@ -253,12 +253,7 @@ export default function PSFSimulator() {
 
                     // Super-critical (Outside) -> Magenta/Pink
                     drawTextWithOutline("Super-critical", wB / 2, 20, "#e879f9");
-                    // actually user snippet puts it at (crit + max)/2
 
-                    ctx.fillStyle = "rgba(236, 72, 153, 0.8)"; // Pink-ish
-                    // Check if Super-critical region exists (it must if NA > n_sample)
-                    // Place it near the top of the ring
-                    ctx.fillText("Super-critical", wB / 2, 10);
                 }
             }
         }
