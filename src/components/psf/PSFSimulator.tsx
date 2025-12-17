@@ -405,7 +405,7 @@ export default function PSFSimulator() {
                         <span className="absolute top-4 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">PSF (Image Plane)</span>
                         <canvas
                             ref={psfCanvasRef}
-                            className="max-w-full max-h-full aspect-square image-pixelated"
+                            className="w-full max-w-full max-h-full aspect-square image-pixelated"
                             style={{ imageRendering: 'pixelated' }}
                         />
                         {/* Dynamic Scale Overlay */}
