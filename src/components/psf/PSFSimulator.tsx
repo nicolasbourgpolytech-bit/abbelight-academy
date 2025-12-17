@@ -534,7 +534,8 @@ export default function PSFSimulator() {
                         <span className="absolute top-4 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">PSF (Image Plane)</span>
                         <canvas
                             ref={psfCanvasRef}
-                            className="w-full h-full aspect-square image-pixelated"
+                            onClick={handleCanvasClick}
+                            className="w-full h-full aspect-square image-pixelated cursor-crosshair"
                             style={{ imageRendering: 'pixelated' }}
                         />
                         {/* Dynamic Scale Overlay */}
@@ -557,29 +558,67 @@ export default function PSFSimulator() {
                     </div>
                 </div>
 
-                {/* Profile Graph */}
-                <div className="h-48 bg-white/5 border border-white/10 rounded-2xl p-4 relative">
-                    <span className="absolute top-2 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">X-Profile</span>
-                    <div className="w-full h-full pt-4">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={profileData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                                <XAxis dataKey="x" hide />
-                                <YAxis hide domain={[0, 'auto']} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#111', borderColor: '#333', fontSize: '12px' }}
-                                    itemStyle={{ color: '#fff' }}
-                                />
-                                <Line
-                                    type="monotone"
-                                    dataKey="intensity"
-                                    stroke={wavelengthToColor(params.lambda_vac)}
-                                    strokeWidth={2}
-                                    dot={false}
-                                    isAnimationActive={false}
-                                />
-                            </LineChart>
-                        </ResponsiveContainer>
+                {/* Profile Graph & Stats */}
+                <div className="flex flex-col lg:flex-row gap-4 h-48">
+                    {/* Graph */}
+                    <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 relative min-w-0">
+                        <span className="absolute top-2 left-4 text-xs font-mono text-gray-500 uppercase tracking-widest">
+                            X-Profile (y={profileAnalysis?.cy ?? 'C'})
+                        </span>
+                        <div className="w-full h-full pt-4">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={profileAnalysis?.data || []}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                                    <XAxis dataKey="x" hide />
+                                    <YAxis hide domain={[0, 'auto']} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#111', borderColor: '#333', fontSize: '12px' }}
+                                        itemStyle={{ color: '#fff' }}
+                                    />
+                                    <Line
+                                        type="monotone"
+                                        dataKey="intensity"
+                                        stroke={wavelengthToColor(params.lambda_vac)}
+                                        strokeWidth={2}
+                                        dot={false}
+                                        isAnimationActive={false}
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Stats Panel */}
+                    <div className="w-full lg:w-64 bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col justify-center gap-3">
+                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-white/10 pb-1">
+                            Gaussian Fit (Pixels)
+                        </h4>
+
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                            <div className="text-gray-500">Parameter</div>
+                            <div className="text-right text-gray-500 font-mono">Value</div>
+
+                            <div className="text-cyan-400">Sigma X</div>
+                            <div className="text-right font-mono text-white">
+                                {profileAnalysis?.hStats?.sigma.toFixed(2) ?? '-'}
+                            </div>
+
+                            <div className="text-pink-400">Sigma Y</div>
+                            <div className="text-right font-mono text-white">
+                                {profileAnalysis?.vStats?.sigma.toFixed(2) ?? '-'}
+                            </div>
+
+                            <div className="col-span-2 h-px bg-white/10 my-1" />
+
+                            <div className="text-gray-400">FWHM X</div>
+                            <div className="text-right font-mono text-white">
+                                {profileAnalysis?.hStats?.fwhm.toFixed(2) ?? '-'}
+                            </div>
+                            <div className="text-gray-400">FWHM Y</div>
+                            <div className="text-right font-mono text-white">
+                                {profileAnalysis?.vStats?.fwhm.toFixed(2) ?? '-'}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
