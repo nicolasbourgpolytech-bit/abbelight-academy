@@ -561,17 +561,17 @@ export default function PSFSimulator() {
                                 <>
                                     {/* Horizontal Line */}
                                     <div
-                                        className="absolute w-full h-px bg-white/50 pointer-events-none"
+                                        className="absolute w-full border-t border-white/50 border-dashed pointer-events-none"
                                         style={{
-                                            top: `${(profileAnalysis.cy / profileAnalysis.height) * 100}%`,
+                                            top: `${((profileAnalysis.cy + 0.5) / profileAnalysis.height) * 100}%`,
                                             left: 0
                                         }}
                                     />
                                     {/* Vertical Line */}
                                     <div
-                                        className="absolute h-full w-px bg-white/50 pointer-events-none"
+                                        className="absolute h-full border-l border-white/50 border-dashed pointer-events-none"
                                         style={{
-                                            left: `${(profileAnalysis.cx / profileAnalysis.width) * 100}%`,
+                                            left: `${((profileAnalysis.cx + 0.5) / profileAnalysis.width) * 100}%`,
                                             top: 0
                                         }}
                                     />
