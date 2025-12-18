@@ -633,8 +633,8 @@ export default function PSFSimulator() {
 
             </div>
 
-            {/* Main Content Area */}
-            <div className="flex-1 w-full flex flex-col gap-4 overflow-hidden pt-[58px]">
+            {/* Main Content Area - Auto width to hug content (Tabs align with Image), H-full for vertical calculation */}
+            <div className="w-auto h-full flex flex-col gap-4 overflow-hidden pt-[58px]">
 
                 {/* Tabs */}
                 <div className="flex border-b border-white/10">
