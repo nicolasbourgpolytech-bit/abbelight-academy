@@ -698,13 +698,13 @@ export default function PSFSimulator() {
 
                         </div>
 
-                        <div className="absolute bottom-4 left-4 flex flex-col items-start gap-1 p-2 bg-black/80 border border-brand-cyan/20 pointer-events-none z-20">
+                        <div className="absolute bottom-4 left-4 flex flex-col items-start gap-1 p-3 bg-black/80 border border-brand-cyan/20 pointer-events-none z-20 rounded-sm backdrop-blur-sm">
                             {activeTab === 'psf' ? (
                                 <>
-                                    <div className="text-[10px] font-mono text-brand-cyan uppercase tracking-widest border-b border-brand-cyan/20 pb-1 mb-1 w-full">
+                                    <div className="text-xs font-bold font-mono text-brand-cyan uppercase tracking-widest border-b border-brand-cyan/20 pb-1 mb-1 w-full">
                                         Parameters
                                     </div>
-                                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[10px] font-mono whitespace-nowrap">
+                                    <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs font-bold font-mono whitespace-nowrap">
                                         <span className="text-gray-500">NA:</span>
                                         <span className="text-white text-right">{params.NA.toFixed(2)}</span>
 
@@ -729,7 +729,7 @@ export default function PSFSimulator() {
                                     </div>
                                 </>
                             ) : (
-                                <div className="text-[10px] font-mono text-brand-magenta">
+                                <div className="text-xs font-bold font-mono text-brand-magenta">
                                     NA Limit: {params.NA.toFixed(2)}
                                 </div>
                             )}
