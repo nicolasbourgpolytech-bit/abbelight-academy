@@ -442,7 +442,7 @@ export default function PSFSimulator() {
     }, [simResult, crosshair, activeTab]);
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 h-full font-sans">
+        <div className="flex flex-col lg:flex-row gap-6 h-full font-sans justify-center">
             {/* Sidebar Controls */}
             <div className="w-full lg:w-80 shrink-0 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar pt-[58px]">
 
@@ -634,7 +634,7 @@ export default function PSFSimulator() {
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+            <div className="flex flex-col gap-4 overflow-hidden w-auto pt-[58px]">
 
                 {/* Tabs */}
                 <div className="flex border-b border-white/10">
