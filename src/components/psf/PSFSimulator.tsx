@@ -523,13 +523,18 @@ export default function PSFSimulator() {
                                 <label className="text-xs text-gray-500 uppercase tracking-wider">Defocus</label>
                                 <span className="text-xs font-mono text-brand-cyan">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
                             </div>
-                            <input
-                                type="range"
-                                min="-2000" max="2000" step="50"
-                                value={params.z_defocus * 1e9}
-                                onChange={e => setParams(p => ({ ...p, z_defocus: parseFloat(e.target.value) * 1e-9 }))}
-                                className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
-                            />
+                            {(() => {
+                                const limitNm = (2 * params.n_imm * params.lambda_vac / (params.NA ** 2)) * 1e9;
+                                return (
+                                    <input
+                                        type="range"
+                                        min={-limitNm} max={limitNm} step={limitNm / 50} // Adaptive step size
+                                        value={params.z_defocus * 1e9}
+                                        onChange={e => setParams(p => ({ ...p, z_defocus: parseFloat(e.target.value) * 1e-9 }))}
+                                        className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
+                                    />
+                                );
+                            })()}
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs text-gray-500 uppercase tracking-wider">Astigmatism</label>
