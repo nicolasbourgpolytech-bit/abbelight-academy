@@ -504,7 +504,7 @@ export default function PSFSimulator() {
                     </h3>
                     <div className="space-y-4">
                         <div className="space-y-1">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">n Sample</label>
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Sample medium refractive index (n_sample)</label>
                             <input
                                 type="text"
                                 value={inputValues.n_sample}
