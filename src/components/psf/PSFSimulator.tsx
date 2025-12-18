@@ -437,7 +437,7 @@ export default function PSFSimulator() {
     return (
         <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)] font-sans">
             {/* Sidebar Controls */}
-            <div className="w-full lg:w-80 shrink-0 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="w-full lg:w-80 shrink-0 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar pt-[58px]">
 
                 {state === "LOADING" && (
                     <div className="p-4 bg-primary/10 border border-primary text-primary animate-pulse text-xs uppercase tracking-widest font-bold">
