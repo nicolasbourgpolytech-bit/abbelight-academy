@@ -851,7 +851,7 @@ export default function PSFSimulator() {
                     {/* 4. Stats Panel (Bottom-Right) */}
                     <div className="glass-card !p-4 flex flex-col justify-center gap-2">
                         <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/10 pb-1">
-                            {activeTab === 'psf' ? "Gaussian Fit" : "Cursor Info"}
+                            {activeTab === 'psf' ? "Gaussian Fit" : "BFP Analysis"}
                         </h4>
 
                         {activeTab === 'psf' ? (
@@ -889,10 +889,26 @@ export default function PSFSimulator() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-center space-y-2">
-                                <div className="text-xl text-gray-700">✛</div>
-                                <div className="text-[10px] text-gray-500 uppercase tracking-wide">
-                                    Click BFP to view <br /> profiles
+                            <div className="flex flex-col space-y-3">
+                                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                                    <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
+                                    <div className="text-right text-gray-600 text-[10px] uppercase">Value</div>
+
+                                    {params.NA > params.n_sample && simResult?.saf_ratio !== undefined ? (
+                                        <>
+                                            <div className="text-brand-magenta font-mono font-bold">SAF Ratio</div>
+                                            <div className="text-right font-mono text-white font-bold">
+                                                {Number(simResult.saf_ratio).toFixed(3)}
+                                            </div>
+                                            <div className="col-span-2 text-[10px] text-gray-500 italic mt-1">
+                                                Ratio = SAF / UAF Integration
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="col-span-2 text-center text-gray-500 py-2">
+                                            No SAF (NA &lt; n_sample)
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}

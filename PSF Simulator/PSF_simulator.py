@@ -598,4 +598,17 @@ class OpticalFourierMicroscope:
                  new_half = (display_fov_um) / 2
                  ext_cam_iso = [-new_half, new_half, -new_half, new_half]
 
-        return img_iso_cam, bfp_total, ext_cam_iso, extent_bfp, bfp_phase_vis
+        # 9. SAF Ratio Calculation
+        sin_theta_crit = self.n2 / self.n1
+        mask_uaf = (self.sin_theta1 <= sin_theta_crit) & self.pupil_mask
+        mask_saf = (self.sin_theta1 > sin_theta_crit) & self.pupil_mask
+        
+        int_uaf = np.sum(bfp_total[mask_uaf])
+        int_saf = np.sum(bfp_total[mask_saf])
+        
+        if int_uaf > 0:
+            saf_ratio = int_saf / int_uaf
+        else:
+            saf_ratio = 0.0
+
+        return img_iso_cam, bfp_total, ext_cam_iso, extent_bfp, bfp_phase_vis, saf_ratio

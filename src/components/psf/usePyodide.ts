@@ -172,7 +172,7 @@ export function usePyodide() {
                 phase_mask = current_microscope.compute_cylindrical_phase(-16.0)
 
             # Run Simulation
-            img, bfp, ext_cam, ext_bfp, bfp_phase = current_microscope.simulate_isotropic(
+            img, bfp, ext_cam, ext_bfp, bfp_phase, saf_ratio = current_microscope.simulate_isotropic(
                 z_defocus=float(params.get('z_defocus', 0.0)),
                 phase_mask=phase_mask,
                 oversampling=int(params.get('oversampling', 3)),
@@ -189,7 +189,8 @@ export function usePyodide() {
                 "bfp": bfp,
                 "ext_cam": ext_cam,
                 "ext_bfp": ext_bfp,
-                "bfp_phase": bfp_phase
+                "bfp_phase": bfp_phase,
+                "saf_ratio": saf_ratio
             }
             result
         `;
