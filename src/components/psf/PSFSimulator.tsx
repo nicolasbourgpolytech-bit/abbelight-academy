@@ -653,6 +653,7 @@ export default function PSFSimulator() {
                                 }`}
                         >
                             BFP Image Plane
+                        </button>
                     </div>
 
                     {/* Flex Column Layout - Robust Alignment */}
