@@ -90,23 +90,38 @@ function drawMatrix(
     for (let i = 0; i < data.length; i++) {
         const val = data[i];
         const norm = (val - min) / range;
-
         let r, g, b;
 
         if (isPhase) {
-            // Twilight-ish map: Blue -> White -> Red
-            // -PI to PI typically
-            // Let's us a simple rainbow or just Cyclical
-            // Simple Grayscale for now or simple diverging
+            // Phase Map: -PI to PI -> 0-1 (approx)
+            // In Python: bfp_phase_vis = np.angle(complex_z) -> -PI to PI floats.
+            // We did NOT cast bfp_phase_vis to uint16.
+            // So for phase, val is still float -PI..PI.
             const v = (val + Math.PI) / (2 * Math.PI); // 0 to 1
             r = Math.floor(v * 255);
             g = Math.floor(v * 255);
-            b = Math.floor(255 - v * 255); // Dummy map
+            b = Math.floor(255 - v * 255);
         } else {
             // Intensity map: Black -> Color
-            r = Math.floor(norm * r_feat);
-            g = Math.floor(norm * g_feat);
-            b = Math.floor(norm * b_feat);
+            // Normalize 16-bit (0-65535) to 0-1 if data is 16-bit, otherwise use min/max normalization
+            // Assuming intensity data is 16-bit (0-65535) from Python,
+            // but `data` is Float64Array, so it's already scaled.
+            // The `norm` variable below already handles min/max scaling for the current view.
+            // If the Python output is already scaled to 0-1, then `range` would be 1 and `min` would be 0.
+            // If Python output is 0-65535, then `range` would be 65535 and `min` would be 0.
+            // The existing `norm` calculation `(val - min) / range` is robust.
+            // However, if we want to explicitly treat `val` as a 16-bit value that needs to be scaled to 0-1
+            // before applying the color, we can do that.
+            // Let's assume the Python output for intensity is 0-65535 and we want to map that directly
+            // to the color intensity, rather than scaling based on the current min/max of the displayed data.
+            // This would make the color mapping consistent regardless of the data range in the current view.
+
+            // If the data is expected to be 0-65535, normalize it to 0-1
+            const normalizedVal = val / 65535; // Explicit 16-bit normalization
+
+            r = Math.floor(normalizedVal * r_feat);
+            g = Math.floor(normalizedVal * g_feat);
+            b = Math.floor(normalizedVal * b_feat);
         }
 
         const idx = i * 4;
@@ -216,7 +231,13 @@ export default function PSFSimulator() {
     const [calculating, setCalculating] = useState(false);
     const [lastError, setLastError] = useState<string | null>(null);
 
-    // Interactive Crosshair State (Indices in simulation array)
+    // --- Reset Crosshair on Dimension Change ---
+    useEffect(() => {
+        if (!simResult) return;
+        setCrosshair(null); // Reset to center
+    }, [simResult?.img[0]?.length, simResult?.img?.length, params.cam_pixel_um, params.display_fov_um]);
+
+    // --- Interaction Handlers ---Crosshair State (Indices in simulation array)
     const [crosshair, setCrosshair] = useState<{ x: number, y: number } | null>(null);
 
     // Single Main Canvas Ref
@@ -391,8 +412,8 @@ export default function PSFSimulator() {
         const height = dataGrid.length;
         const width = dataGrid[0].length;
 
-        const cx = crosshair ? crosshair.x : Math.floor(width / 2);
-        const cy = crosshair ? crosshair.y : Math.floor(height / 2);
+        const cx = crosshair ? Math.min(Math.max(crosshair.x, 0), width - 1) : Math.floor(width / 2);
+        const cy = crosshair ? Math.min(Math.max(crosshair.y, 0), height - 1) : Math.floor(height / 2);
 
         // 1. Horizontal Profile
         const row = dataGrid[cy] ? Array.from(dataGrid[cy]) : new Array(width).fill(0);
@@ -758,6 +779,12 @@ export default function PSFSimulator() {
                         <div className="flex-1 w-full min-h-0 pt-4">
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart layout="vertical" data={profileAnalysis?.vData || []} barCategoryGap={0} barGap={0}>
+                                    <defs>
+                                        <linearGradient id="gradVertical" x1="0" y1="0" x2="1" y2="0">
+                                            <stop offset="0%" stopColor="#000000" stopOpacity={0} />
+                                            <stop offset="100%" stopColor={wavelengthToColor(params.lambda_vac)} stopOpacity={0.8} />
+                                        </linearGradient>
+                                    </defs>
                                     <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" horizontal={false} />
                                     <XAxis type="number" hide domain={[0, 'auto']} />
                                     <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
@@ -769,8 +796,8 @@ export default function PSFSimulator() {
                                     {/* Intensity Bar (Bottom Layer) */}
                                     <Bar
                                         dataKey="intensity"
-                                        fill={wavelengthToColor(params.lambda_vac)}
-                                        fillOpacity={0.4}
+                                        fill="url(#gradVertical)"
+                                        fillOpacity={1}
                                         isAnimationActive={false}
                                     />
                                     {/* Gaussian Fit Line (Top Layer, drawn last) */}
@@ -798,6 +825,12 @@ export default function PSFSimulator() {
                         <div className="flex-1 w-full min-h-0 pt-2">
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart data={profileAnalysis?.hData || []} barCategoryGap={0} barGap={0}>
+                                    <defs>
+                                        <linearGradient id="gradHorizontal" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor={wavelengthToColor(params.lambda_vac)} stopOpacity={0.8} />
+                                            <stop offset="100%" stopColor="#000000" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
                                     <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" vertical={false} />
                                     <XAxis dataKey="x" hide />
                                     <YAxis hide domain={[0, 'auto']} />
@@ -809,8 +842,8 @@ export default function PSFSimulator() {
                                     {/* Intensity Bar (Bottom Layer) */}
                                     <Bar
                                         dataKey="intensity"
-                                        fill={wavelengthToColor(params.lambda_vac)}
-                                        fillOpacity={0.4}
+                                        fill="url(#gradHorizontal)"
+                                        fillOpacity={1}
                                         isAnimationActive={false}
                                     />
                                     {/* Gaussian Fit Line (Top Layer, drawn last) */}
