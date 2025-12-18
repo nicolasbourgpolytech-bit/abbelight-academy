@@ -743,21 +743,27 @@ export default function PSFSimulator() {
                     </div>
 
                     {/* Flex Column Layout - Robust Alignment */}
-                    <div className="flex flex-row w-full h-full min-h-[500px] gap-4">
+                    {/* NEW LAYOUT SYSTEM: Conditional Grid (PSF) vs Flex (BFP) */}
+                    <div className="flex-1 w-full min-h-[500px] flex justify-center items-center p-2 md:p-4 overflow-hidden">
 
-                        {/* LEFT COLUMN: Image + X-Profile */}
-                        {/* Width is driven by the aspect-square of the image which fills the available height */}
-                        <div className="flex flex-col gap-4 h-full flex-1 min-w-0">
-
-                            {/* 1. Main Canvas Area - Split for BFP Dual View */}
-                            <div className="w-full flex gap-2 min-h-0 min-w-0 flex-1">
-                                {/* PRIMARY CANVAS (Image or BFP Intensity) */}
-                                <div className="glass-card flex-1 h-full flex flex-col items-center justify-center relative overflow-hidden group border border-white/10 !p-0">
-                                    <span className="absolute top-4 left-4 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
-                                        {activeTab === 'psf' ? 'Primary View' : 'BFP Intensity'}
+                        {activeTab === 'psf' ? (
+                            /* PSF GRID LAYOUT
+                               Cols: [Image (Flex)] [Y-Profile (240px)]
+                               Rows: [Image (Flex)] [X-Profile (240px)]
+                               Wrapper is forced aspect-square to ensure the 1fr track equals 1fr track.
+                            */
+                            <div className="grid gap-4 w-full h-full max-w-full max-h-full aspect-square mx-auto"
+                                style={{
+                                    gridTemplateColumns: 'minmax(0, 1fr) 240px',
+                                    gridTemplateRows: 'minmax(0, 1fr) 240px',
+                                }}
+                            >
+                                {/* 1. TOP LEFT: MAIN CANVAS (Image Plane) */}
+                                <div className="relative w-full h-full bg-black/20 border border-white/10 group overflow-hidden">
+                                    <span className="absolute top-2 left-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
+                                        Primary View
                                     </span>
 
-                                    {/* Loading / Calculating Overlay */}
                                     {(state === "LOADING" || calculating) && (
                                         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
                                             <div className="text-brand-cyan font-bold text-sm uppercase tracking-widest animate-pulse border border-brand-cyan/30 px-6 py-3 bg-black/80 rounded shadow-lg shadow-brand-cyan/20">
@@ -766,106 +772,72 @@ export default function PSFSimulator() {
                                         </div>
                                     )}
 
-                                    <div className="relative w-full h-full flex items-center justify-center p-4">
-                                        {/* Simple Container - No aspect-square hack */}
-                                        <div className="relative w-full h-full max-w-full max-h-full flex items-center justify-center">
-                                            <canvas
-                                                ref={psfCanvasRef}
-                                                onClick={(e) => handleCanvasClick(e, false)}
-                                                className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
-                                                style={{ imageRendering: 'pixelated' }}
-                                            />
+                                    <canvas
+                                        ref={psfCanvasRef}
+                                        onClick={(e) => handleCanvasClick(e, false)}
+                                        className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
+                                        style={{ imageRendering: 'pixelated' }}
+                                    />
 
-                                            {/* Crosshair Overlay */}
-                                            {profileAnalysis && (
-                                                <>
-                                                    {/* Horizontal Line */}
-                                                    <div
-                                                        className="absolute w-full border-t border-brand-cyan/30 border-dashed pointer-events-none transition-all duration-75"
-                                                        style={{
-                                                            top: `${((profileAnalysis.cy + 0.5) / profileAnalysis.height) * 100}%`,
-                                                            left: 0
-                                                        }}
-                                                    />
-                                                    {/* Vertical Line */}
-                                                    <div
-                                                        className="absolute h-full border-l border-brand-magenta/30 border-dashed pointer-events-none transition-all duration-75"
-                                                        style={{
-                                                            left: `${((profileAnalysis.cx + 0.5) / profileAnalysis.width) * 100}%`,
-                                                            top: 0
-                                                        }}
-                                                    />
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* BFP Labels & Params Overlay (Same as before but filtered for only this view) */}
-                                    {activeTab === 'bfp' && params.NA > params.n_sample && (
+                                    {/* Crosshair Overlay */}
+                                    {profileAnalysis && (
                                         <>
-                                            {/* UAF (Sub-critical) - Center */}
-                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-brand-cyan font-bold text-sm pointer-events-none drop-shadow-md select-none">
-                                                UAF
-                                            </div>
-
-                                            {/* SAF (Super-critical) - Top Edge (Restored) */}
                                             <div
-                                                className="absolute left-1/2 -translate-x-1/2 text-[10px] md:text-xs font-bold text-brand-magenta pointer-events-none drop-shadow-md select-none uppercase tracking-widest"
-                                                style={{
-                                                    top: `calc(50% - (50% * ${params.n_sample / params.NA}) - 20px)`
-                                                }}
-                                            >
-                                                SAF
-                                            </div>
+                                                className="absolute w-full border-t border-brand-cyan/30 border-dashed pointer-events-none transition-all duration-75"
+                                                style={{ top: `${((profileAnalysis.cy + 0.5) / profileAnalysis.height) * 100}%`, left: 0 }}
+                                            />
+                                            <div
+                                                className="absolute h-full border-l border-brand-magenta/30 border-dashed pointer-events-none transition-all duration-75"
+                                                style={{ left: `${((profileAnalysis.cx + 0.5) / profileAnalysis.width) * 100}%`, top: 0 }}
+                                            />
                                         </>
                                     )}
-
                                 </div>
 
-                                {/* SECONDARY CANVAS (BFP Phase) - Only visible in BFP mode */}
-                                {activeTab === 'bfp' && (
-                                    <div className="glass-card flex-1 h-full flex flex-col items-center justify-center relative overflow-hidden group border border-white/10 !p-0">
-                                        <span className="absolute top-4 left-4 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
-                                            BFP Phase (Pupil)
-                                        </span>
-                                        <div className="relative w-full h-full flex items-center justify-center">
-                                            <div className="relative aspect-square h-full max-w-full">
-                                                <canvas
-                                                    ref={bfpPhaseCanvasRef}
-                                                    className="w-full h-full image-pixelated block shadow-2xl shadow-black/50"
-                                                    style={{ imageRendering: 'pixelated' }}
+                                {/* 2. TOP RIGHT: Y-PROFILE */}
+                                <div className="glass-card !p-4 relative flex flex-col w-full h-full min-h-0 border-l border-brand-magenta/20">
+                                    <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-magenta uppercase tracking-widest">
+                                        Y-Axis Intensity
+                                    </span>
+                                    <div className="flex-1 w-full min-h-0 pt-4">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <ComposedChart layout="vertical" data={profileAnalysis?.vData || []} barCategoryGap={0} barGap={0}>
+                                                <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" horizontal={false} />
+                                                <XAxis type="number" hide domain={[0, 'auto']} />
+                                                <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
+                                                <Tooltip
+                                                    contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
+                                                    itemStyle={{ color: '#fff' }}
+                                                    cursor={{ stroke: '#333' }}
                                                 />
-                                            </div>
-                                        </div>
-
-                                        {/* ABERRATION CHART OVERLAY */}
-                                        {simResult?.stats && (
-                                            <div className="absolute bottom-2 right-2 w-48 h-32 bg-black/60 backdrop-blur border border-white/10 p-2 z-20">
-                                                <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest block mb-1">
-                                                    Aberration Power (PV)
-                                                </span>
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <BarChart data={[
-                                                        { name: 'Depth', val: simResult.stats.Depth, fill: '#06b6d4' },
-                                                        { name: 'Def', val: simResult.stats.Defocus, fill: '#22c55e' },
-                                                        { name: 'Astig', val: simResult.stats.Astig, fill: '#c026d3' },
-                                                        { name: 'Collar', val: simResult.stats.Collar, fill: '#eab308' },
-                                                    ]}>
-                                                        <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#fff' }} interval={0} />
-                                                        <YAxis hide domain={[0, 'auto']} />
-                                                        <Tooltip contentStyle={{ backgroundColor: '#000', fontSize: '10px' }} />
-                                                        <Bar dataKey="val" />
-                                                    </BarChart>
-                                                </ResponsiveContainer>
-                                            </div>
-                                        )}
+                                                <Bar dataKey="intensity" isAnimationActive={false}>
+                                                    {profileAnalysis?.vData.map((entry: any, index: number) => (
+                                                        <Cell
+                                                            key={`cell-${index}`}
+                                                            fill={wavelengthToColor(params.lambda_vac)}
+                                                            fillOpacity={profileAnalysis.vMax ? (entry.intensity / profileAnalysis.vMax) : 0}
+                                                        />
+                                                    ))}
+                                                </Bar>
+                                                <Line
+                                                    dataKey="fit"
+                                                    type="monotone"
+                                                    stroke="#fff"
+                                                    strokeWidth={1.5}
+                                                    strokeDasharray="4 4"
+                                                    dot={false}
+                                                    isAnimationActive={false}
+                                                />
+                                            </ComposedChart>
+                                        </ResponsiveContainer>
                                     </div>
-                                )}
-                            </div>
+                                    <div className="absolute bottom-2 right-4 flex flex-col text-[10px] font-mono">
+                                        {/* Stats for Y could go here or in stats panel? User didn't request specific location. Sticking to stats panel for details. */}
+                                    </div>
+                                </div>
 
-                            {/* 2. Horizontal Profile (Bottom) - Fixed Height (Only show in PSF mode) */}
-                            {activeTab === 'psf' && (
-                                <div className="glass-card !p-4 relative flex flex-col h-[240px] shrink-0 border-t border-brand-cyan/20">
+                                {/* 3. BOTTOM LEFT: X-PROFILE */}
+                                <div className="glass-card !p-4 relative flex flex-col w-full h-full min-h-0 border-t border-brand-cyan/20">
                                     <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-cyan uppercase tracking-widest">
                                         X-Axis Intensity
                                     </span>
@@ -899,138 +871,110 @@ export default function PSFSimulator() {
                                             </ComposedChart>
                                         </ResponsiveContainer>
                                     </div>
-                                    <div className="absolute bottom-2 right-4 flex items-center gap-4 text-[10px] font-mono">
-                                        {profileAnalysis?.hStats && (
-                                            <>
-                                                <span className="text-brand-cyan">
-                                                    σ: {(profileAnalysis.hStats.sigma * params.cam_pixel_um).toFixed(1)} nm
-                                                </span>
-                                                <span className="text-brand-magenta">
-                                                    FWHM: {(profileAnalysis.hStats.fwhm * params.cam_pixel_um).toFixed(1)} nm
-                                                </span>
-                                            </>
-                                        )}
-                                    </div>
                                 </div>
-                            )}
-                        </div>
-                    </div> {/* End Left Column */}
 
-                    {/* RIGHT COLUMN: Y-Profile + Stats */}
-                    {/* Fixed Width */}
-                    <div className="flex flex-col gap-4 h-full w-[240px] shrink-0">
-
-                        {/* 3. Vertical Profile (Top) - Dynamic Height (Matches Image) - Only in PSF Mode */}
-                        {activeTab === 'psf' && (
-                            <div className="glass-card !p-4 relative flex flex-col flex-1 min-h-0 border-l border-brand-magenta/20">
-                                <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-magenta uppercase tracking-widest">
-                                    Y-Axis Intensity
-                                </span>
-                                <div className="flex-1 w-full min-h-0 pt-4">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <ComposedChart layout="vertical" data={profileAnalysis?.vData || []} barCategoryGap={0} barGap={0}>
-                                            <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" horizontal={false} />
-                                            <XAxis type="number" hide domain={[0, 'auto']} />
-                                            <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
-                                            <Tooltip
-                                                contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
-                                                itemStyle={{ color: '#fff' }}
-                                                cursor={{ stroke: '#333' }}
-                                            />
-                                            <Bar dataKey="intensity" isAnimationActive={false}>
-                                                {profileAnalysis?.vData.map((entry: any, index: number) => (
-                                                    <Cell
-                                                        key={`cell-${index}`}
-                                                        fill={wavelengthToColor(params.lambda_vac)}
-                                                        fillOpacity={profileAnalysis.vMax ? (entry.intensity / profileAnalysis.vMax) : 0}
-                                                    />
-                                                ))}
-                                            </Bar>
-                                            <Line
-                                                dataKey="fit"
-                                                type="monotone"
-                                                stroke="#fff"
-                                                strokeWidth={1.5}
-                                                strokeDasharray="4 4"
-                                                dot={false}
-                                                isAnimationActive={false}
-                                            />
-                                        </ComposedChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 4. Stats Panel (Bottom) - Fixed Height */}
-                        <div className="glass-card !p-4 flex flex-col justify-center gap-2 h-[240px] shrink-0">
-                            <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/10 pb-1">
-                                {activeTab === 'psf' ? "Gaussian Fit" : "BFP Analysis"}
-                            </h4>
-
-                            {activeTab === 'psf' ? (
-                                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
-                                    <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
-                                    <div className="text-right text-gray-600 text-[10px] uppercase">nm</div>
-
-                                    <div className="text-brand-cyan font-mono">σ (X)</div>
-                                    <div className="text-right font-mono text-white">
-                                        {(profileAnalysis?.hStats?.sigma
-                                            ? (profileAnalysis.hStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                            : 0).toFixed(1)}
-                                    </div>
-
-                                    <div className="text-brand-magenta font-mono">σ (Y)</div>
-                                    <div className="text-right font-mono text-white">
-                                        {(profileAnalysis?.vStats?.sigma
-                                            ? (profileAnalysis.vStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                            : 0).toFixed(1)}
-                                    </div>
-
-                                    <div className="col-span-2 h-px bg-white/5 my-1" />
-
-                                    <div className="text-gray-500 font-mono">FWHM X</div>
-                                    <div className="text-right font-mono text-white">
-                                        {(profileAnalysis?.hStats?.fwhm
-                                            ? (profileAnalysis.hStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                            : 0).toFixed(1)}
-                                    </div>
-                                    <div className="text-gray-500 font-mono">FWHM Y</div>
-                                    <div className="text-right font-mono text-white">
-                                        {(profileAnalysis?.vStats?.fwhm
-                                            ? (profileAnalysis.vStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                            : 0).toFixed(1)}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col space-y-3">
+                                {/* 4. BOTTOM RIGHT: STATS PANEL */}
+                                <div className="glass-card !p-4 flex flex-col justify-center gap-2 w-full h-full">
+                                    <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/10 pb-1">
+                                        Gaussian Fit
+                                    </h4>
                                     <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
                                         <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
-                                        <div className="text-right text-gray-600 text-[10px] uppercase">Value</div>
+                                        <div className="text-right text-gray-600 text-[10px] uppercase">nm</div>
 
-                                        {params.NA <= params.n_sample ? (
-                                            <div className="col-span-2 text-center text-gray-500 py-2">
-                                                No SAF (NA &lt; n_sample)
+                                        <div className="text-brand-cyan font-mono">σ (X)</div>
+                                        <div className="text-right font-mono text-white">
+                                            {(profileAnalysis?.hStats?.sigma
+                                                ? (profileAnalysis.hStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                : 0).toFixed(1)}
+                                        </div>
+
+                                        <div className="text-brand-magenta font-mono">σ (Y)</div>
+                                        <div className="text-right font-mono text-white">
+                                            {(profileAnalysis?.vStats?.sigma
+                                                ? (profileAnalysis.vStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                : 0).toFixed(1)}
+                                        </div>
+
+                                        <div className="col-span-2 h-px bg-white/5 my-1" />
+
+                                        <div className="text-gray-500 font-mono">FWHM X</div>
+                                        <div className="text-right font-mono text-white">
+                                            {(profileAnalysis?.hStats?.fwhm
+                                                ? (profileAnalysis.hStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                : 0).toFixed(1)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            /* BFP LAYOUT: DUAL SQUARE ROW */
+                            <div className="flex gap-8 w-full h-full max-w-full max-h-full justify-center items-center">
+                                {/* Left: BFP Intensity */}
+                                <div className="relative aspect-square h-full max-h-full bg-black/20 border border-white/10 group overflow-hidden">
+                                    <span className="absolute top-2 left-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
+                                        BFP Intensity
+                                    </span>
+                                    <canvas
+                                        ref={psfCanvasRef}
+                                        className="w-full h-full image-pixelated block shadow-2xl shadow-black/50"
+                                        style={{ imageRendering: 'pixelated' }}
+                                    />
+                                    {/* BFP Overlays (UAF/SAF) - Logic Restored */}
+                                    {params.NA > params.n_sample && (
+                                        <>
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-brand-cyan font-bold text-sm pointer-events-none drop-shadow-md select-none">
+                                                UAF
                                             </div>
-                                        ) : simResult?.saf_ratio !== undefined ? (
-                                            <>
-                                                <div className="text-brand-magenta font-mono font-bold">SAF Ratio</div>
-                                                <div className="text-right font-mono text-white font-bold">
-                                                    {Number(simResult.saf_ratio).toFixed(3)}
-                                                </div>
-                                                <div className="col-span-2 text-[10px] text-gray-500 italic mt-1">
-                                                    Ratio = SAF / UAF Integration
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="col-span-2 text-center text-gray-500 py-2 animate-pulse">
-                                                Calculating SAF...
+                                            <div
+                                                className="absolute left-1/2 -translate-x-1/2 text-[10px] md:text-xs font-bold text-brand-magenta pointer-events-none drop-shadow-md select-none uppercase tracking-widest"
+                                                style={{
+                                                    top: `calc(50% - (50% * ${params.n_sample / params.NA}) - 20px)`
+                                                }}
+                                            >
+                                                SAF
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Right: BFP Phase */}
+                                {simResult?.bfp_phase && (
+                                    <div className="relative aspect-square h-full max-h-full bg-black/20 border border-white/10 group overflow-hidden">
+                                        <span className="absolute top-2 left-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
+                                            BFP Phase (Pupil)
+                                        </span>
+                                        <canvas
+                                            ref={bfpPhaseCanvasRef}
+                                            className="w-full h-full image-pixelated block shadow-2xl shadow-black/50"
+                                            style={{ imageRendering: 'pixelated' }}
+                                        />
+                                        {/* ABERRATION CHART OVERLAY */}
+                                        {simResult?.stats && (
+                                            <div className="absolute bottom-2 right-2 w-48 h-32 bg-black/60 backdrop-blur border border-white/10 p-2 z-20">
+                                                <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest block mb-1">
+                                                    Aberration Power (PV)
+                                                </span>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={[
+                                                        { name: 'Depth', val: simResult.stats.Depth, fill: '#06b6d4' },
+                                                        { name: 'Def', val: simResult.stats.Defocus, fill: '#22c55e' },
+                                                        { name: 'Astig', val: simResult.stats.Astig, fill: '#c026d3' },
+                                                        { name: 'Collar', val: simResult.stats.Collar, fill: '#eab308' },
+                                                    ]}>
+                                                        <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#fff' }} interval={0} />
+                                                        <YAxis hide domain={[0, 'auto']} />
+                                                        <Tooltip contentStyle={{ backgroundColor: '#000', fontSize: '10px' }} />
+                                                        <Bar dataKey="val" />
+                                                    </BarChart>
+                                                </ResponsiveContainer>
                                             </div>
                                         )}
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    </div> {/* End Right Column */}
+                                )}
+                            </div>
+                        )}
+                    </div>
 
                 </div>
             </div>
