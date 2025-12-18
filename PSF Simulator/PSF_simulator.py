@@ -598,18 +598,4 @@ class OpticalFourierMicroscope:
                  new_half = (display_fov_um) / 2
                  ext_cam_iso = [-new_half, new_half, -new_half, new_half]
 
-        # --- 16-bit Normalization ---
-        # Normalize to 0-65535
-        def to_uint16(arr):
-             if arr.size == 0: return arr.astype(np.uint16)
-             mx = arr.max()
-             mn = arr.min()
-             if mx == mn: return np.zeros_like(arr, dtype=np.uint16)
-             norm = (arr - mn) / (mx - mn)
-             return (norm * 65535).astype(np.uint16)
-
-        img_iso_cam_16 = to_uint16(img_iso_cam)
-        bfp_total_16 = to_uint16(bfp_total)
-        
-        return img_iso_cam_16, bfp_total_16, ext_cam_iso, extent_bfp, bfp_phase_vis
-
+        return img_iso_cam, bfp_total, ext_cam_iso, extent_bfp, bfp_phase_vis

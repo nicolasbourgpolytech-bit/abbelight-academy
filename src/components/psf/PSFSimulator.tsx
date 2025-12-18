@@ -103,25 +103,9 @@ function drawMatrix(
             b = Math.floor(255 - v * 255);
         } else {
             // Intensity map: Black -> Color
-            // Normalize 16-bit (0-65535) to 0-1 if data is 16-bit, otherwise use min/max normalization
-            // Assuming intensity data is 16-bit (0-65535) from Python,
-            // but `data` is Float64Array, so it's already scaled.
-            // The `norm` variable below already handles min/max scaling for the current view.
-            // If the Python output is already scaled to 0-1, then `range` would be 1 and `min` would be 0.
-            // If Python output is 0-65535, then `range` would be 65535 and `min` would be 0.
-            // The existing `norm` calculation `(val - min) / range` is robust.
-            // However, if we want to explicitly treat `val` as a 16-bit value that needs to be scaled to 0-1
-            // before applying the color, we can do that.
-            // Let's assume the Python output for intensity is 0-65535 and we want to map that directly
-            // to the color intensity, rather than scaling based on the current min/max of the displayed data.
-            // This would make the color mapping consistent regardless of the data range in the current view.
-
-            // If the data is expected to be 0-65535, normalize it to 0-1
-            const normalizedVal = val / 65535; // Explicit 16-bit normalization
-
-            r = Math.floor(normalizedVal * r_feat);
-            g = Math.floor(normalizedVal * g_feat);
-            b = Math.floor(normalizedVal * b_feat);
+            r = Math.floor(norm * r_feat);
+            g = Math.floor(norm * g_feat);
+            b = Math.floor(norm * b_feat);
         }
 
         const idx = i * 4;
