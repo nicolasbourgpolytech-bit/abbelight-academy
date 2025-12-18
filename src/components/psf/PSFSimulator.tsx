@@ -661,8 +661,8 @@ export default function PSFSimulator() {
                     {/* Width is driven by the aspect-square of the image which fills the available height */}
                     <div className="flex flex-col gap-4 h-full w-auto min-w-0">
 
-                        {/* 1. Main Canvas (Top) - Dynamic Height (Flex-1), Square Aspect Ratio */}
-                        <div className="flex-1 aspect-square relative min-h-0 min-w-0">
+                        {/* 1. Main Canvas (Top) - Dynamic Height (Explicit Calc), Square Aspect Ratio */}
+                        <div className="h-[calc(100%-256px)] aspect-square relative min-h-0 min-w-0">
                             <div className="glass-card w-full h-full flex flex-col items-center justify-center relative overflow-hidden group border border-white/10 !p-0">
                                 <span className="absolute top-4 left-4 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
                                     {activeTab === 'psf' ? 'Primary View' : 'Fourier Plane'}
