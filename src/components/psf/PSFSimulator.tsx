@@ -633,8 +633,8 @@ export default function PSFSimulator() {
 
             </div>
 
-            {/* Main Content Area - w-fit to glue to sidebar, centered by parent */}
-            <div className="w-fit h-full flex flex-col pt-[58px] overflow-hidden">
+            {/* Main Content Area */}
+            <div className="flex-1 w-full flex flex-col pt-[58px] overflow-hidden">
                 {/* Centered Wrapper: Hugs content width (Visualization) and centers it. Tabs stretch to this width. */}
                 <div className="w-fit mx-auto h-full flex flex-col gap-4 min-w-0">
 
