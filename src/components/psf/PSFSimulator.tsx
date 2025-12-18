@@ -711,7 +711,12 @@ export default function PSFSimulator() {
                                     </div>
 
                                     {/* SAF (Super-critical) - Top Edge */}
-                                    <div className="absolute top-[10%] left-1/2 -translate-x-1/2 text-[10px] md:text-xs font-bold text-brand-magenta pointer-events-none drop-shadow-md select-none uppercase tracking-widest">
+                                    <div
+                                        className="absolute left-1/2 -translate-x-1/2 text-[10px] md:text-xs font-bold text-brand-magenta pointer-events-none drop-shadow-md select-none uppercase tracking-widest"
+                                        style={{
+                                            top: `calc(50% - (50% * ${params.n_sample / params.NA}) - 20px)`
+                                        }}
+                                    >
                                         SAF
                                     </div>
                                 </>
