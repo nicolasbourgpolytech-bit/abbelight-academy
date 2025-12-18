@@ -634,7 +634,7 @@ export default function PSFSimulator() {
             </div>
 
             {/* Main Content Area */}
-            <div className="flex flex-col gap-4 overflow-hidden w-auto pt-[58px]">
+            <div className="flex-1 w-full flex flex-col gap-4 overflow-hidden pt-[58px]">
 
                 {/* Tabs */}
                 <div className="flex border-b border-white/10">
