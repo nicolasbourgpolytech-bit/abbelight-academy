@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { usePyodide } from './usePyodide';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 // --- Types ---
 interface SimulationParams {
@@ -752,7 +752,7 @@ export default function PSFSimulator() {
                         </span>
                         <div className="flex-1 w-full min-h-0 pt-4">
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart layout="vertical" data={profileAnalysis?.vData || []}>
+                                <ComposedChart layout="vertical" data={profileAnalysis?.vData || []}>
                                     <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" horizontal={false} />
                                     <XAxis type="number" hide domain={[0, 'auto']} />
                                     <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
@@ -761,11 +761,19 @@ export default function PSFSimulator() {
                                         itemStyle={{ color: '#fff' }}
                                         cursor={{ stroke: '#333' }}
                                     />
+                                    {/* Intensity Bar (Bottom Layer) */}
+                                    <Bar
+                                        dataKey="intensity"
+                                        fill={wavelengthToColor(params.lambda_vac)}
+                                        fillOpacity={0.6}
+                                        barSize={4}
+                                        isAnimationActive={false}
+                                    />
+                                    {/* Gaussian Fit Line (Top Layer, drawn last) */}
                                     {activeTab === 'psf' && (
-                                        <Line dataKey="fit" type="monotone" stroke="#444" strokeWidth={1} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
+                                        <Line dataKey="fit" type="monotone" stroke="#fff" strokeWidth={2} dot={false} isAnimationActive={false} />
                                     )}
-                                    <Line dataKey="intensity" type="monotone" stroke={wavelengthToColor(params.lambda_vac)} strokeWidth={2} dot={false} isAnimationActive={false} />
-                                </LineChart>
+                                </ComposedChart>
                             </ResponsiveContainer>
                         </div>
                     </div>
@@ -777,7 +785,7 @@ export default function PSFSimulator() {
                         </span>
                         <div className="flex-1 w-full min-h-0 pt-2">
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={profileAnalysis?.hData || []}>
+                                <ComposedChart data={profileAnalysis?.hData || []}>
                                     <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" vertical={false} />
                                     <XAxis dataKey="x" hide />
                                     <YAxis hide domain={[0, 'auto']} />
@@ -786,11 +794,19 @@ export default function PSFSimulator() {
                                         itemStyle={{ color: '#fff' }}
                                         cursor={{ stroke: '#333' }}
                                     />
+                                    {/* Intensity Bar (Bottom Layer) */}
+                                    <Bar
+                                        dataKey="intensity"
+                                        fill={wavelengthToColor(params.lambda_vac)}
+                                        fillOpacity={0.6}
+                                        barSize={4}
+                                        isAnimationActive={false}
+                                    />
+                                    {/* Gaussian Fit Line (Top Layer, drawn last) */}
                                     {activeTab === 'psf' && (
-                                        <Line dataKey="fit" type="monotone" stroke="#444" strokeWidth={1} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
+                                        <Line dataKey="fit" type="monotone" stroke="#fff" strokeWidth={2} dot={false} isAnimationActive={false} />
                                     )}
-                                    <Line dataKey="intensity" type="monotone" stroke={wavelengthToColor(params.lambda_vac)} strokeWidth={2} dot={false} isAnimationActive={false} />
-                                </LineChart>
+                                </ComposedChart>
                             </ResponsiveContainer>
                         </div>
                     </div>
