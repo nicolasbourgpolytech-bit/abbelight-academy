@@ -651,36 +651,34 @@ export default function PSFSimulator() {
                             {activeTab === 'psf' ? 'Primary View' : 'Fourier Plane'}
                         </span>
 
-                        <div className="relative w-full h-full flex items-center justify-center p-4">
+                        <div className="relative h-full aspect-square p-4 mx-auto">
                             <canvas
                                 ref={psfCanvasRef}
                                 onClick={handleCanvasClick}
-                                className="image-pixelated cursor-crosshair block shadow-2xl shadow-black/50 max-w-full max-h-full aspect-square w-auto h-auto"
+                                className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
                                 style={{ imageRendering: 'pixelated' }}
                             />
 
                             {/* Crosshair Overlay */}
                             {profileAnalysis && (
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <div className="relative max-w-full max-h-full aspect-square w-full h-full">
-                                        {/* Horizontal Line */}
-                                        <div
-                                            className="absolute w-full border-t border-brand-cyan/30 border-dashed transition-all duration-75"
-                                            style={{
-                                                top: `${((profileAnalysis.cy + 0.5) / profileAnalysis.height) * 100}%`,
-                                                left: 0
-                                            }}
-                                        />
-                                        {/* Vertical Line */}
-                                        <div
-                                            className="absolute h-full border-l border-brand-magenta/30 border-dashed transition-all duration-75"
-                                            style={{
-                                                left: `${((profileAnalysis.cx + 0.5) / profileAnalysis.width) * 100}%`,
-                                                top: 0
-                                            }}
-                                        />
-                                    </div>
-                                </div>
+                                <>
+                                    {/* Horizontal Line */}
+                                    <div
+                                        className="absolute w-full border-t border-brand-cyan/30 border-dashed pointer-events-none transition-all duration-75"
+                                        style={{
+                                            top: `${((profileAnalysis.cy + 0.5) / profileAnalysis.height) * 100}%`,
+                                            left: 0
+                                        }}
+                                    />
+                                    {/* Vertical Line */}
+                                    <div
+                                        className="absolute h-full border-l border-brand-magenta/30 border-dashed pointer-events-none transition-all duration-75"
+                                        style={{
+                                            left: `${((profileAnalysis.cx + 0.5) / profileAnalysis.width) * 100}%`,
+                                            top: 0
+                                        }}
+                                    />
+                                </>
                             )}
 
                             {/* BFP Labels - Pure HTML/CSS for crisp text */}
