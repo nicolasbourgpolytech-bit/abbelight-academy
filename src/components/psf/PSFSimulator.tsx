@@ -460,24 +460,37 @@ export default function PSFSimulator() {
                     <h3 className="text-sm font-bold text-white uppercase tracking-widest border-b border-white/10 pb-2">
                         Objective lens parameters
                     </h3>
-                    <div className="space-y-4">
-                        {[
-                            { label: "NA", key: "NA" },
-                            { label: "Mag (X)", key: "M_obj" },
-                            { label: "n Imm", key: "n_imm" },
-                        ].map(({ label, key }) => (
-                            <div key={key} className="space-y-1">
-                                <label className="text-xs text-gray-500 uppercase tracking-wider">{label}</label>
-                                <input
-                                    type="text"
-                                    value={inputValues[key as keyof typeof inputValues]}
-                                    onChange={e => handleInputChange(key as any, e.target.value)}
-                                    onKeyDown={e => handleKeyDown(e, key as any)}
-                                    // onBlur={() => commitInput(key as any)} // Optional: Auto-commit on blur
-                                    className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
-                                />
-                            </div>
-                        ))}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">NA</label>
+                            <input
+                                type="text"
+                                value={inputValues.NA}
+                                onChange={e => handleInputChange('NA', e.target.value)}
+                                onKeyDown={e => handleKeyDown(e, 'NA')}
+                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Mag (X)</label>
+                            <input
+                                type="text"
+                                value={inputValues.M_obj}
+                                onChange={e => handleInputChange('M_obj', e.target.value)}
+                                onKeyDown={e => handleKeyDown(e, 'M_obj')}
+                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                            />
+                        </div>
+                        <div className="space-y-1 col-span-2">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Immersion medium refractive index (N_imm)</label>
+                            <input
+                                type="text"
+                                value={inputValues.n_imm}
+                                onChange={e => handleInputChange('n_imm', e.target.value)}
+                                onKeyDown={e => handleKeyDown(e, 'n_imm')}
+                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -498,7 +511,47 @@ export default function PSFSimulator() {
                             />
                         </div>
 
-                        <div className="space-y-2 pt-2">
+                        {/* Molecule Depth (Moved here, renamed, nm units) */}
+                        <div className="space-y-2 pt-2 border-t border-white/10">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Molecule depth (nm)</label>
+                            <input
+                                type="text"
+                                value={inputValues.depth}
+                                onChange={e => handleInputChange('depth', e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                        const val = parseFloat(inputValues.depth);
+                                        if (!isNaN(val)) {
+                                            // NM conversion: 1e-9
+                                            setParams(p => ({ ...p, depth: val * 1e-9 }));
+                                            (e.target as HTMLInputElement).blur();
+                                        }
+                                    }
+                                }}
+                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                            />
+                            {/* Presets (nm) */}
+                            <div className="grid grid-cols-3 gap-2 pt-2">
+                                {[0, 500, 1000, 3000, 5000].map((d_nm) => (
+                                    <button
+                                        key={d_nm}
+                                        onClick={() => {
+                                            // NM conversion
+                                            setParams(p => ({ ...p, depth: d_nm * 1e-9, z_defocus: 0 }));
+                                            setInputValues(prev => ({ ...prev, depth: d_nm.toString() }));
+                                        }}
+                                        className={`text-[10px] py-1 border border-white/10 transition-all uppercase tracking-wide
+                                            ${Math.abs(params.depth * 1e9 - d_nm) < 1
+                                                ? "bg-brand-cyan text-black font-bold"
+                                                : "hover:bg-white/5 text-gray-400"}`}
+                                    >
+                                        {d_nm === 0 ? "Surface" : `${d_nm} nm`}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-2 pt-2 border-t border-white/10">
                             <label className="text-xs text-gray-500 uppercase tracking-wider">Wavelength: {(params.lambda_vac * 1e9).toFixed(0)} nm</label>
                             <input
                                 type="range"
@@ -512,51 +565,7 @@ export default function PSFSimulator() {
                     </div>
                 </div>
 
-                {/* 2b. Interface Depth */}
-                <div className="glass-card !p-6 space-y-4">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-widest border-b border-white/10 pb-2">
-                        Interface Depth
-                    </h3>
-                    <div className="space-y-4">
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Depth (µm)</label>
-                            <input
-                                type="text"
-                                value={inputValues.depth}
-                                onChange={e => handleInputChange('depth', e.target.value)}
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter') {
-                                        const val = parseFloat(inputValues.depth);
-                                        if (!isNaN(val)) {
-                                            setParams(p => ({ ...p, depth: val * 1e-6 }));
-                                            (e.target as HTMLInputElement).blur();
-                                        }
-                                    }
-                                }}
-                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
-                            />
-                        </div>
 
-                        {/* Presets */}
-                        <div className="grid grid-cols-3 gap-2">
-                            {[0, 0.5, 1.0, 3.0, 5.0].map((d_um) => (
-                                <button
-                                    key={d_um}
-                                    onClick={() => {
-                                        setParams(p => ({ ...p, depth: d_um * 1e-6, z_defocus: 0 }));
-                                        setInputValues(prev => ({ ...prev, depth: d_um.toString() }));
-                                    }}
-                                    className={`text-[10px] py-2 border border-white/10 transition-all uppercase tracking-wide
-                                        ${Math.abs(params.depth * 1e6 - d_um) < 0.01
-                                            ? "bg-brand-cyan text-black font-bold"
-                                            : "hover:bg-white/5 text-gray-400"}`}
-                                >
-                                    {d_um === 0 ? "Surface" : `${d_um} µm`}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
 
                 {/* 3. Camera parameters */}
                 <div className="glass-card !p-6 space-y-4">
