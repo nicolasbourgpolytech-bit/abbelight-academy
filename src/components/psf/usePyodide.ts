@@ -177,7 +177,7 @@ export function usePyodide() {
                 phase_mask=phase_mask,
                 oversampling=int(params.get('oversampling', 3)),
                 cam_pixel_um=float(params.get('cam_pixel_um', 6.5)),
-                display_fov_um=float(params.get('display_fov_um', 40.0) or 40.0)
+                depth=float(params.get('depth', 0.0))
             )
 
             # Prepare output as a dictionary

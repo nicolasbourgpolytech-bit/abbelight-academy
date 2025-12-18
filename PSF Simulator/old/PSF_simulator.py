@@ -91,13 +91,10 @@ class OpticalFourierMicroscope:
         # exp(i*k*(i*A)*z) = exp(-k*A*z). Correct decay.
         # Numpy sqrt of negative real number gives 1j * sqrt(val).
         
-    def calculate_greens_tensor_bfp(self, depth=0.0):
+    def calculate_greens_tensor_bfp(self):
         """
         Calculates the Green's tensor at the Back Focal Plane including interface transmission.
         Using Fresnel coefficients for transmission n2 -> n1.
-        
-        Args:
-            depth: Distance of the molecule from the interface (meters). >0 is inside sample.
         """
         # Aliases for readability (angles in sample frame mostly, but we need transmission)
         # Field lines map from theta2 to theta1.
@@ -199,17 +196,6 @@ class OpticalFourierMicroscope:
         G_bfp[1, 1] = Myy * prefactor
         G_bfp[1, 2] = Myz * prefactor
         
-        # --- Interface Depth Phase Term ---
-        # Propagating from the interface (z=0) to the molecule (z=depth) inside medium 2.
-        # Phase factor = exp(i * k2 * depth * cos_theta2)
-        # k2 = k0 * n2
-        # If SAF (sin_theta2 > 1), cos_theta2 is imaginary -> decay.
-        if depth != 0:
-            phase_depth = self.k2 * depth * self.cos_theta2
-            # Add phase to all components
-            phase_factor = np.exp(1j * phase_depth)
-            G_bfp *= phase_factor
-            
         return G_bfp
 
     def compute_cylindrical_phase(self, f_cyl_len):
@@ -438,25 +424,20 @@ class OpticalFourierMicroscope:
             pixelated_img = scipy.ndimage.zoom(intensity, (zoom_y, zoom_x), order=1)
             return pixelated_img, extent_cam
 
-    def simulate_isotropic(self, z_defocus=0.0, astigmatism=0.0, phase_mask=None, oversampling=8, cam_pixel_um=6.5, depth=0.0):
+    def simulate_isotropic(self, z_defocus=0.0, astigmatism=0.0, phase_mask=None, oversampling=8, cam_pixel_um=6.5):
         """
         Simulate an isotropic (free) dipole by summing intensities of three orthogonal dipoles (X, Y, Z).
         Optimized with batched FFT.
         
         Args:
             astigmatism: Coefficient for vertical astigmatism (Zernike Z2,2). Resulting phase = astig * rho^2 * cos(2*phi).
-            depth: Distance of molecule from interface (meters).
         """
         # 1. Get Green's Tensor (Shape: 2, 3, N, N)
-        # Check if we can reuse cached G
-        if (hasattr(self, 'G_bfp') and 
-            hasattr(self, 'last_depth') and 
-            self.last_depth == depth):
+        if hasattr(self, 'G_bfp'):
              G = self.G_bfp
         else:
-             G = self.calculate_greens_tensor_bfp(depth=depth)
+             G = self.calculate_greens_tensor_bfp()
              self.G_bfp = G # Cache it
-             self.last_depth = depth
         
         # 2. Define Dipoles (X, Y, Z columns)
         # Mu vectors: [ [1,0,0], [0,1,0], [0,0,1] ]

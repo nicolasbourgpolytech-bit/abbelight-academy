@@ -17,6 +17,7 @@ interface SimulationParams {
     cam_pixel_um: number;
     oversampling: number;
     display_fov_um: number;
+    depth: number; // meters
 }
 
 // Helper for rainbow gradient
@@ -34,7 +35,8 @@ const DEFAULT_PARAMS: SimulationParams = {
     astigmatism: "None",
     cam_pixel_um: 6.5,
     oversampling: 3,
-    display_fov_um: 300
+    display_fov_um: 300,
+    depth: 0,
 };
 
 // --- Helpers ---
@@ -207,6 +209,7 @@ export default function PSFSimulator() {
         n_imm: DEFAULT_PARAMS.n_imm.toString(),
         n_sample: DEFAULT_PARAMS.n_sample.toString(),
         cam_pixel_um: DEFAULT_PARAMS.cam_pixel_um.toString(),
+        depth: (DEFAULT_PARAMS.depth * 1e6).toString(),
     });
 
     const [simResult, setSimResult] = useState<any>(null);
@@ -281,7 +284,21 @@ export default function PSFSimulator() {
                 setCalculating(true);
                 setLastError(null);
                 try {
-                    const res = await runSimulation(params, {});
+                    // Calculate Auto-Focus Shift
+                    // Z_shift = - Depth * (n_imm / n_sample)^2
+                    // This shifts the focal plane deeper to match the molecule position roughly
+                    const z_shift = -params.depth * Math.pow(params.n_imm / params.n_sample, 2);
+
+                    // Total Z passed to engine = slider_value (relative) + shift (offset)
+                    const z_total = params.z_defocus + z_shift;
+
+                    // Pass modified params to simulation
+                    const simArgs = {
+                        ...params,
+                        z_defocus: z_total
+                    };
+
+                    const res = await runSimulation(simArgs, {});
                     setSimResult(res);
                 } catch (e: any) {
                     console.error("Simulation failed:", e);
@@ -495,6 +512,52 @@ export default function PSFSimulator() {
                     </div>
                 </div>
 
+                {/* 2b. Interface Depth */}
+                <div className="glass-card !p-6 space-y-4">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-widest border-b border-white/10 pb-2">
+                        Interface Depth
+                    </h3>
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Depth (µm)</label>
+                            <input
+                                type="text"
+                                value={inputValues.depth}
+                                onChange={e => handleInputChange('depth', e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                        const val = parseFloat(inputValues.depth);
+                                        if (!isNaN(val)) {
+                                            setParams(p => ({ ...p, depth: val * 1e-6 }));
+                                            (e.target as HTMLInputElement).blur();
+                                        }
+                                    }
+                                }}
+                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                            />
+                        </div>
+
+                        {/* Presets */}
+                        <div className="grid grid-cols-3 gap-2">
+                            {[0, 0.5, 1.0, 3.0, 5.0].map((d_um) => (
+                                <button
+                                    key={d_um}
+                                    onClick={() => {
+                                        setParams(p => ({ ...p, depth: d_um * 1e-6, z_defocus: 0 }));
+                                        setInputValues(prev => ({ ...prev, depth: d_um.toString() }));
+                                    }}
+                                    className={`text-[10px] py-2 border border-white/10 transition-all uppercase tracking-wide
+                                        ${Math.abs(params.depth * 1e6 - d_um) < 0.01
+                                            ? "bg-brand-cyan text-black font-bold"
+                                            : "hover:bg-white/5 text-gray-400"}`}
+                                >
+                                    {d_um === 0 ? "Surface" : `${d_um} µm`}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
                 {/* 3. Camera parameters */}
                 <div className="glass-card !p-6 space-y-4">
                     <h3 className="text-sm font-bold text-white uppercase tracking-widest border-b border-white/10 pb-2 flex justify-between items-center">
@@ -524,7 +587,7 @@ export default function PSFSimulator() {
                                 <span className="text-xs font-mono text-brand-cyan">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
                             </div>
                             {(() => {
-                                const limitNm = (2 * params.n_imm * params.lambda_vac / (params.NA ** 2)) * 1e9;
+                                const limitNm = (4 * params.n_imm * params.lambda_vac / (params.NA ** 2)) * 1e9;
                                 return (
                                     <input
                                         type="range"
@@ -750,6 +813,6 @@ export default function PSFSimulator() {
             <div className="fixed bottom-0 right-0 p-1 bg-black/90 text-[10px] text-gray-600 pointer-events-none z-50 font-mono">
                 PSF Sim v2.2 | Status: {state}
             </div>
-        </div>
+        </div >
     );
 }
