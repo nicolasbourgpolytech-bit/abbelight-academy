@@ -746,7 +746,7 @@ export default function PSFSimulator() {
                         <div className="flex flex-col gap-4 h-full w-auto min-w-0">
 
                             {/* 1. Main Canvas Area - Split for BFP Dual View */}
-                            <div className="h-[calc(100%-256px)] w-full flex gap-2 min-h-0 min-w-0">
+                            <div className="w-full flex gap-2 min-h-0 min-w-0 flex-1">
                                 {/* PRIMARY CANVAS (Image or BFP Intensity) */}
                                 <div className="glass-card flex-1 h-full flex flex-col items-center justify-center relative overflow-hidden group border border-white/10 !p-0">
                                     <span className="absolute top-4 left-4 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
@@ -803,7 +803,16 @@ export default function PSFSimulator() {
                                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-brand-cyan font-bold text-sm pointer-events-none drop-shadow-md select-none">
                                                 UAF
                                             </div>
-                                            {/* SAF Label could go here too */}
+
+                                            {/* SAF (Super-critical) - Top Edge (Restored) */}
+                                            <div
+                                                className="absolute left-1/2 -translate-x-1/2 text-[10px] md:text-xs font-bold text-brand-magenta pointer-events-none drop-shadow-md select-none uppercase tracking-widest"
+                                                style={{
+                                                    top: `calc(50% - (50% * ${params.n_sample / params.NA}) - 20px)`
+                                                }}
+                                            >
+                                                SAF
+                                            </div>
                                         </>
                                     )}
 
@@ -850,53 +859,65 @@ export default function PSFSimulator() {
                                 )}
                             </div>
 
-                            {/* 2. Horizontal Profile (Bottom) - Fixed Height */}
-                            <div className="glass-card !p-4 relative flex flex-col h-[240px] shrink-0 border-t border-brand-cyan/20">
-                                <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-cyan uppercase tracking-widest">
-                                    X-Axis Intensity
-                                </span>
-                                <div className="flex-1 w-full min-h-0 pt-2">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <ComposedChart data={profileAnalysis?.hData || []} barCategoryGap={0} barGap={0}>
-                                            <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" vertical={false} />
-                                            <XAxis dataKey="x" hide />
-                                            <YAxis hide domain={[0, 'auto']} />
-                                            <Tooltip
-                                                contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
-                                                itemStyle={{ color: '#fff' }}
-                                                cursor={{ stroke: '#333' }}
-                                            />
-                                            <Bar dataKey="intensity" isAnimationActive={false}>
-                                                {profileAnalysis?.hData.map((entry: any, index: number) => (
-                                                    <Cell
-                                                        key={`cell-${index}`}
-                                                        fill={wavelengthToColor(params.lambda_vac)}
-                                                        fillOpacity={profileAnalysis.hMax ? (entry.intensity / profileAnalysis.hMax) : 0}
-                                                    />
-                                                ))}
-                                            </Bar>
-                                            {activeTab === 'psf' && (
+                            {/* 2. Horizontal Profile (Bottom) - Fixed Height (Only show in PSF mode) */}
+                            {activeTab === 'psf' && (
+                                <div className="glass-card !p-4 relative flex flex-col h-[240px] shrink-0 border-t border-brand-cyan/20">
+                                    <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-cyan uppercase tracking-widest">
+                                        X-Axis Intensity
+                                    </span>
+                                    <div className="flex-1 w-full min-h-0 pt-2">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <ComposedChart data={profileAnalysis?.hData || []} barCategoryGap={0} barGap={0}>
+                                                <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" vertical={false} />
+                                                <XAxis dataKey="x" hide />
+                                                <YAxis hide domain={[0, 'auto']} />
+                                                <Tooltip
+                                                    contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
+                                                    itemStyle={{ color: '#fff' }}
+                                                    cursor={{ stroke: '#333' }}
+                                                />
+                                                <Bar dataKey="intensity" isAnimationActive={false}>
+                                                    {profileAnalysis?.hData.map((entry: any, index: number) => (
+                                                        <Cell
+                                                            key={`cell-${index}`}
+                                                            fill={wavelengthToColor(params.lambda_vac)}
+                                                            fillOpacity={profileAnalysis.hMax ? (entry.intensity / profileAnalysis.hMax) : 0}
+                                                        />
+                                                    ))}
+                                                </Bar>
                                                 <Line
                                                     dataKey="fit"
-                                                    type="monotone"
-                                                    stroke="#fff"
-                                                    strokeWidth={1.5}
-                                                    strokeDasharray="4 4"
+                                                    stroke="#ef4444"
                                                     dot={false}
+                                                    strokeWidth={2}
                                                     isAnimationActive={false}
                                                 />
-                                            )}
-                                        </ComposedChart>
-                                    </ResponsiveContainer>
+                                            </ComposedChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div className="absolute bottom-2 right-4 flex items-center gap-4 text-[10px] font-mono">
+                                        {profileAnalysis?.hStats && (
+                                            <>
+                                                <span className="text-brand-cyan">
+                                                    σ: {(profileAnalysis.hStats.sigma * params.cam_pixel_um).toFixed(1)} nm
+                                                </span>
+                                                <span className="text-brand-magenta">
+                                                    FWHM: {(profileAnalysis.hStats.fwhm * params.cam_pixel_um).toFixed(1)} nm
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        </div> {/* End Left Column */}
+                            )}
+                        </div>
+                    </div> {/* End Left Column */}
 
-                        {/* RIGHT COLUMN: Y-Profile + Stats */}
-                        {/* Fixed Width */}
-                        <div className="flex flex-col gap-4 h-full w-[240px] shrink-0">
+                    {/* RIGHT COLUMN: Y-Profile + Stats */}
+                    {/* Fixed Width */}
+                    <div className="flex flex-col gap-4 h-full w-[240px] shrink-0">
 
-                            {/* 3. Vertical Profile (Top) - Dynamic Height (Matches Image) */}
+                        {/* 3. Vertical Profile (Top) - Dynamic Height (Matches Image) - Only in PSF Mode */}
+                        {activeTab === 'psf' && (
                             <div className="glass-card !p-4 relative flex flex-col flex-1 min-h-0 border-l border-brand-magenta/20">
                                 <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-magenta uppercase tracking-widest">
                                     Y-Axis Intensity
@@ -921,101 +942,95 @@ export default function PSFSimulator() {
                                                     />
                                                 ))}
                                             </Bar>
-                                            {activeTab === 'psf' && (
-                                                <Line
-                                                    dataKey="fit"
-                                                    type="monotone"
-                                                    stroke="#fff"
-                                                    strokeWidth={1.5}
-                                                    strokeDasharray="4 4"
-                                                    dot={false}
-                                                    isAnimationActive={false}
-                                                />
-                                            )}
+                                            <Line
+                                                dataKey="fit"
+                                                type="monotone"
+                                                stroke="#fff"
+                                                strokeWidth={1.5}
+                                                strokeDasharray="4 4"
+                                                dot={false}
+                                                isAnimationActive={false}
+                                            />
                                         </ComposedChart>
                                     </ResponsiveContainer>
                                 </div>
                             </div>
+                        )}
 
-                            {/* 4. Stats Panel (Bottom) - Fixed Height */}
-                            <div className="glass-card !p-4 flex flex-col justify-center gap-2 h-[240px] shrink-0">
-                                <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/10 pb-1">
-                                    {activeTab === 'psf' ? "Gaussian Fit" : "BFP Analysis"}
-                                </h4>
+                        {/* 4. Stats Panel (Bottom) - Fixed Height */}
+                        <div className="glass-card !p-4 flex flex-col justify-center gap-2 h-[240px] shrink-0">
+                            <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/10 pb-1">
+                                {activeTab === 'psf' ? "Gaussian Fit" : "BFP Analysis"}
+                            </h4>
 
-                                {activeTab === 'psf' ? (
+                            {activeTab === 'psf' ? (
+                                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                                    <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
+                                    <div className="text-right text-gray-600 text-[10px] uppercase">nm</div>
+
+                                    <div className="text-brand-cyan font-mono">σ (X)</div>
+                                    <div className="text-right font-mono text-white">
+                                        {(profileAnalysis?.hStats?.sigma
+                                            ? (profileAnalysis.hStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                            : 0).toFixed(1)}
+                                    </div>
+
+                                    <div className="text-brand-magenta font-mono">σ (Y)</div>
+                                    <div className="text-right font-mono text-white">
+                                        {(profileAnalysis?.vStats?.sigma
+                                            ? (profileAnalysis.vStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                            : 0).toFixed(1)}
+                                    </div>
+
+                                    <div className="col-span-2 h-px bg-white/5 my-1" />
+
+                                    <div className="text-gray-500 font-mono">FWHM X</div>
+                                    <div className="text-right font-mono text-white">
+                                        {(profileAnalysis?.hStats?.fwhm
+                                            ? (profileAnalysis.hStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                            : 0).toFixed(1)}
+                                    </div>
+                                    <div className="text-gray-500 font-mono">FWHM Y</div>
+                                    <div className="text-right font-mono text-white">
+                                        {(profileAnalysis?.vStats?.fwhm
+                                            ? (profileAnalysis.vStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                            : 0).toFixed(1)}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col space-y-3">
                                     <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
                                         <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
-                                        <div className="text-right text-gray-600 text-[10px] uppercase">nm</div>
+                                        <div className="text-right text-gray-600 text-[10px] uppercase">Value</div>
 
-                                        <div className="text-brand-cyan font-mono">σ (X)</div>
-                                        <div className="text-right font-mono text-white">
-                                            {(profileAnalysis?.hStats?.sigma
-                                                ? (profileAnalysis.hStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                                : 0).toFixed(1)}
-                                        </div>
-
-                                        <div className="text-brand-magenta font-mono">σ (Y)</div>
-                                        <div className="text-right font-mono text-white">
-                                            {(profileAnalysis?.vStats?.sigma
-                                                ? (profileAnalysis.vStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                                : 0).toFixed(1)}
-                                        </div>
-
-                                        <div className="col-span-2 h-px bg-white/5 my-1" />
-
-                                        <div className="text-gray-500 font-mono">FWHM X</div>
-                                        <div className="text-right font-mono text-white">
-                                            {(profileAnalysis?.hStats?.fwhm
-                                                ? (profileAnalysis.hStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                                : 0).toFixed(1)}
-                                        </div>
-                                        <div className="text-gray-500 font-mono">FWHM Y</div>
-                                        <div className="text-right font-mono text-white">
-                                            {(profileAnalysis?.vStats?.fwhm
-                                                ? (profileAnalysis.vStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                                : 0).toFixed(1)}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col space-y-3">
-                                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
-                                            <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
-                                            <div className="text-right text-gray-600 text-[10px] uppercase">Value</div>
-
-                                            {params.NA <= params.n_sample ? (
-                                                <div className="col-span-2 text-center text-gray-500 py-2">
-                                                    No SAF (NA &lt; n_sample)
+                                        {params.NA <= params.n_sample ? (
+                                            <div className="col-span-2 text-center text-gray-500 py-2">
+                                                No SAF (NA &lt; n_sample)
+                                            </div>
+                                        ) : simResult?.saf_ratio !== undefined ? (
+                                            <>
+                                                <div className="text-brand-magenta font-mono font-bold">SAF Ratio</div>
+                                                <div className="text-right font-mono text-white font-bold">
+                                                    {Number(simResult.saf_ratio).toFixed(3)}
                                                 </div>
-                                            ) : simResult?.saf_ratio !== undefined ? (
-                                                <>
-                                                    <div className="text-brand-magenta font-mono font-bold">SAF Ratio</div>
-                                                    <div className="text-right font-mono text-white font-bold">
-                                                        {Number(simResult.saf_ratio).toFixed(3)}
-                                                    </div>
-                                                    <div className="col-span-2 text-[10px] text-gray-500 italic mt-1">
-                                                        Ratio = SAF / UAF Integration
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <div className="col-span-2 text-center text-gray-500 py-2 animate-pulse">
-                                                    Calculating SAF...
+                                                <div className="col-span-2 text-[10px] text-gray-500 italic mt-1">
+                                                    Ratio = SAF / UAF Integration
                                                 </div>
-                                            )}
-                                        </div>
+                                            </>
+                                        ) : (
+                                            <div className="col-span-2 text-center text-gray-500 py-2 animate-pulse">
+                                                Calculating SAF...
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                        </div> {/* End Right Column */}
+                                </div>
+                            )}
+                        </div>
+                    </div> {/* End Right Column */}
 
-                    </div>
-                </div> {/* End Centered Wrapper */}
-            </div>
-
-            {/* DEBUG SECTION */}
-            < div className="fixed bottom-0 right-0 p-1 bg-black/90 text-[10px] text-gray-600 pointer-events-none z-50 font-mono" >
-                PSF Sim v2.2 | Status: {state}
-            </div >
-        </div >
+                </div>
+            </div> {/* End Centered Wrapper */}
+        </div>
+    </div >
     );
 }
