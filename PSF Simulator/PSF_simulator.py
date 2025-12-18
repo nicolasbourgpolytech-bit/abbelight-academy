@@ -438,7 +438,7 @@ class OpticalFourierMicroscope:
             pixelated_img = scipy.ndimage.zoom(intensity, (zoom_y, zoom_x), order=1)
             return pixelated_img, extent_cam
 
-    def simulate_isotropic(self, z_defocus=0.0, astigmatism=0.0, phase_mask=None, oversampling=8, cam_pixel_um=6.5, depth=0.0):
+    def simulate_isotropic(self, z_defocus=0.0, astigmatism=0.0, phase_mask=None, oversampling=8, cam_pixel_um=6.5, depth=0.0, display_fov_um=None):
         """
         Simulate an isotropic (free) dipole by summing intensities of three orthogonal dipoles (X, Y, Z).
         Optimized with batched FFT.
@@ -446,6 +446,7 @@ class OpticalFourierMicroscope:
         Args:
             astigmatism: Coefficient for vertical astigmatism (Zernike Z2,2). Resulting phase = astig * rho^2 * cos(2*phi).
             depth: Distance of molecule from interface (meters).
+            display_fov_um: Optional. If set, crops the final image to this field of view (in micrometers) centered on the axis.
         """
         # 1. Get Green's Tensor (Shape: 2, 3, N, N)
         # Check if we can reuse cached G
@@ -568,5 +569,33 @@ class OpticalFourierMicroscope:
         # 7. Resample to Camera Pixels
         # Crucial step: Downsample/Interpolate I_iso_high to match cam_pixel_um
         img_iso_cam, ext_cam_iso = self.resample_to_camera(I_iso_high, extent_cam, cam_pixel_um)
+        
+        # 8. CROP to Display FOV (if requested)
+        if display_fov_um is not None and display_fov_um > 0:
+            # Current extent: ext_cam_iso = [min_x, max_x, min_y, max_y]
+            # Width = max_x - min_x
+            current_width = ext_cam_iso[1] - ext_cam_iso[0]
+            current_height = ext_cam_iso[3] - ext_cam_iso[2]
+            
+            # Pixels
+            Ny, Nx = img_iso_cam.shape
+            
+            # Pixels to keep
+            # crop_um / pixel_um
+            # display_fov_um should be total width? User said +/- 150 -> Total 300.
+            # Assuming display_fov_um is TOTAL width.
+            
+            target_px_x = int(display_fov_um / cam_pixel_um)
+            target_px_y = int(display_fov_um / cam_pixel_um)
+            
+            if target_px_x < Nx:
+                 start_x = (Nx - target_px_x) // 2
+                 start_y = (Ny - target_px_y) // 2
+                 
+                 img_iso_cam = img_iso_cam[start_y:start_y+target_px_y, start_x:start_x+target_px_x]
+                 
+                 # Update extent
+                 new_half = (display_fov_um) / 2
+                 ext_cam_iso = [-new_half, new_half, -new_half, new_half]
         
         return img_iso_cam, bfp_total, ext_cam_iso, extent_bfp, bfp_phase_vis
