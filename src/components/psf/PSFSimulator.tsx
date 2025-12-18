@@ -1029,8 +1029,7 @@ export default function PSFSimulator() {
                     </div> {/* End Right Column */}
 
                 </div>
-            </div> {/* End Centered Wrapper */}
         </div>
-    </div >
+    </div>
     );
 }
