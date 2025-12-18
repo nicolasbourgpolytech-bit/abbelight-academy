@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { usePyodide } from './usePyodide';
-import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
+import { ComposedChart, Bar, BarChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
 
 // --- Types ---
 interface SimulationParams {
@@ -18,10 +18,50 @@ interface SimulationParams {
     oversampling: number;
     display_fov_um: number;
     depth: number; // meters
+    correction_sa: number; // Rad * rho^4
 }
 
 // Helper for rainbow gradient
 const SPECTRUM_GRADIENT = "linear-gradient(to right, #440099, #0000FF, #00FFFF, #00FF00, #FFFF00, #FF7F00, #FF0000)";
+
+// Twilight Colormap Helper (Cyclic: White -> Blue -> Black -> Red -> White)
+function getTwilightColor(val: number): [number, number, number] {
+    // val is -PI to PI. Map to 0..1
+    const t = (val + Math.PI) / (2 * Math.PI);
+
+    // Interpolate keypoints
+    // 0.0 (White): 255, 255, 255
+    // 0.25 (Blue): 65, 105, 225
+    // 0.5 (Black): 0, 0, 0
+    // 0.75 (Red): 220, 20, 60
+    // 1.0 (White): 255, 255, 255
+
+    let r = 0, g = 0, b = 0;
+
+    if (t < 0.25) { // White -> Blue
+        const p = t / 0.25;
+        r = 255 * (1 - p) + 65 * p;
+        g = 255 * (1 - p) + 105 * p;
+        b = 255 * (1 - p) + 225 * p;
+    } else if (t < 0.5) { // Blue -> Black
+        const p = (t - 0.25) / 0.25;
+        r = 65 * (1 - p);
+        g = 105 * (1 - p);
+        b = 225 * (1 - p);
+    } else if (t < 0.75) { // Black -> Red
+        const p = (t - 0.5) / 0.25;
+        r = 220 * p;
+        g = 20 * p;
+        b = 60 * p;
+    } else { // Red -> White
+        const p = (t - 0.75) / 0.25;
+        r = 220 * (1 - p) + 255 * p;
+        g = 60 * (1 - p) + 255 * p;
+        b = 60 * (1 - p) + 255 * p;
+    }
+
+    return [Math.floor(r), Math.floor(g), Math.floor(b)];
+}
 
 // --- Constants ---
 const DEFAULT_PARAMS: SimulationParams = {
@@ -37,6 +77,7 @@ const DEFAULT_PARAMS: SimulationParams = {
     oversampling: 3,
     display_fov_um: 300,
     depth: 0,
+    correction_sa: 0,
 };
 
 // --- Helpers ---
@@ -93,14 +134,8 @@ function drawMatrix(
         let r, g, b;
 
         if (isPhase) {
-            // Phase Map: -PI to PI -> 0-1 (approx)
-            // In Python: bfp_phase_vis = np.angle(complex_z) -> -PI to PI floats.
-            // We did NOT cast bfp_phase_vis to uint16.
-            // So for phase, val is still float -PI..PI.
-            const v = (val + Math.PI) / (2 * Math.PI); // 0 to 1
-            r = Math.floor(v * 255);
-            g = Math.floor(v * 255);
-            b = Math.floor(255 - v * 255);
+            // Twilight Colormap
+            [r, g, b] = getTwilightColor(val);
         } else {
             // Intensity map: Black -> Color
             r = Math.floor(norm * r_feat);
@@ -224,17 +259,22 @@ export default function PSFSimulator() {
     // --- Interaction Handlers ---Crosshair State (Indices in simulation array)
     const [crosshair, setCrosshair] = useState<{ x: number, y: number } | null>(null);
 
-    // Single Main Canvas Ref
-    const psfCanvasRef = useRef<HTMLCanvasElement>(null);
+    // Canvases
+    const psfCanvasRef = useRef<HTMLCanvasElement>(null); // Main Image (or Left BFP)
+    const bfpPhaseCanvasRef = useRef<HTMLCanvasElement>(null); // Right BFP (Phase)
 
     // Handle clicks on Canvas
-    const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>, isSecondary: boolean = false) => {
         if (!simResult) return;
 
         // Select Data based on Tab
         let dataGrid: number[][] | undefined;
         if (activeTab === "psf") dataGrid = simResult.img;
-        else dataGrid = simResult.bfp;
+        else {
+            // In BFP Mode: Left=Intensity, Right=Phase
+            if (isSecondary) dataGrid = simResult.bfp_phase;
+            else dataGrid = simResult.bfp;
+        }
 
         if (!dataGrid) return;
 
@@ -334,12 +374,16 @@ export default function PSFSimulator() {
         let dataGrid: number[][] | undefined;
         let isBfp = false;
 
+        let isPhase = false;
+        let usePhaseCanvas = false;
+
         if (activeTab === "psf") {
             dataGrid = simResult.img;
-            isBfp = false;
         } else {
             dataGrid = simResult.bfp;
             isBfp = true;
+            // Note: Phase view is handled separately in effect below or same effect?
+            // Let's draw Intensity here on Main Canvas
         }
 
         if (!dataGrid || dataGrid.length === 0) {
@@ -360,7 +404,26 @@ export default function PSFSimulator() {
             }
         }
 
-        drawMatrix(canvas, flatData, width, height, color);
+        drawMatrix(canvas, flatData, width, height, color, false);
+
+        // --- SECONDARY CANVAS (BFP PHASE) ---
+        if (activeTab === "bfp" && bfpPhaseCanvasRef.current && simResult.bfp_phase) {
+            const canvas2 = bfpPhaseCanvasRef.current;
+            const dataGrid2 = simResult.bfp_phase;
+            if (dataGrid2 && dataGrid2.length > 0) {
+                const h2 = dataGrid2.length;
+                const w2 = dataGrid2[0].length;
+                const flatData2 = new Float64Array(w2 * h2);
+                for (let y = 0; y < h2; y++) {
+                    const row = dataGrid2[y];
+                    for (let x = 0; x < w2; x++) {
+                        flatData2[y * w2 + x] = row[x];
+                    }
+                }
+                // Colors doesn't matter for Phase Twilight, but we pass one
+                drawMatrix(canvas2, flatData2, w2, h2, "#ffffff", true);
+            }
+        }
 
         // BFP Circle Overlay (Text moved to JSX)
         if (isBfp && params.NA > params.n_sample) {
@@ -458,7 +521,7 @@ export default function PSFSimulator() {
                     </div>
                 )}
 
-                {/* 1. Objective Lens Parameters */}
+                // 1. Objective Lens Parameters & Correction Collar
                 <div className="glass-card !p-6 space-y-4">
                     <h3 className="text-sm font-bold text-white uppercase tracking-widest border-b border-white/10 pb-2">
                         Objective lens parameters
@@ -492,6 +555,21 @@ export default function PSFSimulator() {
                                 onChange={e => handleInputChange('n_imm', e.target.value)}
                                 onKeyDown={e => handleKeyDown(e, 'n_imm')}
                                 className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                            />
+                        </div>
+
+                        {/* Correction Collar */}
+                        <div className="space-y-2 col-span-2 pt-2 border-t border-white/10">
+                            <div className="flex justify-between">
+                                <label className="text-xs text-gray-500 uppercase tracking-wider">Correction Collar</label>
+                                <span className="text-xs font-mono text-brand-cyan">{params.correction_sa.toFixed(1)} rad</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="-15" max="15" step="0.1"
+                                value={params.correction_sa}
+                                onChange={e => setParams(p => ({ ...p, correction_sa: parseFloat(e.target.value) }))}
+                                className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
                             />
                         </div>
                     </div>
@@ -599,6 +677,10 @@ export default function PSFSimulator() {
                                 <span className="text-xs font-mono text-brand-cyan">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
                             </div>
                             {(() => {
+                                // Dynamic Range: +/- 4 * DOF
+                                // DOF approx lambda / NA^2
+                                // 2 * n_imm * lambda / NA^2 ??
+                                // Code used: (4 * n_imm * lambda / NA^2)
                                 const limitNm = (4 * params.n_imm * params.lambda_vac / (params.NA ** 2)) * 1e9;
                                 return (
                                     <input
@@ -663,11 +745,12 @@ export default function PSFSimulator() {
                         {/* Width is driven by the aspect-square of the image which fills the available height */}
                         <div className="flex flex-col gap-4 h-full w-auto min-w-0">
 
-                            {/* 1. Main Canvas (Top) - Dynamic Height (Explicit Calc), Square Aspect Ratio */}
-                            <div className="h-[calc(100%-256px)] aspect-square relative min-h-0 min-w-0">
-                                <div className="glass-card w-full h-full flex flex-col items-center justify-center relative overflow-hidden group border border-white/10 !p-0">
+                            {/* 1. Main Canvas Area - Split for BFP Dual View */}
+                            <div className="h-[calc(100%-256px)] w-full flex gap-2 min-h-0 min-w-0">
+                                {/* PRIMARY CANVAS (Image or BFP Intensity) */}
+                                <div className="glass-card flex-1 h-full flex flex-col items-center justify-center relative overflow-hidden group border border-white/10 !p-0">
                                     <span className="absolute top-4 left-4 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
-                                        {activeTab === 'psf' ? 'Primary View' : 'Fourier Plane'}
+                                        {activeTab === 'psf' ? 'Primary View' : 'BFP Intensity'}
                                     </span>
 
                                     {/* Loading / Calculating Overlay */}
@@ -679,95 +762,92 @@ export default function PSFSimulator() {
                                         </div>
                                     )}
 
-                                    <div className="relative w-full h-full">
-                                        <canvas
-                                            ref={psfCanvasRef}
-                                            onClick={handleCanvasClick}
-                                            className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
-                                            style={{ imageRendering: 'pixelated' }}
-                                        />
+                                    <div className="relative w-full h-full flex items-center justify-center">
+                                        {/* Aspect Ratio Constraint Container */}
+                                        <div className="relative aspect-square h-full max-w-full">
+                                            <canvas
+                                                ref={psfCanvasRef}
+                                                onClick={(e) => handleCanvasClick(e, false)}
+                                                className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
+                                                style={{ imageRendering: 'pixelated' }}
+                                            />
 
-                                        {/* Crosshair Overlay */}
-                                        {profileAnalysis && (
-                                            <>
-                                                {/* Horizontal Line */}
-                                                <div
-                                                    className="absolute w-full border-t border-brand-cyan/30 border-dashed pointer-events-none transition-all duration-75"
-                                                    style={{
-                                                        top: `${((profileAnalysis.cy + 0.5) / profileAnalysis.height) * 100}%`,
-                                                        left: 0
-                                                    }}
-                                                />
-                                                {/* Vertical Line */}
-                                                <div
-                                                    className="absolute h-full border-l border-brand-magenta/30 border-dashed pointer-events-none transition-all duration-75"
-                                                    style={{
-                                                        left: `${((profileAnalysis.cx + 0.5) / profileAnalysis.width) * 100}%`,
-                                                        top: 0
-                                                    }}
-                                                />
-                                            </>
-                                        )}
+                                            {/* Crosshair Overlay */}
+                                            {profileAnalysis && (
+                                                <>
+                                                    {/* Horizontal Line */}
+                                                    <div
+                                                        className="absolute w-full border-t border-brand-cyan/30 border-dashed pointer-events-none transition-all duration-75"
+                                                        style={{
+                                                            top: `${((profileAnalysis.cy + 0.5) / profileAnalysis.height) * 100}%`,
+                                                            left: 0
+                                                        }}
+                                                    />
+                                                    {/* Vertical Line */}
+                                                    <div
+                                                        className="absolute h-full border-l border-brand-magenta/30 border-dashed pointer-events-none transition-all duration-75"
+                                                        style={{
+                                                            left: `${((profileAnalysis.cx + 0.5) / profileAnalysis.width) * 100}%`,
+                                                            top: 0
+                                                        }}
+                                                    />
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {/* BFP Labels */}
+                                    {/* BFP Labels & Params Overlay (Same as before but filtered for only this view) */}
                                     {activeTab === 'bfp' && params.NA > params.n_sample && (
                                         <>
                                             {/* UAF (Sub-critical) - Center */}
                                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-brand-cyan font-bold text-sm pointer-events-none drop-shadow-md select-none">
                                                 UAF
                                             </div>
-
-                                            {/* SAF (Super-critical) - Top Edge */}
-                                            <div
-                                                className="absolute left-1/2 -translate-x-1/2 text-[10px] md:text-xs font-bold text-brand-magenta pointer-events-none drop-shadow-md select-none uppercase tracking-widest"
-                                                style={{
-                                                    top: `calc(50% - (50% * ${params.n_sample / params.NA}) - 20px)`
-                                                }}
-                                            >
-                                                SAF
-                                            </div>
+                                            {/* SAF Label could go here too */}
                                         </>
                                     )}
 
-                                    {/* Parameters Overlay */}
-                                    <div className="absolute bottom-4 left-4 flex flex-col items-start gap-1 p-3 bg-black/80 border border-brand-cyan/20 pointer-events-none z-20 rounded-sm backdrop-blur-sm">
-                                        {activeTab === 'psf' ? (
-                                            <>
-                                                <div className="text-xs font-bold font-mono text-brand-cyan uppercase tracking-widest border-b border-brand-cyan/20 pb-1 mb-1 w-full">
-                                                    Parameters
-                                                </div>
-                                                <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs font-bold font-mono whitespace-nowrap">
-                                                    <span className="text-gray-500">NA:</span>
-                                                    <span className="text-white text-right">{params.NA.toFixed(2)}</span>
+                                </div>
 
-                                                    <span className="text-gray-500">Mag:</span>
-                                                    <span className="text-white text-right">{params.M_obj}x</span>
+                                {/* SECONDARY CANVAS (BFP Phase) - Only visible in BFP mode */}
+                                {activeTab === 'bfp' && (
+                                    <div className="glass-card flex-1 h-full flex flex-col items-center justify-center relative overflow-hidden group border border-white/10 !p-0">
+                                        <span className="absolute top-4 left-4 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
+                                            BFP Phase (Pupil)
+                                        </span>
+                                        <div className="relative w-full h-full flex items-center justify-center">
+                                            <div className="relative aspect-square h-full max-w-full">
+                                                <canvas
+                                                    ref={bfpPhaseCanvasRef}
+                                                    className="w-full h-full image-pixelated block shadow-2xl shadow-black/50"
+                                                    style={{ imageRendering: 'pixelated' }}
+                                                />
+                                            </div>
+                                        </div>
 
-                                                    <span className="text-gray-500">λ:</span>
-                                                    <span className="text-right" style={{ color: wavelengthToColor(params.lambda_vac) }}>
-                                                        {(params.lambda_vac * 1e9).toFixed(0)} nm
-                                                    </span>
-
-                                                    <span className="text-gray-500">Depth:</span>
-                                                    <span className="text-white text-right">{(params.depth * 1e6).toFixed(1)} µm</span>
-
-                                                    <span className="text-gray-500">Defocus:</span>
-                                                    <span className="text-white text-right">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
-
-                                                    <span className="text-brand-cyan/80 mt-1 pt-1 border-t border-brand-cyan/10">FOV:</span>
-                                                    <span className="text-brand-cyan mt-1 pt-1 border-t border-brand-cyan/10 text-right">
-                                                        {(params.display_fov_um || 300).toFixed(0)} µm
-                                                    </span>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="text-xs font-bold font-mono text-brand-magenta">
-                                                NA Limit: {params.NA.toFixed(2)}
+                                        {/* ABERRATION CHART OVERLAY */}
+                                        {simResult?.stats && (
+                                            <div className="absolute bottom-2 right-2 w-48 h-32 bg-black/60 backdrop-blur border border-white/10 p-2 z-20">
+                                                <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest block mb-1">
+                                                    Aberration Power (PV)
+                                                </span>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={[
+                                                        { name: 'Depth', val: simResult.stats.Depth, fill: '#06b6d4' },
+                                                        { name: 'Def', val: simResult.stats.Defocus, fill: '#22c55e' },
+                                                        { name: 'Astig', val: simResult.stats.Astig, fill: '#c026d3' },
+                                                        { name: 'Collar', val: simResult.stats.Collar, fill: '#eab308' },
+                                                    ]}>
+                                                        <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#fff' }} interval={0} />
+                                                        <YAxis hide domain={[0, 'auto']} />
+                                                        <Tooltip contentStyle={{ backgroundColor: '#000', fontSize: '10px' }} />
+                                                        <Bar dataKey="val" />
+                                                    </BarChart>
+                                                </ResponsiveContainer>
                                             </div>
                                         )}
                                     </div>
-                                </div>
+                                )}
                             </div>
 
                             {/* 2. Horizontal Profile (Bottom) - Fixed Height */}

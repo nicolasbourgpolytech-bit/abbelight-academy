@@ -175,15 +175,22 @@ export function usePyodide() {
             # Handle backward compatibility if the class in memory is old (returns 5 values)
             ret_val = current_microscope.simulate_isotropic(
                 z_defocus=float(params.get('z_defocus', 0.0)),
+                astigmatism=float(0.0), # Helper logic handles this via phase_mask, but we can pass 0 here or update signature
                 phase_mask=phase_mask,
                 oversampling=int(params.get('oversampling', 3)),
                 cam_pixel_um=float(params.get('cam_pixel_um', 6.5)),
                 depth=float(params.get('depth', 0.0)),
-                display_fov_um=float(params.get('display_fov_um', 300.0) or 300.0)
+                display_fov_um=float(params.get('display_fov_um', 300.0) or 300.0),
+                correction_sa=float(params.get('correction_sa', 0.0))
             )
             
-            saf_ratio = None
-            if len(ret_val) == 6:
+            saf_ratio = 0.0
+            stats = {}
+            
+            # Unpack based on length (Robustness)
+            if len(ret_val) == 7:
+                 img, bfp, ext_cam, ext_bfp, bfp_phase, saf_ratio, stats = ret_val
+            elif len(ret_val) == 6:
                 img, bfp, ext_cam, ext_bfp, bfp_phase, saf_ratio = ret_val
             else:
                 img, bfp, ext_cam, ext_bfp, bfp_phase = ret_val
@@ -197,7 +204,8 @@ export function usePyodide() {
                 "ext_cam": ext_cam,
                 "ext_bfp": ext_bfp,
                 "bfp_phase": bfp_phase,
-                "saf_ratio": saf_ratio
+                "saf_ratio": saf_ratio,
+                "stats": stats
             }
             result
         `;

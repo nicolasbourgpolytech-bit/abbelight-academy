@@ -438,7 +438,7 @@ class OpticalFourierMicroscope:
             pixelated_img = scipy.ndimage.zoom(intensity, (zoom_y, zoom_x), order=1)
             return pixelated_img, extent_cam
 
-    def simulate_isotropic(self, z_defocus=0.0, astigmatism=0.0, phase_mask=None, oversampling=8, cam_pixel_um=6.5, depth=0.0, display_fov_um=None, correction_sa=0.0):
+    def simulate_isotropic(self, z_defocus=0.0, astigmatism=0.0, phase_mask=None, oversampling=8, cam_pixel_um=6.5, depth=0.0, display_fov_um=None):
         """
         Simulate an isotropic (free) dipole by summing intensities of three orthogonal dipoles (X, Y, Z).
         Optimized with batched FFT.
@@ -447,7 +447,6 @@ class OpticalFourierMicroscope:
             astigmatism: Coefficient for vertical astigmatism (Zernike Z2,2). Resulting phase = astig * rho^2 * cos(2*phi).
             depth: Distance of molecule from interface (meters).
             display_fov_um: Optional. If set, crops the final image to this field of view (in micrometers) centered on the axis.
-            correction_sa: Amplitude of spherical aberration correction (radians * rho^4).
         """
         # 1. Get Green's Tensor (Shape: 2, 3, N, N)
         # Check if we can reuse cached G
@@ -479,11 +478,10 @@ class OpticalFourierMicroscope:
         E_bfp_stack[1, 1] = G[1, 1]
         
         # Dipole Z: (0, 0, 1)
-        # E_bfp_stack[2, 0] = G[0, 2]
         E_bfp_stack[2, 0] = G[0, 2]
         E_bfp_stack[2, 1] = G[1, 2]
         
-        # 3. Apply Phase / Defocus / Astigmatism / Correction (Broadcasting over dipoles)
+        # 3. Apply Phase / Defocus / Astigmatism (Broadcasting over dipoles)
         factor = 1.0 + 0j
         
         if phase_mask is not None:
@@ -500,11 +498,6 @@ class OpticalFourierMicroscope:
             # Yes, G is 0 outside. So we just compute phase everywhere.
             astig_phase = astigmatism * (self.RHO**2) * np.cos(2 * self.PHI)
             factor *= np.exp(1j * astig_phase)
-
-        # Correction Collar (Spherical Aberration term: rho^4)
-        if correction_sa != 0:
-            sa_phase = correction_sa * (self.RHO**4)
-            factor *= np.exp(1j * sa_phase)
             
         if not np.isscalar(factor) or factor != 1.0:
             E_bfp_stack *= factor
@@ -545,45 +538,22 @@ class OpticalFourierMicroscope:
         # E_bfp_stack is (3, 2, npix, npix)
         bfp_total = np.sum(np.abs(E_bfp_stack)**2, axis=(0, 1))
         
-        # EXTRACT PHASE for Visualization: Pure Pupil Function (Aberration Map)
-        # Show the phase delay introduced by the system (Depth + Defocus + Astigmatism)
-        # This represents the "System Aberration" common to all dipoles.
-        
-        # 1. Depth Phase (Spherical Aberration term)
-        # Re-calculate to ensure we see it even if G is cached
-        phase_depth = self.k2 * depth * self.cos_theta2
-        
-        # 2. Defocus Phase
-        phase_defocus = 0.0
-        if z_defocus != 0:
-            phase_defocus = self.n1 * self.k0 * z_defocus * self.cos_theta1
-            
-        # 3. Astigmatism Phase
-        phase_astig = 0.0
-        if astigmatism != 0:
-             phase_astig = astigmatism * (self.RHO**2) * np.cos(2 * self.PHI)
-             
-        # 4. External Phase Mask (Cylindrical Lens)
-        phase_ext = 0.0
-        if phase_mask is not None:
-            phase_ext = phase_mask
-
-        # 5. Correction SA
-        phase_corr = 0.0
-        if correction_sa != 0:
-            phase_corr = correction_sa * (self.RHO**4)
-            
-        total_phase = phase_depth + phase_defocus + phase_astig + phase_ext + phase_corr
-        
-        # Compute wrapped phase (-pi to pi)
-        bfp_phase_vis = np.angle(np.exp(1j * total_phase))
-        
-        # Mask outside NA
-        bfp_phase_vis[self.pupil_mask == 0] = 0.0
+        # EXTRACT PHASE (Z-Dipole, P-Polarization dominant) for visualization
+        # Dipole Z is index 2. Polarization P is roughly Radial... let's take a component.
+        # Or just take the phase of the first component of Z dipole?
+        # Z dipole field at BFP ~ sin(theta) * Tp (p-pol).
+        # Let's return the phase of E_bfp_stack[2, 0] (Ex component of Z dipole)
+        # Or better: Phase of the Dot product with a reference?
+        # Simplest: Phase of one component of Z dipole.
+        complex_z = E_bfp_stack[2, 0] # Z-dipole, X-polarization component
+        # If it's zero (e.g. at center), phase is noise. 
+        bfp_phase_vis = np.angle(complex_z)
         
         # Calculate Dimensions
         fov_obj = (self.lambda_vac * original_npix) / (2 * self.NA)
         fov_cam_um = fov_obj * self.M_total * 1e6
+        
+        print(f"DEBUG: FOV Obj={fov_obj*1e6:.2f}um, M={self.M_total:.2f}, FOV Cam={fov_cam_um:.2f}um")
         
         half_fov = fov_cam_um / 2
         extent_cam = [-half_fov, half_fov, -half_fov, half_fov]
@@ -627,7 +597,7 @@ class OpticalFourierMicroscope:
                  # Update extent
                  new_half = (display_fov_um) / 2
                  ext_cam_iso = [-new_half, new_half, -new_half, new_half]
-        
+
         # 9. SAF Ratio Calculation
         sin_theta_crit = self.n2 / self.n1
         mask_uaf = (self.sin_theta1 <= sin_theta_crit) & self.pupil_mask
@@ -641,27 +611,4 @@ class OpticalFourierMicroscope:
         else:
             saf_ratio = 0.0
 
-        # 10. Compute Aberration Statistics (PV in Radians)
-        # We use np.ptp (peak to peak) on the masked region
-        stats = {}
-        mask = self.pupil_mask
-        
-        # Depth
-        if depth != 0:
-             stats['Depth'] = np.ptp(phase_depth[mask].real) # Take real part if cos_theta complex
-        else: stats['Depth'] = 0.0
-        
-        # Defocus
-        if z_defocus != 0: stats['Defocus'] = np.ptp(phase_defocus[mask].real)
-        else: stats['Defocus'] = 0.0
-        
-        # Astig (Zernike + External Mask)
-        pv_astig = np.ptp(phase_astig[mask].real) if astigmatism != 0 else 0.0
-        pv_ext = np.ptp(phase_mask[mask].real) if phase_mask is not None else 0.0
-        stats['Astig'] = pv_astig + pv_ext
-        
-        # Collar
-        if correction_sa != 0: stats['Collar'] = np.ptp(phase_corr[mask].real)
-        else: stats['Collar'] = 0.0
-
-        return img_iso_cam, bfp_total, ext_cam_iso, extent_bfp, bfp_phase_vis, saf_ratio, stats
+        return img_iso_cam, bfp_total, ext_cam_iso, extent_bfp, bfp_phase_vis, saf_ratio
