@@ -743,7 +743,7 @@ export default function PSFSimulator() {
                     </div>
 
                     {/* Flex Column Layout - Robust Alignment */}
-                    <div className="flex flex-row w-full h-full min-h-0 gap-4">
+                    <div className="flex flex-row w-full h-full min-h-[500px] gap-4">
 
                         {/* LEFT COLUMN: Image + X-Profile */}
                         {/* Width is driven by the aspect-square of the image which fills the available height */}
@@ -766,13 +766,13 @@ export default function PSFSimulator() {
                                         </div>
                                     )}
 
-                                    <div className="relative w-full h-full flex items-center justify-center">
-                                        {/* Aspect Ratio Constraint Container */}
-                                        <div className="relative aspect-square h-full max-w-full">
+                                    <div className="relative w-full h-full flex items-center justify-center p-4">
+                                        {/* Simple Container - No aspect-square hack */}
+                                        <div className="relative w-full h-full max-w-full max-h-full flex items-center justify-center">
                                             <canvas
                                                 ref={psfCanvasRef}
                                                 onClick={(e) => handleCanvasClick(e, false)}
-                                                className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50 bg-red-900/50"
+                                                className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
                                                 style={{ imageRendering: 'pixelated' }}
                                             />
 
