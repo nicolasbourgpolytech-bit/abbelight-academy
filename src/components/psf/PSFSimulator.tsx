@@ -100,7 +100,11 @@ function drawMatrix(
     isPhase: boolean = false
 ) {
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+        console.error("Canvas Context Lost or Null");
+        return;
+    }
+    console.log("Drawing Matrix:", { width, height, dataLen: data.length, canvasW: canvas.width, canvasH: canvas.height });
 
     // Clear
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -768,7 +772,7 @@ export default function PSFSimulator() {
                                             <canvas
                                                 ref={psfCanvasRef}
                                                 onClick={(e) => handleCanvasClick(e, false)}
-                                                className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
+                                                className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50 bg-red-900/50"
                                                 style={{ imageRendering: 'pixelated' }}
                                             />
 
