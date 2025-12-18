@@ -51,7 +51,7 @@ export function usePyodide() {
 
                 // 4. Load the Simulation Code
                 console.log("Fetching simulator code...");
-                const response = await fetch('/python/PSF_simulator.py');
+                const response = await fetch(`/python/PSF_simulator.py?t=${Date.now()}`);
                 const code = await response.text();
 
                 // Write to virtual file system so it can be imported
@@ -172,7 +172,8 @@ export function usePyodide() {
                 phase_mask = current_microscope.compute_cylindrical_phase(-16.0)
 
             # Run Simulation
-            img, bfp, ext_cam, ext_bfp, bfp_phase, saf_ratio = current_microscope.simulate_isotropic(
+            # Handle backward compatibility if the class in memory is old (returns 5 values)
+            ret_val = current_microscope.simulate_isotropic(
                 z_defocus=float(params.get('z_defocus', 0.0)),
                 phase_mask=phase_mask,
                 oversampling=int(params.get('oversampling', 3)),
@@ -180,6 +181,12 @@ export function usePyodide() {
                 depth=float(params.get('depth', 0.0)),
                 display_fov_um=float(params.get('display_fov_um', 300.0) or 300.0)
             )
+            
+            saf_ratio = None
+            if len(ret_val) == 6:
+                img, bfp, ext_cam, ext_bfp, bfp_phase, saf_ratio = ret_val
+            else:
+                img, bfp, ext_cam, ext_bfp, bfp_phase = ret_val
 
             # Prepare output as a dictionary
             # Convert numpy arrays to lists or direct buffers? 
