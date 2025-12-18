@@ -765,7 +765,7 @@ export default function PSFSimulator() {
                                     <Bar
                                         dataKey="intensity"
                                         fill={wavelengthToColor(params.lambda_vac)}
-                                        fillOpacity={0.6}
+                                        fillOpacity={0.4}
                                         isAnimationActive={false}
                                     />
                                     {/* Gaussian Fit Line (Top Layer, drawn last) */}
@@ -805,7 +805,7 @@ export default function PSFSimulator() {
                                     <Bar
                                         dataKey="intensity"
                                         fill={wavelengthToColor(params.lambda_vac)}
-                                        fillOpacity={0.6}
+                                        fillOpacity={0.4}
                                         isAnimationActive={false}
                                     />
                                     {/* Gaussian Fit Line (Top Layer, drawn last) */}
