@@ -683,27 +683,35 @@ export default function PSFSimulator() {
                         {activeTab === 'psf' ? (
                             <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
                                 <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
-                                <div className="text-right text-gray-600 text-[10px] uppercase">Pixels</div>
+                                <div className="text-right text-gray-600 text-[10px] uppercase">nm</div>
 
                                 <div className="text-brand-cyan font-mono">σ (X)</div>
                                 <div className="text-right font-mono text-white">
-                                    {profileAnalysis?.hStats?.sigma.toFixed(2) ?? '-'}
+                                    {(profileAnalysis?.hStats?.sigma
+                                        ? (profileAnalysis.hStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                        : 0).toFixed(1)}
                                 </div>
 
                                 <div className="text-brand-magenta font-mono">σ (Y)</div>
                                 <div className="text-right font-mono text-white">
-                                    {profileAnalysis?.vStats?.sigma.toFixed(2) ?? '-'}
+                                    {(profileAnalysis?.vStats?.sigma
+                                        ? (profileAnalysis.vStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                        : 0).toFixed(1)}
                                 </div>
 
                                 <div className="col-span-2 h-px bg-white/5 my-1" />
 
                                 <div className="text-gray-500 font-mono">FWHM X</div>
                                 <div className="text-right font-mono text-white">
-                                    {profileAnalysis?.hStats?.fwhm.toFixed(2) ?? '-'}
+                                    {(profileAnalysis?.hStats?.fwhm
+                                        ? (profileAnalysis.hStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                        : 0).toFixed(1)}
                                 </div>
                                 <div className="text-gray-500 font-mono">FWHM Y</div>
                                 <div className="text-right font-mono text-white">
-                                    {profileAnalysis?.vStats?.fwhm.toFixed(2) ?? '-'}
+                                    {(profileAnalysis?.vStats?.fwhm
+                                        ? (profileAnalysis.vStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                        : 0).toFixed(1)}
                                 </div>
                             </div>
                         ) : (
