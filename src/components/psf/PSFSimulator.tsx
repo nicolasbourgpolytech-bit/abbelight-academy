@@ -654,13 +654,16 @@ export default function PSFSimulator() {
                     </button>
                 </div>
 
-                {/* Grid Layout - Centered and Condensed */}
-                <div className="flex justify-center w-full h-full min-h-0">
-                    <div className="grid grid-cols-[auto_240px] grid-rows-[1fr_240px] gap-4 w-auto h-full max-w-full">
+                {/* Flex Column Layout - Robust Alignment */}
+                <div className="flex flex-row justify-center w-full h-full min-h-0 gap-4">
 
-                        {/* 1. Main Canvas (Top-Left) */}
-                        <div className="flex items-center justify-center relative min-w-0 min-h-0">
-                            <div className="glass-card aspect-square h-full w-auto max-w-full flex flex-col items-center justify-center relative overflow-hidden group border border-white/10 !p-0">
+                    {/* LEFT COLUMN: Image + X-Profile */}
+                    {/* Width is driven by the aspect-square of the image which fills the available height */}
+                    <div className="flex flex-col gap-4 h-full w-auto min-w-0">
+
+                        {/* 1. Main Canvas (Top) - Dynamic Height (Flex-1), Square Aspect Ratio */}
+                        <div className="flex-1 aspect-square relative min-h-0 min-w-0">
+                            <div className="glass-card w-full h-full flex flex-col items-center justify-center relative overflow-hidden group border border-white/10 !p-0">
                                 <span className="absolute top-4 left-4 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
                                     {activeTab === 'psf' ? 'Primary View' : 'Fourier Plane'}
                                 </span>
@@ -765,51 +768,8 @@ export default function PSFSimulator() {
                             </div>
                         </div>
 
-                        {/* 2. Vertical Profile (Top-Right) */}
-                        <div className="glass-card !p-4 relative flex flex-col min-h-0 border-l border-brand-magenta/20">
-                            <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-magenta uppercase tracking-widest">
-                                Y-Axis Intensity
-                            </span>
-                            <div className="flex-1 w-full min-h-0 pt-4">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <ComposedChart layout="vertical" data={profileAnalysis?.vData || []} barCategoryGap={0} barGap={0}>
-                                        <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" horizontal={false} />
-                                        <XAxis type="number" hide domain={[0, 'auto']} />
-                                        <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
-                                            itemStyle={{ color: '#fff' }}
-                                            cursor={{ stroke: '#333' }}
-                                        />
-                                        {/* Intensity Bar (Bottom Layer) */}
-                                        <Bar dataKey="intensity" isAnimationActive={false}>
-                                            {profileAnalysis?.vData.map((entry: any, index: number) => (
-                                                <Cell
-                                                    key={`cell-${index}`}
-                                                    fill={wavelengthToColor(params.lambda_vac)}
-                                                    fillOpacity={profileAnalysis.vMax ? (entry.intensity / profileAnalysis.vMax) : 0}
-                                                />
-                                            ))}
-                                        </Bar>
-                                        {/* Gaussian Fit Line (Top Layer, drawn last) */}
-                                        {activeTab === 'psf' && (
-                                            <Line
-                                                dataKey="fit"
-                                                type="monotone"
-                                                stroke="#fff"
-                                                strokeWidth={1.5}
-                                                strokeDasharray="4 4"
-                                                dot={false}
-                                                isAnimationActive={false}
-                                            />
-                                        )}
-                                    </ComposedChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-
-                        {/* 3. Horizontal Profile (Bottom-Left) */}
-                        <div className="glass-card !p-4 relative flex flex-col min-h-0 border-t border-brand-cyan/20">
+                        {/* 2. Horizontal Profile (Bottom) - Fixed Height */}
+                        <div className="glass-card !p-4 relative flex flex-col h-[240px] shrink-0 border-t border-brand-cyan/20">
                             <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-cyan uppercase tracking-widest">
                                 X-Axis Intensity
                             </span>
@@ -824,7 +784,6 @@ export default function PSFSimulator() {
                                             itemStyle={{ color: '#fff' }}
                                             cursor={{ stroke: '#333' }}
                                         />
-                                        {/* Intensity Bar (Bottom Layer) */}
                                         <Bar dataKey="intensity" isAnimationActive={false}>
                                             {profileAnalysis?.hData.map((entry: any, index: number) => (
                                                 <Cell
@@ -834,7 +793,52 @@ export default function PSFSimulator() {
                                                 />
                                             ))}
                                         </Bar>
-                                        {/* Gaussian Fit Line (Top Layer, drawn last) */}
+                                        {activeTab === 'psf' && (
+                                            <Line
+                                                dataKey="fit"
+                                                type="monotone"
+                                                stroke="#fff"
+                                                strokeWidth={1.5}
+                                                strokeDasharray="4 4"
+                                                dot={false}
+                                                isAnimationActive={false}
+                                            />
+                                        )}
+                                    </ComposedChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div> {/* End Left Column */}
+
+                    {/* RIGHT COLUMN: Y-Profile + Stats */}
+                    {/* Fixed Width */}
+                    <div className="flex flex-col gap-4 h-full w-[240px] shrink-0">
+
+                        {/* 3. Vertical Profile (Top) - Dynamic Height (Matches Image) */}
+                        <div className="glass-card !p-4 relative flex flex-col flex-1 min-h-0 border-l border-brand-magenta/20">
+                            <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-magenta uppercase tracking-widest">
+                                Y-Axis Intensity
+                            </span>
+                            <div className="flex-1 w-full min-h-0 pt-4">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <ComposedChart layout="vertical" data={profileAnalysis?.vData || []} barCategoryGap={0} barGap={0}>
+                                        <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" horizontal={false} />
+                                        <XAxis type="number" hide domain={[0, 'auto']} />
+                                        <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
+                                            itemStyle={{ color: '#fff' }}
+                                            cursor={{ stroke: '#333' }}
+                                        />
+                                        <Bar dataKey="intensity" isAnimationActive={false}>
+                                            {profileAnalysis?.vData.map((entry: any, index: number) => (
+                                                <Cell
+                                                    key={`cell-${index}`}
+                                                    fill={wavelengthToColor(params.lambda_vac)}
+                                                    fillOpacity={profileAnalysis.vMax ? (entry.intensity / profileAnalysis.vMax) : 0}
+                                                />
+                                            ))}
+                                        </Bar>
                                         {activeTab === 'psf' && (
                                             <Line
                                                 dataKey="fit"
@@ -851,8 +855,8 @@ export default function PSFSimulator() {
                             </div>
                         </div>
 
-                        {/* 4. Stats Panel (Bottom-Right) */}
-                        <div className="glass-card !p-4 flex flex-col justify-center gap-2">
+                        {/* 4. Stats Panel (Bottom) - Fixed Height */}
+                        <div className="glass-card !p-4 flex flex-col justify-center gap-2 h-[240px] shrink-0">
                             <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/10 pb-1">
                                 {activeTab === 'psf' ? "Gaussian Fit" : "BFP Analysis"}
                             </h4>
@@ -920,8 +924,8 @@ export default function PSFSimulator() {
                                 </div>
                             )}
                         </div>
+                    </div> {/* End Right Column */}
 
-                    </div>
                 </div>
             </div>
 
