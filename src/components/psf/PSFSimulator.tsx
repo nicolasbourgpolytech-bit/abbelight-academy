@@ -442,7 +442,7 @@ export default function PSFSimulator() {
     }, [simResult, crosshair, activeTab]);
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)] font-sans">
+        <div className="flex flex-col lg:flex-row gap-6 h-full font-sans">
             {/* Sidebar Controls */}
             <div className="w-full lg:w-80 shrink-0 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar pt-[58px]">
 
@@ -672,7 +672,7 @@ export default function PSFSimulator() {
                             </div>
                         )}
 
-                        <div className="relative h-full aspect-square p-4 mx-auto">
+                        <div className="relative aspect-square max-h-full max-w-full p-4 mx-auto">
                             <canvas
                                 ref={psfCanvasRef}
                                 onClick={handleCanvasClick}
