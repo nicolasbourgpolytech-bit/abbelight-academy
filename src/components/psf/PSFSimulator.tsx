@@ -521,7 +521,7 @@ export default function PSFSimulator() {
                     </div>
                 )}
 
-                // 1. Objective Lens Parameters & Correction Collar
+                {/* 1. Objective Lens Parameters & Correction Collar */}
                 <div className="glass-card !p-6 space-y-4">
                     <h3 className="text-sm font-bold text-white uppercase tracking-widest border-b border-white/10 pb-2">
                         Objective lens parameters
@@ -718,7 +718,7 @@ export default function PSFSimulator() {
             {/* Main Content Area */}
             <div className="flex-1 w-full flex flex-col pt-[58px] overflow-hidden">
                 {/* Centered Wrapper: Hugs content width (Visualization) and centers it. Tabs stretch to this width. */}
-                <div className="w-fit mx-auto h-full flex flex-col gap-4 min-w-0">
+                <div className="w-full max-w-7xl mx-auto h-full flex flex-col gap-4 min-w-0">
 
                     {/* Tabs */}
                     <div className="flex border-b border-white/10 w-full">
@@ -743,7 +743,7 @@ export default function PSFSimulator() {
 
                         {/* LEFT COLUMN: Image + X-Profile */}
                         {/* Width is driven by the aspect-square of the image which fills the available height */}
-                        <div className="flex flex-col gap-4 h-full w-auto min-w-0">
+                        <div className="flex flex-col gap-4 h-full flex-1 min-w-0">
 
                             {/* 1. Main Canvas Area - Split for BFP Dual View */}
                             <div className="w-full flex gap-2 min-h-0 min-w-0 flex-1">
@@ -1029,7 +1029,7 @@ export default function PSFSimulator() {
                     </div> {/* End Right Column */}
 
                 </div>
+            </div>
         </div>
-    </div>
     );
 }
