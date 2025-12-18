@@ -909,16 +909,16 @@ export default function PSFSimulator() {
                             </div>
                         ) : (
                             /* BFP LAYOUT: DUAL SQUARE ROW */
-                            <div className="flex gap-8 w-full h-full max-w-full max-h-full justify-center items-center">
+                            <div className="flex gap-4 w-full h-full max-w-full max-h-full justify-center items-center px-4">
                                 {/* Left: BFP Intensity */}
-                                <div className="relative aspect-square h-full max-h-full bg-black/20 border border-white/10 group overflow-hidden">
+                                <div className="relative aspect-square h-auto w-full max-w-[calc(50%-1rem)] max-h-full bg-black/20 border border-white/10 group overflow-hidden">
                                     <span className="absolute top-2 left-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
                                         BFP Intensity
                                     </span>
                                     <canvas
                                         ref={psfCanvasRef}
                                         className="w-full h-full image-pixelated block shadow-2xl shadow-black/50"
-                                        style={{ imageRendering: 'pixelated' }}
+                                        style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
                                     />
                                     {/* BFP Overlays (UAF/SAF) - Logic Restored */}
                                     {params.NA > params.n_sample && (
@@ -940,14 +940,14 @@ export default function PSFSimulator() {
 
                                 {/* Right: BFP Phase */}
                                 {simResult?.bfp_phase && (
-                                    <div className="relative aspect-square h-full max-h-full bg-black/20 border border-white/10 group overflow-hidden">
+                                    <div className="relative aspect-square h-auto w-full max-w-[calc(50%-1rem)] max-h-full bg-black/20 border border-white/10 group overflow-hidden">
                                         <span className="absolute top-2 left-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
                                             BFP Phase (Pupil)
                                         </span>
                                         <canvas
                                             ref={bfpPhaseCanvasRef}
                                             className="w-full h-full image-pixelated block shadow-2xl shadow-black/50"
-                                            style={{ imageRendering: 'pixelated' }}
+                                            style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
                                         />
                                         {/* ABERRATION CHART OVERLAY */}
                                         {simResult?.stats && (
