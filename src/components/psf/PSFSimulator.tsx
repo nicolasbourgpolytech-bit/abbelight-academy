@@ -658,51 +658,53 @@ export default function PSFSimulator() {
                 <div className="grid grid-cols-[1fr_240px] grid-rows-[1fr_240px] gap-4 w-full h-full min-h-0">
 
                     {/* 1. Main Canvas (Top-Left) */}
-                    <div className="glass-card !p-0 flex flex-col items-center justify-center relative overflow-hidden group border border-white/10">
-                        <span className="absolute top-4 left-4 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
-                            {activeTab === 'psf' ? 'Primary View' : 'Fourier Plane'}
-                        </span>
+                    <div className="flex items-center justify-center relative min-w-0 min-h-0">
+                        <div className="glass-card aspect-square h-full w-auto max-w-full flex flex-col items-center justify-center relative overflow-hidden group border border-white/10 !p-0">
+                            <span className="absolute top-4 left-4 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
+                                {activeTab === 'psf' ? 'Primary View' : 'Fourier Plane'}
+                            </span>
 
-                        {/* Loading / Calculating Overlay */}
-                        {(state === "LOADING" || calculating) && (
-                            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
-                                <div className="text-brand-cyan font-bold text-sm uppercase tracking-widest animate-pulse border border-brand-cyan/30 px-6 py-3 bg-black/80 rounded shadow-lg shadow-brand-cyan/20">
-                                    {state === "LOADING" ? "Loading Engine..." : "Calculating..."}
+                            {/* Loading / Calculating Overlay */}
+                            {(state === "LOADING" || calculating) && (
+                                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+                                    <div className="text-brand-cyan font-bold text-sm uppercase tracking-widest animate-pulse border border-brand-cyan/30 px-6 py-3 bg-black/80 rounded shadow-lg shadow-brand-cyan/20">
+                                        {state === "LOADING" ? "Loading Engine..." : "Calculating..."}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-
-                        <div className="relative aspect-square max-h-full max-w-full p-4 mx-auto">
-                            <canvas
-                                ref={psfCanvasRef}
-                                onClick={handleCanvasClick}
-                                className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
-                                style={{ imageRendering: 'pixelated' }}
-                            />
-
-                            {/* Crosshair Overlay */}
-                            {profileAnalysis && (
-                                <>
-                                    {/* Horizontal Line */}
-                                    <div
-                                        className="absolute w-full border-t border-brand-cyan/30 border-dashed pointer-events-none transition-all duration-75"
-                                        style={{
-                                            top: `${((profileAnalysis.cy + 0.5) / profileAnalysis.height) * 100}%`,
-                                            left: 0
-                                        }}
-                                    />
-                                    {/* Vertical Line */}
-                                    <div
-                                        className="absolute h-full border-l border-brand-magenta/30 border-dashed pointer-events-none transition-all duration-75"
-                                        style={{
-                                            left: `${((profileAnalysis.cx + 0.5) / profileAnalysis.width) * 100}%`,
-                                            top: 0
-                                        }}
-                                    />
-                                </>
                             )}
 
-                            {/* BFP Labels - Pure HTML/CSS for crisp text */}
+                            <div className="relative w-full h-full">
+                                <canvas
+                                    ref={psfCanvasRef}
+                                    onClick={handleCanvasClick}
+                                    className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
+                                    style={{ imageRendering: 'pixelated' }}
+                                />
+
+                                {/* Crosshair Overlay */}
+                                {profileAnalysis && (
+                                    <>
+                                        {/* Horizontal Line */}
+                                        <div
+                                            className="absolute w-full border-t border-brand-cyan/30 border-dashed pointer-events-none transition-all duration-75"
+                                            style={{
+                                                top: `${((profileAnalysis.cy + 0.5) / profileAnalysis.height) * 100}%`,
+                                                left: 0
+                                            }}
+                                        />
+                                        {/* Vertical Line */}
+                                        <div
+                                            className="absolute h-full border-l border-brand-magenta/30 border-dashed pointer-events-none transition-all duration-75"
+                                            style={{
+                                                left: `${((profileAnalysis.cx + 0.5) / profileAnalysis.width) * 100}%`,
+                                                top: 0
+                                            }}
+                                        />
+                                    </>
+                                )}
+                            </div>
+
+                            {/* BFP Labels */}
                             {activeTab === 'bfp' && params.NA > params.n_sample && (
                                 <>
                                     {/* UAF (Sub-critical) - Center */}
@@ -722,43 +724,43 @@ export default function PSFSimulator() {
                                 </>
                             )}
 
-                        </div>
+                            {/* Parameters Overlay */}
+                            <div className="absolute bottom-4 left-4 flex flex-col items-start gap-1 p-3 bg-black/80 border border-brand-cyan/20 pointer-events-none z-20 rounded-sm backdrop-blur-sm">
+                                {activeTab === 'psf' ? (
+                                    <>
+                                        <div className="text-xs font-bold font-mono text-brand-cyan uppercase tracking-widest border-b border-brand-cyan/20 pb-1 mb-1 w-full">
+                                            Parameters
+                                        </div>
+                                        <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs font-bold font-mono whitespace-nowrap">
+                                            <span className="text-gray-500">NA:</span>
+                                            <span className="text-white text-right">{params.NA.toFixed(2)}</span>
 
-                        <div className="absolute bottom-4 left-4 flex flex-col items-start gap-1 p-3 bg-black/80 border border-brand-cyan/20 pointer-events-none z-20 rounded-sm backdrop-blur-sm">
-                            {activeTab === 'psf' ? (
-                                <>
-                                    <div className="text-xs font-bold font-mono text-brand-cyan uppercase tracking-widest border-b border-brand-cyan/20 pb-1 mb-1 w-full">
-                                        Parameters
+                                            <span className="text-gray-500">Mag:</span>
+                                            <span className="text-white text-right">{params.M_obj}x</span>
+
+                                            <span className="text-gray-500">λ:</span>
+                                            <span className="text-right" style={{ color: wavelengthToColor(params.lambda_vac) }}>
+                                                {(params.lambda_vac * 1e9).toFixed(0)} nm
+                                            </span>
+
+                                            <span className="text-gray-500">Depth:</span>
+                                            <span className="text-white text-right">{(params.depth * 1e6).toFixed(1)} µm</span>
+
+                                            <span className="text-gray-500">Defocus:</span>
+                                            <span className="text-white text-right">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
+
+                                            <span className="text-brand-cyan/80 mt-1 pt-1 border-t border-brand-cyan/10">FOV:</span>
+                                            <span className="text-brand-cyan mt-1 pt-1 border-t border-brand-cyan/10 text-right">
+                                                {(params.display_fov_um || 300).toFixed(0)} µm
+                                            </span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-xs font-bold font-mono text-brand-magenta">
+                                        NA Limit: {params.NA.toFixed(2)}
                                     </div>
-                                    <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs font-bold font-mono whitespace-nowrap">
-                                        <span className="text-gray-500">NA:</span>
-                                        <span className="text-white text-right">{params.NA.toFixed(2)}</span>
-
-                                        <span className="text-gray-500">Mag:</span>
-                                        <span className="text-white text-right">{params.M_obj}x</span>
-
-                                        <span className="text-gray-500">λ:</span>
-                                        <span className="text-right" style={{ color: wavelengthToColor(params.lambda_vac) }}>
-                                            {(params.lambda_vac * 1e9).toFixed(0)} nm
-                                        </span>
-
-                                        <span className="text-gray-500">Depth:</span>
-                                        <span className="text-white text-right">{(params.depth * 1e6).toFixed(1)} µm</span>
-
-                                        <span className="text-gray-500">Defocus:</span>
-                                        <span className="text-white text-right">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
-
-                                        <span className="text-brand-cyan/80 mt-1 pt-1 border-t border-brand-cyan/10">FOV:</span>
-                                        <span className="text-brand-cyan mt-1 pt-1 border-t border-brand-cyan/10 text-right">
-                                            {(params.display_fov_um || 300).toFixed(0)} µm
-                                        </span>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="text-xs font-bold font-mono text-brand-magenta">
-                                    NA Limit: {params.NA.toFixed(2)}
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -919,12 +921,12 @@ export default function PSFSimulator() {
                     </div>
 
                 </div>
-            </div>
+            </div >
 
             {/* DEBUG SECTION */}
-            <div className="fixed bottom-0 right-0 p-1 bg-black/90 text-[10px] text-gray-600 pointer-events-none z-50 font-mono">
+            < div className="fixed bottom-0 right-0 p-1 bg-black/90 text-[10px] text-gray-600 pointer-events-none z-50 font-mono" >
                 PSF Sim v2.2 | Status: {state}
-            </div>
+            </div >
         </div >
     );
 }
