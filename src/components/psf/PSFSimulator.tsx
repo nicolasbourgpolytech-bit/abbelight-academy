@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { usePyodide } from './usePyodide';
-import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
 
 // --- Types ---
 interface SimulationParams {
@@ -424,19 +424,21 @@ export default function PSFSimulator() {
             vFitData = vFitRaw;
         }
 
+        const hMax = Math.max(...row);
         const hData = row.map((val: number, i: number) => ({
             x: i,
             intensity: val,
             fit: hFitData[i]?.fit || null
         }));
 
+        const vMax = Math.max(...col);
         const vData = col.map((val: number, i: number) => ({
             y: i,
             intensity: val,
             fit: vFitData[i]?.fit || null
         }));
 
-        return { hData, vData, hStats, vStats, cx, cy, width, height };
+        return { hData, vData, hStats, vStats, cx, cy, width, height, hMax, vMax };
     }, [simResult, crosshair, activeTab]);
 
     return (
@@ -763,12 +765,6 @@ export default function PSFSimulator() {
                         <div className="flex-1 w-full min-h-0 pt-4">
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart layout="vertical" data={profileAnalysis?.vData || []} barCategoryGap={0} barGap={0}>
-                                    <defs>
-                                        <linearGradient id="gradVertical" x1="0" y1="0" x2="1" y2="0">
-                                            <stop offset="0%" stopColor="#000000" stopOpacity={0} />
-                                            <stop offset="100%" stopColor={wavelengthToColor(params.lambda_vac)} stopOpacity={0.8} />
-                                        </linearGradient>
-                                    </defs>
                                     <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" horizontal={false} />
                                     <XAxis type="number" hide domain={[0, 'auto']} />
                                     <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
@@ -778,12 +774,15 @@ export default function PSFSimulator() {
                                         cursor={{ stroke: '#333' }}
                                     />
                                     {/* Intensity Bar (Bottom Layer) */}
-                                    <Bar
-                                        dataKey="intensity"
-                                        fill="url(#gradVertical)"
-                                        fillOpacity={1}
-                                        isAnimationActive={false}
-                                    />
+                                    <Bar dataKey="intensity" isAnimationActive={false}>
+                                        {profileAnalysis?.vData.map((entry: any, index: number) => (
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={wavelengthToColor(params.lambda_vac)}
+                                                fillOpacity={profileAnalysis.vMax ? (entry.intensity / profileAnalysis.vMax) : 0}
+                                            />
+                                        ))}
+                                    </Bar>
                                     {/* Gaussian Fit Line (Top Layer, drawn last) */}
                                     {activeTab === 'psf' && (
                                         <Line
@@ -809,12 +808,6 @@ export default function PSFSimulator() {
                         <div className="flex-1 w-full min-h-0 pt-2">
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart data={profileAnalysis?.hData || []} barCategoryGap={0} barGap={0}>
-                                    <defs>
-                                        <linearGradient id="gradHorizontal" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stopColor={wavelengthToColor(params.lambda_vac)} stopOpacity={0.8} />
-                                            <stop offset="100%" stopColor="#000000" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
                                     <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" vertical={false} />
                                     <XAxis dataKey="x" hide />
                                     <YAxis hide domain={[0, 'auto']} />
@@ -824,12 +817,15 @@ export default function PSFSimulator() {
                                         cursor={{ stroke: '#333' }}
                                     />
                                     {/* Intensity Bar (Bottom Layer) */}
-                                    <Bar
-                                        dataKey="intensity"
-                                        fill="url(#gradHorizontal)"
-                                        fillOpacity={1}
-                                        isAnimationActive={false}
-                                    />
+                                    <Bar dataKey="intensity" isAnimationActive={false}>
+                                        {profileAnalysis?.hData.map((entry: any, index: number) => (
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={wavelengthToColor(params.lambda_vac)}
+                                                fillOpacity={profileAnalysis.hMax ? (entry.intensity / profileAnalysis.hMax) : 0}
+                                            />
+                                        ))}
+                                    </Bar>
                                     {/* Gaussian Fit Line (Top Layer, drawn last) */}
                                     {activeTab === 'psf' && (
                                         <Line
