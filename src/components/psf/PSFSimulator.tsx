@@ -634,299 +634,301 @@ export default function PSFSimulator() {
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 w-full flex flex-col gap-4 overflow-hidden pt-[58px]">
+            <div className="flex-1 w-full flex flex-col pt-[58px] overflow-hidden">
+                {/* Centered Wrapper: Hugs content width (Visualization) and centers it. Tabs stretch to this width. */}
+                <div className="w-fit mx-auto h-full flex flex-col gap-4 min-w-0">
 
-                {/* Tabs */}
-                <div className="flex border-b border-white/10">
-                    <button
-                        onClick={() => setActiveTab('psf')}
-                        className={`px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === 'psf' ? 'border-brand-cyan text-white' : 'border-transparent text-gray-600 hover:text-gray-400'
-                            }`}
-                    >
-                        PSF Image Plane
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('bfp')}
-                        className={`px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === 'bfp' ? 'border-brand-magenta text-white' : 'border-transparent text-gray-600 hover:text-gray-400'
-                            }`}
-                    >
-                        BFP Image Plane
-                    </button>
-                </div>
+                    {/* Tabs */}
+                    <div className="flex border-b border-white/10 w-full">
+                        <button
+                            onClick={() => setActiveTab('psf')}
+                            className={`px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === 'psf' ? 'border-brand-cyan text-white' : 'border-transparent text-gray-600 hover:text-gray-400'
+                                }`}
+                        >
+                            PSF Image Plane
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('bfp')}
+                            className={`px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === 'bfp' ? 'border-brand-magenta text-white' : 'border-transparent text-gray-600 hover:text-gray-400'
+                                }`}
+                        >
+                            BFP Image Plane
+                    </div>
 
-                {/* Flex Column Layout - Robust Alignment */}
-                <div className="flex flex-row justify-center w-full h-full min-h-0 gap-4">
+                    {/* Flex Column Layout - Robust Alignment */}
+                    <div className="flex flex-row w-full h-full min-h-0 gap-4">
 
-                    {/* LEFT COLUMN: Image + X-Profile */}
-                    {/* Width is driven by the aspect-square of the image which fills the available height */}
-                    <div className="flex flex-col gap-4 h-full w-auto min-w-0">
+                        {/* LEFT COLUMN: Image + X-Profile */}
+                        {/* Width is driven by the aspect-square of the image which fills the available height */}
+                        <div className="flex flex-col gap-4 h-full w-auto min-w-0">
 
-                        {/* 1. Main Canvas (Top) - Dynamic Height (Explicit Calc), Square Aspect Ratio */}
-                        <div className="h-[calc(100%-256px)] aspect-square relative min-h-0 min-w-0">
-                            <div className="glass-card w-full h-full flex flex-col items-center justify-center relative overflow-hidden group border border-white/10 !p-0">
-                                <span className="absolute top-4 left-4 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
-                                    {activeTab === 'psf' ? 'Primary View' : 'Fourier Plane'}
-                                </span>
+                            {/* 1. Main Canvas (Top) - Dynamic Height (Explicit Calc), Square Aspect Ratio */}
+                            <div className="h-[calc(100%-256px)] aspect-square relative min-h-0 min-w-0">
+                                <div className="glass-card w-full h-full flex flex-col items-center justify-center relative overflow-hidden group border border-white/10 !p-0">
+                                    <span className="absolute top-4 left-4 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
+                                        {activeTab === 'psf' ? 'Primary View' : 'Fourier Plane'}
+                                    </span>
 
-                                {/* Loading / Calculating Overlay */}
-                                {(state === "LOADING" || calculating) && (
-                                    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
-                                        <div className="text-brand-cyan font-bold text-sm uppercase tracking-widest animate-pulse border border-brand-cyan/30 px-6 py-3 bg-black/80 rounded shadow-lg shadow-brand-cyan/20">
-                                            {state === "LOADING" ? "Loading Engine..." : "Calculating..."}
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="relative w-full h-full">
-                                    <canvas
-                                        ref={psfCanvasRef}
-                                        onClick={handleCanvasClick}
-                                        className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
-                                        style={{ imageRendering: 'pixelated' }}
-                                    />
-
-                                    {/* Crosshair Overlay */}
-                                    {profileAnalysis && (
-                                        <>
-                                            {/* Horizontal Line */}
-                                            <div
-                                                className="absolute w-full border-t border-brand-cyan/30 border-dashed pointer-events-none transition-all duration-75"
-                                                style={{
-                                                    top: `${((profileAnalysis.cy + 0.5) / profileAnalysis.height) * 100}%`,
-                                                    left: 0
-                                                }}
-                                            />
-                                            {/* Vertical Line */}
-                                            <div
-                                                className="absolute h-full border-l border-brand-magenta/30 border-dashed pointer-events-none transition-all duration-75"
-                                                style={{
-                                                    left: `${((profileAnalysis.cx + 0.5) / profileAnalysis.width) * 100}%`,
-                                                    top: 0
-                                                }}
-                                            />
-                                        </>
-                                    )}
-                                </div>
-
-                                {/* BFP Labels */}
-                                {activeTab === 'bfp' && params.NA > params.n_sample && (
-                                    <>
-                                        {/* UAF (Sub-critical) - Center */}
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-brand-cyan font-bold text-sm pointer-events-none drop-shadow-md select-none">
-                                            UAF
-                                        </div>
-
-                                        {/* SAF (Super-critical) - Top Edge */}
-                                        <div
-                                            className="absolute left-1/2 -translate-x-1/2 text-[10px] md:text-xs font-bold text-brand-magenta pointer-events-none drop-shadow-md select-none uppercase tracking-widest"
-                                            style={{
-                                                top: `calc(50% - (50% * ${params.n_sample / params.NA}) - 20px)`
-                                            }}
-                                        >
-                                            SAF
-                                        </div>
-                                    </>
-                                )}
-
-                                {/* Parameters Overlay */}
-                                <div className="absolute bottom-4 left-4 flex flex-col items-start gap-1 p-3 bg-black/80 border border-brand-cyan/20 pointer-events-none z-20 rounded-sm backdrop-blur-sm">
-                                    {activeTab === 'psf' ? (
-                                        <>
-                                            <div className="text-xs font-bold font-mono text-brand-cyan uppercase tracking-widest border-b border-brand-cyan/20 pb-1 mb-1 w-full">
-                                                Parameters
+                                    {/* Loading / Calculating Overlay */}
+                                    {(state === "LOADING" || calculating) && (
+                                        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+                                            <div className="text-brand-cyan font-bold text-sm uppercase tracking-widest animate-pulse border border-brand-cyan/30 px-6 py-3 bg-black/80 rounded shadow-lg shadow-brand-cyan/20">
+                                                {state === "LOADING" ? "Loading Engine..." : "Calculating..."}
                                             </div>
-                                            <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs font-bold font-mono whitespace-nowrap">
-                                                <span className="text-gray-500">NA:</span>
-                                                <span className="text-white text-right">{params.NA.toFixed(2)}</span>
-
-                                                <span className="text-gray-500">Mag:</span>
-                                                <span className="text-white text-right">{params.M_obj}x</span>
-
-                                                <span className="text-gray-500">λ:</span>
-                                                <span className="text-right" style={{ color: wavelengthToColor(params.lambda_vac) }}>
-                                                    {(params.lambda_vac * 1e9).toFixed(0)} nm
-                                                </span>
-
-                                                <span className="text-gray-500">Depth:</span>
-                                                <span className="text-white text-right">{(params.depth * 1e6).toFixed(1)} µm</span>
-
-                                                <span className="text-gray-500">Defocus:</span>
-                                                <span className="text-white text-right">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
-
-                                                <span className="text-brand-cyan/80 mt-1 pt-1 border-t border-brand-cyan/10">FOV:</span>
-                                                <span className="text-brand-cyan mt-1 pt-1 border-t border-brand-cyan/10 text-right">
-                                                    {(params.display_fov_um || 300).toFixed(0)} µm
-                                                </span>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="text-xs font-bold font-mono text-brand-magenta">
-                                            NA Limit: {params.NA.toFixed(2)}
                                         </div>
                                     )}
-                                </div>
-                            </div>
-                        </div>
 
-                        {/* 2. Horizontal Profile (Bottom) - Fixed Height */}
-                        <div className="glass-card !p-4 relative flex flex-col h-[240px] shrink-0 border-t border-brand-cyan/20">
-                            <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-cyan uppercase tracking-widest">
-                                X-Axis Intensity
-                            </span>
-                            <div className="flex-1 w-full min-h-0 pt-2">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <ComposedChart data={profileAnalysis?.hData || []} barCategoryGap={0} barGap={0}>
-                                        <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" vertical={false} />
-                                        <XAxis dataKey="x" hide />
-                                        <YAxis hide domain={[0, 'auto']} />
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
-                                            itemStyle={{ color: '#fff' }}
-                                            cursor={{ stroke: '#333' }}
+                                    <div className="relative w-full h-full">
+                                        <canvas
+                                            ref={psfCanvasRef}
+                                            onClick={handleCanvasClick}
+                                            className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
+                                            style={{ imageRendering: 'pixelated' }}
                                         />
-                                        <Bar dataKey="intensity" isAnimationActive={false}>
-                                            {profileAnalysis?.hData.map((entry: any, index: number) => (
-                                                <Cell
-                                                    key={`cell-${index}`}
-                                                    fill={wavelengthToColor(params.lambda_vac)}
-                                                    fillOpacity={profileAnalysis.hMax ? (entry.intensity / profileAnalysis.hMax) : 0}
-                                                />
-                                            ))}
-                                        </Bar>
-                                        {activeTab === 'psf' && (
-                                            <Line
-                                                dataKey="fit"
-                                                type="monotone"
-                                                stroke="#fff"
-                                                strokeWidth={1.5}
-                                                strokeDasharray="4 4"
-                                                dot={false}
-                                                isAnimationActive={false}
-                                            />
-                                        )}
-                                    </ComposedChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    </div> {/* End Left Column */}
 
-                    {/* RIGHT COLUMN: Y-Profile + Stats */}
-                    {/* Fixed Width */}
-                    <div className="flex flex-col gap-4 h-full w-[240px] shrink-0">
-
-                        {/* 3. Vertical Profile (Top) - Dynamic Height (Matches Image) */}
-                        <div className="glass-card !p-4 relative flex flex-col flex-1 min-h-0 border-l border-brand-magenta/20">
-                            <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-magenta uppercase tracking-widest">
-                                Y-Axis Intensity
-                            </span>
-                            <div className="flex-1 w-full min-h-0 pt-4">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <ComposedChart layout="vertical" data={profileAnalysis?.vData || []} barCategoryGap={0} barGap={0}>
-                                        <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" horizontal={false} />
-                                        <XAxis type="number" hide domain={[0, 'auto']} />
-                                        <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
-                                            itemStyle={{ color: '#fff' }}
-                                            cursor={{ stroke: '#333' }}
-                                        />
-                                        <Bar dataKey="intensity" isAnimationActive={false}>
-                                            {profileAnalysis?.vData.map((entry: any, index: number) => (
-                                                <Cell
-                                                    key={`cell-${index}`}
-                                                    fill={wavelengthToColor(params.lambda_vac)}
-                                                    fillOpacity={profileAnalysis.vMax ? (entry.intensity / profileAnalysis.vMax) : 0}
-                                                />
-                                            ))}
-                                        </Bar>
-                                        {activeTab === 'psf' && (
-                                            <Line
-                                                dataKey="fit"
-                                                type="monotone"
-                                                stroke="#fff"
-                                                strokeWidth={1.5}
-                                                strokeDasharray="4 4"
-                                                dot={false}
-                                                isAnimationActive={false}
-                                            />
-                                        )}
-                                    </ComposedChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-
-                        {/* 4. Stats Panel (Bottom) - Fixed Height */}
-                        <div className="glass-card !p-4 flex flex-col justify-center gap-2 h-[240px] shrink-0">
-                            <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/10 pb-1">
-                                {activeTab === 'psf' ? "Gaussian Fit" : "BFP Analysis"}
-                            </h4>
-
-                            {activeTab === 'psf' ? (
-                                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
-                                    <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
-                                    <div className="text-right text-gray-600 text-[10px] uppercase">nm</div>
-
-                                    <div className="text-brand-cyan font-mono">σ (X)</div>
-                                    <div className="text-right font-mono text-white">
-                                        {(profileAnalysis?.hStats?.sigma
-                                            ? (profileAnalysis.hStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                            : 0).toFixed(1)}
-                                    </div>
-
-                                    <div className="text-brand-magenta font-mono">σ (Y)</div>
-                                    <div className="text-right font-mono text-white">
-                                        {(profileAnalysis?.vStats?.sigma
-                                            ? (profileAnalysis.vStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                            : 0).toFixed(1)}
-                                    </div>
-
-                                    <div className="col-span-2 h-px bg-white/5 my-1" />
-
-                                    <div className="text-gray-500 font-mono">FWHM X</div>
-                                    <div className="text-right font-mono text-white">
-                                        {(profileAnalysis?.hStats?.fwhm
-                                            ? (profileAnalysis.hStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                            : 0).toFixed(1)}
-                                    </div>
-                                    <div className="text-gray-500 font-mono">FWHM Y</div>
-                                    <div className="text-right font-mono text-white">
-                                        {(profileAnalysis?.vStats?.fwhm
-                                            ? (profileAnalysis.vStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                            : 0).toFixed(1)}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col space-y-3">
-                                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
-                                        <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
-                                        <div className="text-right text-gray-600 text-[10px] uppercase">Value</div>
-
-                                        {params.NA <= params.n_sample ? (
-                                            <div className="col-span-2 text-center text-gray-500 py-2">
-                                                No SAF (NA &lt; n_sample)
-                                            </div>
-                                        ) : simResult?.saf_ratio !== undefined ? (
+                                        {/* Crosshair Overlay */}
+                                        {profileAnalysis && (
                                             <>
-                                                <div className="text-brand-magenta font-mono font-bold">SAF Ratio</div>
-                                                <div className="text-right font-mono text-white font-bold">
-                                                    {Number(simResult.saf_ratio).toFixed(3)}
+                                                {/* Horizontal Line */}
+                                                <div
+                                                    className="absolute w-full border-t border-brand-cyan/30 border-dashed pointer-events-none transition-all duration-75"
+                                                    style={{
+                                                        top: `${((profileAnalysis.cy + 0.5) / profileAnalysis.height) * 100}%`,
+                                                        left: 0
+                                                    }}
+                                                />
+                                                {/* Vertical Line */}
+                                                <div
+                                                    className="absolute h-full border-l border-brand-magenta/30 border-dashed pointer-events-none transition-all duration-75"
+                                                    style={{
+                                                        left: `${((profileAnalysis.cx + 0.5) / profileAnalysis.width) * 100}%`,
+                                                        top: 0
+                                                    }}
+                                                />
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* BFP Labels */}
+                                    {activeTab === 'bfp' && params.NA > params.n_sample && (
+                                        <>
+                                            {/* UAF (Sub-critical) - Center */}
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-brand-cyan font-bold text-sm pointer-events-none drop-shadow-md select-none">
+                                                UAF
+                                            </div>
+
+                                            {/* SAF (Super-critical) - Top Edge */}
+                                            <div
+                                                className="absolute left-1/2 -translate-x-1/2 text-[10px] md:text-xs font-bold text-brand-magenta pointer-events-none drop-shadow-md select-none uppercase tracking-widest"
+                                                style={{
+                                                    top: `calc(50% - (50% * ${params.n_sample / params.NA}) - 20px)`
+                                                }}
+                                            >
+                                                SAF
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {/* Parameters Overlay */}
+                                    <div className="absolute bottom-4 left-4 flex flex-col items-start gap-1 p-3 bg-black/80 border border-brand-cyan/20 pointer-events-none z-20 rounded-sm backdrop-blur-sm">
+                                        {activeTab === 'psf' ? (
+                                            <>
+                                                <div className="text-xs font-bold font-mono text-brand-cyan uppercase tracking-widest border-b border-brand-cyan/20 pb-1 mb-1 w-full">
+                                                    Parameters
                                                 </div>
-                                                <div className="col-span-2 text-[10px] text-gray-500 italic mt-1">
-                                                    Ratio = SAF / UAF Integration
+                                                <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs font-bold font-mono whitespace-nowrap">
+                                                    <span className="text-gray-500">NA:</span>
+                                                    <span className="text-white text-right">{params.NA.toFixed(2)}</span>
+
+                                                    <span className="text-gray-500">Mag:</span>
+                                                    <span className="text-white text-right">{params.M_obj}x</span>
+
+                                                    <span className="text-gray-500">λ:</span>
+                                                    <span className="text-right" style={{ color: wavelengthToColor(params.lambda_vac) }}>
+                                                        {(params.lambda_vac * 1e9).toFixed(0)} nm
+                                                    </span>
+
+                                                    <span className="text-gray-500">Depth:</span>
+                                                    <span className="text-white text-right">{(params.depth * 1e6).toFixed(1)} µm</span>
+
+                                                    <span className="text-gray-500">Defocus:</span>
+                                                    <span className="text-white text-right">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
+
+                                                    <span className="text-brand-cyan/80 mt-1 pt-1 border-t border-brand-cyan/10">FOV:</span>
+                                                    <span className="text-brand-cyan mt-1 pt-1 border-t border-brand-cyan/10 text-right">
+                                                        {(params.display_fov_um || 300).toFixed(0)} µm
+                                                    </span>
                                                 </div>
                                             </>
                                         ) : (
-                                            <div className="col-span-2 text-center text-gray-500 py-2 animate-pulse">
-                                                Calculating SAF...
+                                            <div className="text-xs font-bold font-mono text-brand-magenta">
+                                                NA Limit: {params.NA.toFixed(2)}
                                             </div>
                                         )}
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    </div> {/* End Right Column */}
+                            </div>
 
-                </div>
+                            {/* 2. Horizontal Profile (Bottom) - Fixed Height */}
+                            <div className="glass-card !p-4 relative flex flex-col h-[240px] shrink-0 border-t border-brand-cyan/20">
+                                <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-cyan uppercase tracking-widest">
+                                    X-Axis Intensity
+                                </span>
+                                <div className="flex-1 w-full min-h-0 pt-2">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <ComposedChart data={profileAnalysis?.hData || []} barCategoryGap={0} barGap={0}>
+                                            <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" vertical={false} />
+                                            <XAxis dataKey="x" hide />
+                                            <YAxis hide domain={[0, 'auto']} />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
+                                                itemStyle={{ color: '#fff' }}
+                                                cursor={{ stroke: '#333' }}
+                                            />
+                                            <Bar dataKey="intensity" isAnimationActive={false}>
+                                                {profileAnalysis?.hData.map((entry: any, index: number) => (
+                                                    <Cell
+                                                        key={`cell-${index}`}
+                                                        fill={wavelengthToColor(params.lambda_vac)}
+                                                        fillOpacity={profileAnalysis.hMax ? (entry.intensity / profileAnalysis.hMax) : 0}
+                                                    />
+                                                ))}
+                                            </Bar>
+                                            {activeTab === 'psf' && (
+                                                <Line
+                                                    dataKey="fit"
+                                                    type="monotone"
+                                                    stroke="#fff"
+                                                    strokeWidth={1.5}
+                                                    strokeDasharray="4 4"
+                                                    dot={false}
+                                                    isAnimationActive={false}
+                                                />
+                                            )}
+                                        </ComposedChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </div> {/* End Left Column */}
+
+                        {/* RIGHT COLUMN: Y-Profile + Stats */}
+                        {/* Fixed Width */}
+                        <div className="flex flex-col gap-4 h-full w-[240px] shrink-0">
+
+                            {/* 3. Vertical Profile (Top) - Dynamic Height (Matches Image) */}
+                            <div className="glass-card !p-4 relative flex flex-col flex-1 min-h-0 border-l border-brand-magenta/20">
+                                <span className="absolute top-2 left-4 text-[10px] font-mono text-brand-magenta uppercase tracking-widest">
+                                    Y-Axis Intensity
+                                </span>
+                                <div className="flex-1 w-full min-h-0 pt-4">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <ComposedChart layout="vertical" data={profileAnalysis?.vData || []} barCategoryGap={0} barGap={0}>
+                                            <CartesianGrid strokeDasharray="2 2" stroke="#1a1a1a" horizontal={false} />
+                                            <XAxis type="number" hide domain={[0, 'auto']} />
+                                            <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
+                                                itemStyle={{ color: '#fff' }}
+                                                cursor={{ stroke: '#333' }}
+                                            />
+                                            <Bar dataKey="intensity" isAnimationActive={false}>
+                                                {profileAnalysis?.vData.map((entry: any, index: number) => (
+                                                    <Cell
+                                                        key={`cell-${index}`}
+                                                        fill={wavelengthToColor(params.lambda_vac)}
+                                                        fillOpacity={profileAnalysis.vMax ? (entry.intensity / profileAnalysis.vMax) : 0}
+                                                    />
+                                                ))}
+                                            </Bar>
+                                            {activeTab === 'psf' && (
+                                                <Line
+                                                    dataKey="fit"
+                                                    type="monotone"
+                                                    stroke="#fff"
+                                                    strokeWidth={1.5}
+                                                    strokeDasharray="4 4"
+                                                    dot={false}
+                                                    isAnimationActive={false}
+                                                />
+                                            )}
+                                        </ComposedChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            {/* 4. Stats Panel (Bottom) - Fixed Height */}
+                            <div className="glass-card !p-4 flex flex-col justify-center gap-2 h-[240px] shrink-0">
+                                <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/10 pb-1">
+                                    {activeTab === 'psf' ? "Gaussian Fit" : "BFP Analysis"}
+                                </h4>
+
+                                {activeTab === 'psf' ? (
+                                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                                        <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
+                                        <div className="text-right text-gray-600 text-[10px] uppercase">nm</div>
+
+                                        <div className="text-brand-cyan font-mono">σ (X)</div>
+                                        <div className="text-right font-mono text-white">
+                                            {(profileAnalysis?.hStats?.sigma
+                                                ? (profileAnalysis.hStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                : 0).toFixed(1)}
+                                        </div>
+
+                                        <div className="text-brand-magenta font-mono">σ (Y)</div>
+                                        <div className="text-right font-mono text-white">
+                                            {(profileAnalysis?.vStats?.sigma
+                                                ? (profileAnalysis.vStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                : 0).toFixed(1)}
+                                        </div>
+
+                                        <div className="col-span-2 h-px bg-white/5 my-1" />
+
+                                        <div className="text-gray-500 font-mono">FWHM X</div>
+                                        <div className="text-right font-mono text-white">
+                                            {(profileAnalysis?.hStats?.fwhm
+                                                ? (profileAnalysis.hStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                : 0).toFixed(1)}
+                                        </div>
+                                        <div className="text-gray-500 font-mono">FWHM Y</div>
+                                        <div className="text-right font-mono text-white">
+                                            {(profileAnalysis?.vStats?.fwhm
+                                                ? (profileAnalysis.vStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                : 0).toFixed(1)}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col space-y-3">
+                                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                                            <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
+                                            <div className="text-right text-gray-600 text-[10px] uppercase">Value</div>
+
+                                            {params.NA <= params.n_sample ? (
+                                                <div className="col-span-2 text-center text-gray-500 py-2">
+                                                    No SAF (NA &lt; n_sample)
+                                                </div>
+                                            ) : simResult?.saf_ratio !== undefined ? (
+                                                <>
+                                                    <div className="text-brand-magenta font-mono font-bold">SAF Ratio</div>
+                                                    <div className="text-right font-mono text-white font-bold">
+                                                        {Number(simResult.saf_ratio).toFixed(3)}
+                                                    </div>
+                                                    <div className="col-span-2 text-[10px] text-gray-500 italic mt-1">
+                                                        Ratio = SAF / UAF Integration
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="col-span-2 text-center text-gray-500 py-2 animate-pulse">
+                                                    Calculating SAF...
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div> {/* End Right Column */}
+
+                    </div>
+                </div> {/* End Centered Wrapper */}
             </div>
 
             {/* DEBUG SECTION */}
