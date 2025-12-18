@@ -894,7 +894,11 @@ export default function PSFSimulator() {
                                     <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
                                     <div className="text-right text-gray-600 text-[10px] uppercase">Value</div>
 
-                                    {params.NA > params.n_sample && simResult?.saf_ratio !== undefined ? (
+                                    {params.NA <= params.n_sample ? (
+                                        <div className="col-span-2 text-center text-gray-500 py-2">
+                                            No SAF (NA &lt; n_sample)
+                                        </div>
+                                    ) : simResult?.saf_ratio !== undefined ? (
                                         <>
                                             <div className="text-brand-magenta font-mono font-bold">SAF Ratio</div>
                                             <div className="text-right font-mono text-white font-bold">
@@ -905,8 +909,8 @@ export default function PSFSimulator() {
                                             </div>
                                         </>
                                     ) : (
-                                        <div className="col-span-2 text-center text-gray-500 py-2">
-                                            No SAF (NA &lt; n_sample)
+                                        <div className="col-span-2 text-center text-gray-500 py-2 animate-pulse">
+                                            Calculating SAF...
                                         </div>
                                     )}
                                 </div>
