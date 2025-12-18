@@ -254,13 +254,23 @@ export default function PSFSimulator() {
     // Sync inputValues to params when valid number is typed
     const handleInputChange = (key: keyof typeof inputValues, val: string) => {
         setInputValues(prev => ({ ...prev, [key]: val }));
+    };
 
+    const commitInput = (key: keyof typeof inputValues) => {
+        const val = inputValues[key];
         const num = parseFloat(val);
-        if (!isNaN(num) && val.trim() !== "" && !val.endsWith(".")) {
+        if (!isNaN(num) && val.trim() !== "") {
             setParams(prev => {
                 if (prev[key as keyof SimulationParams] === num) return prev;
                 return { ...prev, [key]: num };
             });
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent, key: keyof typeof inputValues) => {
+        if (e.key === 'Enter') {
+            commitInput(key);
+            (e.target as HTMLInputElement).blur();
         }
     };
 
@@ -445,6 +455,8 @@ export default function PSFSimulator() {
                                     type="text"
                                     value={inputValues[key as keyof typeof inputValues]}
                                     onChange={e => handleInputChange(key as any, e.target.value)}
+                                    onKeyDown={e => handleKeyDown(e, key as any)}
+                                    // onBlur={() => commitInput(key as any)} // Optional: Auto-commit on blur
                                     className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
                                 />
                             </div>
@@ -464,6 +476,7 @@ export default function PSFSimulator() {
                                 type="text"
                                 value={inputValues.n_sample}
                                 onChange={e => handleInputChange('n_sample', e.target.value)}
+                                onKeyDown={e => handleKeyDown(e, 'n_sample')}
                                 className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
                             />
                         </div>
@@ -495,6 +508,7 @@ export default function PSFSimulator() {
                                 type="text"
                                 value={inputValues.cam_pixel_um}
                                 onChange={e => handleInputChange('cam_pixel_um', e.target.value)}
+                                onKeyDown={e => handleKeyDown(e, 'cam_pixel_um')}
                                 className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
                             />
                         </div>
