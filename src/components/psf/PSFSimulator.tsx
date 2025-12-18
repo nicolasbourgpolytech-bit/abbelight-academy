@@ -698,11 +698,41 @@ export default function PSFSimulator() {
 
                         </div>
 
-                        <div className="absolute bottom-4 left-4 text-[10px] font-mono text-brand-cyan bg-black/80 px-2 py-1 border border-brand-cyan/20 pointer-events-none">
-                            {activeTab === 'psf'
-                                ? `FOV: ${(params.display_fov_um || 300).toFixed(0)} µm`
-                                : `NA Limit: ${params.NA.toFixed(2)}`
-                            }
+                        <div className="absolute bottom-4 left-4 flex flex-col items-start gap-1 p-2 bg-black/80 border border-brand-cyan/20 pointer-events-none z-20">
+                            {activeTab === 'psf' ? (
+                                <>
+                                    <div className="text-[10px] font-mono text-brand-cyan uppercase tracking-widest border-b border-brand-cyan/20 pb-1 mb-1 w-full">
+                                        Parameters
+                                    </div>
+                                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[10px] font-mono whitespace-nowrap">
+                                        <span className="text-gray-500">NA:</span>
+                                        <span className="text-white text-right">{params.NA.toFixed(2)}</span>
+
+                                        <span className="text-gray-500">Mag:</span>
+                                        <span className="text-white text-right">{params.M_obj}x</span>
+
+                                        <span className="text-gray-500">λ:</span>
+                                        <span className="text-right" style={{ color: wavelengthToColor(params.lambda_vac) }}>
+                                            {(params.lambda_vac * 1e9).toFixed(0)} nm
+                                        </span>
+
+                                        <span className="text-gray-500">Depth:</span>
+                                        <span className="text-white text-right">{(params.depth * 1e6).toFixed(1)} µm</span>
+
+                                        <span className="text-gray-500">Defocus:</span>
+                                        <span className="text-white text-right">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
+
+                                        <span className="text-brand-cyan/80 mt-1 pt-1 border-t border-brand-cyan/10">FOV:</span>
+                                        <span className="text-brand-cyan mt-1 pt-1 border-t border-brand-cyan/10 text-right">
+                                            {(params.display_fov_um || 300).toFixed(0)} µm
+                                        </span>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="text-[10px] font-mono text-brand-magenta">
+                                    NA Limit: {params.NA.toFixed(2)}
+                                </div>
+                            )}
                         </div>
                     </div>
 
