@@ -439,11 +439,7 @@ export default function PSFSimulator() {
             {/* Sidebar Controls */}
             <div className="w-full lg:w-80 shrink-0 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar pt-[58px]">
 
-                {state === "LOADING" && (
-                    <div className="p-4 bg-primary/10 border border-primary text-primary animate-pulse text-xs uppercase tracking-widest font-bold">
-                        Loading Engine...
-                    </div>
-                )}
+
                 {state === "ERROR" && (
                     <div className="p-4 bg-red-900/20 border border-red-500 text-red-500 text-xs font-mono">
                         <strong>ERROR:</strong> {pyodideError || "Simulator failed."}
@@ -659,6 +655,15 @@ export default function PSFSimulator() {
                         <span className="absolute top-4 left-4 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none z-10">
                             {activeTab === 'psf' ? 'Primary View' : 'Fourier Plane'}
                         </span>
+
+                        {/* Loading / Calculating Overlay */}
+                        {(state === "LOADING" || calculating) && (
+                            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+                                <div className="text-brand-cyan font-bold text-sm uppercase tracking-widest animate-pulse border border-brand-cyan/30 px-6 py-3 bg-black/80 rounded shadow-lg shadow-brand-cyan/20">
+                                    {state === "LOADING" ? "Loading Engine..." : "Calculating..."}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="relative h-full aspect-square p-4 mx-auto">
                             <canvas
