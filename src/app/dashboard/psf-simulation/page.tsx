@@ -25,14 +25,14 @@ export default function PSFSimulationPage() {
                 </div>
             </header>
 
-            <main className="flex-1 w-full max-w-[1600px] mx-auto flex flex-col gap-6">
+            <main className="flex-1 w-full flex flex-col gap-6">
                 {/* Introduction / Info Section */}
                 <div className="mb-4 bg-white/5 border border-white/10 rounded-2xl p-4 md:p-6 backdrop-blur-sm relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
                     <div className="relative z-10">
                         <h2 className="text-lg font-semibold text-white mb-2">High-Accuracy Vectorial PSF Simulation</h2>
-                        <div className="text-sm text-gray-400 max-w-4xl leading-relaxed space-y-2">
+                        <div className="text-sm text-gray-400 leading-relaxed space-y-2">
                             <p>
                                 This interactive simulation calculates the PSF and BFP patterns using the <span className="text-white font-medium">rigorous vectorial physical model</span> by <span className="text-white font-medium">W. E. Moerner et al. (Nobel Prize 2014)</span>.
                             </p>
