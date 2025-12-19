@@ -262,7 +262,7 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
         for (let y = 0; y < h; y++) col[y] = dataGrid[y] ? dataGrid[y][cx] : 0;
 
         // Stats
-        let hStats = null, vStats = null, hFit = [], vFit = [];
+        let hStats = null, vStats = null, hFit: any[] = [], vFit: any[] = [];
         if (fitProfiles && !isPhase) { // Only fit intensity
             hStats = calculateGaussStats(row);
             vStats = calculateGaussStats(col);
