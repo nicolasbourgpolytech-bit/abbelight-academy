@@ -510,11 +510,7 @@ export default function PSFSimulator() {
         setBfpCrosshair({ x: Math.floor(x * (w / rect.width)), y: Math.floor(y * (h / rect.height)) });
     };
 
-    // Calculate SAF Ratio
-    const safRatio = useMemo(() => {
-        if (!simResult?.bfp) return 0;
-        return calculateSAFRatio(simResult.bfp, params.NA, params.n_sample);
-    }, [simResult, params]);
+
 
     return (
         <div className="flex flex-col lg:flex-row gap-6 h-full font-sans justify-center">
@@ -794,7 +790,7 @@ export default function PSFSimulator() {
                                 </div>
                             }
                             dataGrid={bfpMode === "intensity" ? simResult?.bfp : simResult?.bfp_phase}
-                            color={bfpMode === "intensity" ? "#eab308" : "#ffffff"}
+                            color={bfpMode === "intensity" ? wavelengthToColor(params.lambda_vac) : "#ffffff"}
                             crosshair={bfpCrosshair}
                             onCanvasClick={handleBfpClick}
                             isPhase={bfpMode === "phase"}
@@ -814,10 +810,19 @@ export default function PSFSimulator() {
                                         </div>
                                     )}
 
-                                    {/* SAF / UAF Labels for Intensity */}
+                                    {/* SAF / UAF Visualization for Intensity */}
                                     {bfpMode === "intensity" && params.NA > params.n_sample && (
                                         <>
-                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-brand-cyan/20 font-bold text-4xl pointer-events-none select-none">UAF</div>
+                                            {/* Critical Angle Ring */}
+                                            <div
+                                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40 border-dashed pointer-events-none z-10 box-border shadow-[0_0_10px_rgba(255,255,255,0.2)]"
+                                                style={{
+                                                    width: `${(params.n_sample / params.NA) * 100}%`,
+                                                    height: `${(params.n_sample / params.NA) * 100}%`
+                                                }}
+                                            />
+                                            {/* Labels: SAF is OUTSIDE, UAF is INSIDE */}
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/30 font-bold text-2xl pointer-events-none select-none">UAF</div>
                                         </>
                                     )}
                                 </>
@@ -827,7 +832,9 @@ export default function PSFSimulator() {
                                     {bfpMode === "intensity" ? (
                                         <div className="flex flex-col items-center justify-center h-full">
                                             <span className="text-xs text-brand-cyan uppercase tracking-widest font-bold">SAF Ratio</span>
-                                            <span className="text-3xl font-mono text-white font-light">{(safRatio * 100).toFixed(1)}%</span>
+                                            <span className="text-3xl font-mono text-white font-light">
+                                                {(simResult?.saf_ratio !== undefined ? simResult.saf_ratio * 100 : 0).toFixed(1)}%
+                                            </span>
                                         </div>
                                     ) : (
                                         simResult?.stats && (
