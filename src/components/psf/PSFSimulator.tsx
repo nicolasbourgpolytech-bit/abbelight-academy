@@ -297,14 +297,14 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
     };
 
     return (
-        <div className="grid gap-4 w-full h-full max-w-full max-h-full aspect-square"
+        <div className="grid gap-4 w-auto h-auto max-w-full max-h-full aspect-square mx-auto"
             style={{
                 gridTemplateColumns: 'minmax(0, 1fr) 200px',
                 gridTemplateRows: 'minmax(0, 1fr) 200px',
             }}
         >
             {/* 1. TOP LEFT: IMAGE */}
-            <div className="relative w-full h-full bg-black/20 border border-white/10 group overflow-hidden" ref={containerRef}>
+            <div className="relative w-full h-full bg-black/20 border border-white/10 group overflow-hidden aspect-square flex items-center justify-center" ref={containerRef}>
                 <div className="absolute top-0 left-0 right-0 p-2 z-10 flex justify-between items-start pointer-events-none">
                     {title}
                 </div>
@@ -312,7 +312,7 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
                 <canvas
                     ref={canvasRef}
                     onClick={onCanvasClick}
-                    className="w-full h-full image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
+                    className="w-full h-full aspect-square object-contain image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
                     style={{ imageRendering: 'pixelated' }}
                 />
 
