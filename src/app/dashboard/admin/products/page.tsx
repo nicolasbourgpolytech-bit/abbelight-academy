@@ -192,6 +192,16 @@ export default function ProductsAdminPage() {
                         <div className="bg-gray-900/40 border border-white/10 rounded-xl p-6 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Product Name</label>
+                                    <input
+                                        type="text"
+                                        value={editingProduct?.name || ""}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                                        className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                        placeholder="e.g. SAFe 360"
+                                    />
+                                </div>
+                                <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Category</label>
                                     <select
                                         value={editingProduct?.category || "SAFe instrument"}
