@@ -54,6 +54,14 @@ export async function GET(request: Request) {
     // Add category column if it doesn't exist (for existing tables)
     await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR(255)`;
 
+    // Add subcategory and optical parameters for Objective lenses
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS subcategory VARCHAR(255)`;
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS reference VARCHAR(255)`;
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS magnification INTEGER`;
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS na FLOAT`;
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS immersion VARCHAR(255)`;
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS tube_lens_focal_length FLOAT`;
+
     return NextResponse.json({ message: "Database updated successfully!" }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error }, { status: 500 });

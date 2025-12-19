@@ -111,7 +111,19 @@ export default function ProductsAdminPage() {
                             <h2 className="text-2xl font-bold text-white">Products List</h2>
                             <button
                                 onClick={() => {
-                                    setEditingProduct({ name: "", description: "", link: "", image_url: "", category: "SAFe instrument" });
+                                    setEditingProduct({
+                                        name: "",
+                                        description: "",
+                                        link: "",
+                                        image_url: "",
+                                        category: "SAFe instrument",
+                                        subcategory: "",
+                                        reference: "",
+                                        magnification: null,
+                                        na: null,
+                                        immersion: "",
+                                        tube_lens_focal_length: null
+                                    });
                                     setIsEditingProduct(true);
                                 }}
                                 className="bg-primary text-black px-4 py-2 rounded-lg font-bold text-sm hover:bg-white transition-colors flex items-center gap-2"
@@ -169,16 +181,6 @@ export default function ProductsAdminPage() {
                         <div className="bg-gray-900/40 border border-white/10 rounded-xl p-6 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Product Name</label>
-                                    <input
-                                        type="text"
-                                        value={editingProduct?.name || ""}
-                                        onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                                        className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
-                                        placeholder="e.g. SAFe 360"
-                                    />
-                                </div>
-                                <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Category</label>
                                     <select
                                         value={editingProduct?.category || "SAFe instrument"}
@@ -191,7 +193,90 @@ export default function ProductsAdminPage() {
                                         <option value="3rd party instrument">3rd party instrument</option>
                                     </select>
                                 </div>
+
+                                {editingProduct?.category === "3rd party instrument" && (
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Subcategory</label>
+                                        <select
+                                            value={editingProduct?.subcategory || ""}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, subcategory: e.target.value })}
+                                            className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                        >
+                                            <option value="">-- Select --</option>
+                                            <option value="Objective lens">Objective lens</option>
+                                            <option value="Microscope body">Microscope body</option>
+                                            <option value="Camera">Camera</option>
+                                            <option value="Light source">Light source</option>
+                                        </select>
+                                    </div>
+                                )}
                             </div>
+
+                            {editingProduct?.category === "3rd party instrument" && editingProduct?.subcategory === "Objective lens" && (
+                                <div className="space-y-6 border-t border-white/10 pt-6 mt-6">
+                                    <h3 className="text-lg font-bold text-primary">Optical Parameters</h3>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Reference</label>
+                                        <input
+                                            type="text"
+                                            value={editingProduct?.reference || ""}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, reference: e.target.value })}
+                                            className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                            placeholder="e.g. OBJ-1234"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Magnification (4-100)</label>
+                                            <input
+                                                type="number"
+                                                min="4"
+                                                max="100"
+                                                value={editingProduct?.magnification || ""}
+                                                onChange={(e) => setEditingProduct({ ...editingProduct, magnification: parseInt(e.target.value) })}
+                                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">NA (0.2-1.7)</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="0.2"
+                                                max="1.7"
+                                                value={editingProduct?.na || ""}
+                                                onChange={(e) => setEditingProduct({ ...editingProduct, na: parseFloat(e.target.value) })}
+                                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Immersion Medium</label>
+                                            <select
+                                                value={editingProduct?.immersion || ""}
+                                                onChange={(e) => setEditingProduct({ ...editingProduct, immersion: e.target.value })}
+                                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                            >
+                                                <option value="">-- Select --</option>
+                                                <option value="Air">Air (n=1)</option>
+                                                <option value="Water">Water (n=1.33)</option>
+                                                <option value="Silicon oil">Silicon oil (n=1.4)</option>
+                                                <option value="Oil">Oil (n=1.518)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tube Lens Focal Length (mm)</label>
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                value={editingProduct?.tube_lens_focal_length || ""}
+                                                onChange={(e) => setEditingProduct({ ...editingProduct, tube_lens_focal_length: parseFloat(e.target.value) })}
+                                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Description</label>
                                 <textarea
