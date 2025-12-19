@@ -536,7 +536,7 @@ export default function PSFSimulator() {
 
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 h-screen w-full overflow-hidden font-sans justify-center bg-black fixed inset-0 z-0">
+        <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-80px)] w-full overflow-hidden font-sans justify-center relative">
             {/* Sidebar Controls */}
             {/* Sidebar Controls */}
             {/* Sidebar Controls */}
