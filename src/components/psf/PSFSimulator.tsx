@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { usePyodide } from './usePyodide';
+import { OBJECTIVES, ObjectiveLens } from '@/data/objectives';
 import { ComposedChart, Bar, BarChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, LabelList } from 'recharts';
 
 // --- Types ---
@@ -11,7 +12,12 @@ interface SimulationParams {
     n_imm: number;
     n_sample: number;
     M_obj: number;
-    f_tube: number;
+    lambda_vac: number; // meters
+    n_imm: number;
+    n_sample: number;
+    M_obj: number;
+    f_tube: number; // meters
+    z_defocus: number; // meters
     z_defocus: number; // meters
     astigmatism: "None" | "Weak" | "Strong";
     cam_pixel_um: number;
@@ -75,30 +81,33 @@ const AccordionSection: React.FC<{ title: string; children: React.ReactNode; def
 
 // --- Constants ---
 const DEFAULT_PARAMS: SimulationParams = {
-    NA: 1.49,
-    lambda_vac: 600e-9,
-    n_imm: 1.518,
-    n_sample: 1.33,
-    M_obj: 100,
-    f_tube: 0.180,
-    z_defocus: 0,
-    astigmatism: "None",
-    cam_pixel_um: 6.5,
-    oversampling: 3,
-    display_fov_um: 300,
-    depth: 0,
-    correction_sa: 0,
-};
+    const DEFAULT_OBJECTIVE = OBJECTIVES[0];
 
-// --- Helpers ---
-function wavelengthToColor(wavelengthM: number): string {
-    const nm = wavelengthM * 1e9;
-    if (nm < 450) return "#8B5CF6"; // Violet
-    if (nm < 495) return "#06b6d4"; // Blue/Cyan
-    if (nm < 570) return "#22c55e"; // Green
-    if (nm < 590) return "#eab308"; // Yellow
-    if (nm < 620) return "#f97316"; // Orange
-    return "#ef4444"; // Red
+    const DEFAULT_PARAMS: SimulationParams = {
+        NA: DEFAULT_OBJECTIVE.NA,
+        lambda_vac: 600e-9,
+        n_imm: DEFAULT_OBJECTIVE.n_imm,
+        n_sample: 1.33,
+        M_obj: DEFAULT_OBJECTIVE.magnification,
+        f_tube: DEFAULT_OBJECTIVE.f_tube_mm / 1000, // Convert mm to meters
+        z_defocus: 0,
+        astigmatism: "None",
+        cam_pixel_um: 6.5,
+        oversampling: 3,
+        display_fov_um: 300,
+        depth: 0,
+        correction_sa: 0,
+    };
+
+    // --- Helpers ---
+    function wavelengthToColor(wavelengthM: number): string {
+        const nm = wavelengthM * 1e9;
+if (nm < 450) return "#8B5CF6"; // Violet
+if (nm < 495) return "#06b6d4"; // Blue/Cyan
+if (nm < 570) return "#22c55e"; // Green
+if (nm < 590) return "#eab308"; // Yellow
+if (nm < 620) return "#f97316"; // Orange
+return "#ef4444"; // Red
 }
 
 function drawMatrix(
@@ -443,454 +452,490 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
 
 export default function PSFSimulator() {
     const { state, runSimulation, error: pyodideError } = usePyodide();
-    const [params, setParams] = useState<SimulationParams>(DEFAULT_PARAMS);
+    export default function PSFSimulator() {
+        const { state, runSimulation, error: pyodideError } = usePyodide();
+        const [params, setParams] = useState<SimulationParams>(DEFAULT_PARAMS);
+        const [selectedObjectiveId, setSelectedObjectiveId] = useState<string>(DEFAULT_OBJECTIVE.id);
 
-    // View States
-    const [psfCrosshair, setPsfCrosshair] = useState<{ x: number, y: number } | null>(null);
-    const [bfpCrosshair, setBfpCrosshair] = useState<{ x: number, y: number } | null>(null);
-    const [bfpMode, setBfpMode] = useState<"intensity" | "phase">("intensity");
+        const selectedObjective = useMemo(() =>
+            OBJECTIVES.find(o => o.id === selectedObjectiveId) || DEFAULT_OBJECTIVE,
+            [selectedObjectiveId]);
 
-    // Inputs
-    const [inputValues, setInputValues] = useState({
-        NA: DEFAULT_PARAMS.NA.toString(),
-        M_obj: DEFAULT_PARAMS.M_obj.toString(),
-        n_imm: DEFAULT_PARAMS.n_imm.toString(),
-        n_sample: DEFAULT_PARAMS.n_sample.toString(),
-        cam_pixel_um: DEFAULT_PARAMS.cam_pixel_um.toString(),
-        depth: (DEFAULT_PARAMS.depth * 1e6).toString(),
-    });
+        // Update params when objective changes
+        useEffect(() => {
+            setParams(prev => ({
+                ...prev,
+                NA: selectedObjective.NA,
+                M_obj: selectedObjective.magnification,
+                n_imm: selectedObjective.n_imm,
+                f_tube: selectedObjective.f_tube_mm / 1000
+            }));
+        }, [selectedObjective]);
 
-    const [simResult, setSimResult] = useState<any>(null);
-    const [calculating, setCalculating] = useState(false);
-    const [lastError, setLastError] = useState<string | null>(null);
+        // View States
+        const [psfCrosshair, setPsfCrosshair] = useState<{ x: number, y: number } | null>(null);
+        const [bfpCrosshair, setBfpCrosshair] = useState<{ x: number, y: number } | null>(null);
+        const [bfpMode, setBfpMode] = useState<"intensity" | "phase">("intensity");
 
-    // Effect: Run Simulation
-    useEffect(() => {
-        if (state === "READY" && !calculating) {
-            const run = async () => {
-                setCalculating(true);
-                setLastError(null);
-                try {
-                    const z_shift = -params.depth * Math.pow(params.n_imm / params.n_sample, 2);
-                    const z_total = params.z_defocus + z_shift;
-                    const simArgs = { ...params, z_defocus: z_total };
-                    const res = await runSimulation(simArgs, {});
-                    setSimResult(res);
-                } catch (e: any) {
-                    console.error("Simulation failed:", e);
-                    setLastError(e.message || String(e));
-                } finally {
-                    setCalculating(false);
-                }
-            };
-            const timer = setTimeout(run, 50);
-            return () => clearTimeout(timer);
-        }
-    }, [state, params]);
+        // Inputs
+        const [inputValues, setInputValues] = useState({
+            n_sample: DEFAULT_PARAMS.n_sample.toString(),
+            cam_pixel_um: DEFAULT_PARAMS.cam_pixel_um.toString(),
+            depth: (DEFAULT_PARAMS.depth * 1e6).toString(),
+        });
 
-    // Handlers
-    const handleInputChange = (key: keyof typeof inputValues, val: string) => {
-        setInputValues(prev => ({ ...prev, [key]: val }));
-    };
+        const [simResult, setSimResult] = useState<any>(null);
+        const [calculating, setCalculating] = useState(false);
+        const [lastError, setLastError] = useState<string | null>(null);
 
-    const commitInput = (key: keyof typeof inputValues) => {
-        const val = inputValues[key];
-        const num = parseFloat(val);
-        if (!isNaN(num) && val.trim() !== "") {
-            setParams(prev => {
-                if (prev[key as keyof SimulationParams] === num) return prev;
-                return { ...prev, [key]: num };
-            });
-        }
-    };
+        // Effect: Run Simulation
+        useEffect(() => {
+            if (state === "READY" && !calculating) {
+                const run = async () => {
+                    setCalculating(true);
+                    setLastError(null);
+                    try {
+                        const z_shift = -params.depth * Math.pow(params.n_imm / params.n_sample, 2);
+                        const z_total = params.z_defocus + z_shift;
+                        const simArgs = { ...params, z_defocus: z_total };
+                        const res = await runSimulation(simArgs, {});
+                        setSimResult(res);
+                    } catch (e: any) {
+                        console.error("Simulation failed:", e);
+                        setLastError(e.message || String(e));
+                    } finally {
+                        setCalculating(false);
+                    }
+                };
+                const timer = setTimeout(run, 50);
+                return () => clearTimeout(timer);
+            }
+        }, [state, params]);
 
-    const handleKeyDown = (e: React.KeyboardEvent, key: keyof typeof inputValues) => {
-        if (e.key === 'Enter') {
-            commitInput(key);
-            (e.target as HTMLInputElement).blur();
-        }
-    };
+        // Handlers
+        const handleInputChange = (key: keyof typeof inputValues, val: string) => {
+            setInputValues(prev => ({ ...prev, [key]: val }));
+        };
 
-    // Click Handlers (Crosshair)
-    const handlePsfClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!simResult?.img) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const w = simResult.img[0].length;
-        const h = simResult.img.length;
-        setPsfCrosshair({ x: Math.floor(x * (w / rect.width)), y: Math.floor(y * (h / rect.height)) });
-    };
+        const commitInput = (key: keyof typeof inputValues) => {
+            const val = inputValues[key];
+            const num = parseFloat(val);
+            if (!isNaN(num) && val.trim() !== "") {
+                setParams(prev => {
+                    if (prev[key as keyof SimulationParams] === num) return prev;
+                    return { ...prev, [key]: num };
+                });
+            }
+        };
 
-    const handleBfpClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        const data = bfpMode === "intensity" ? simResult?.bfp : simResult?.bfp_phase;
-        if (!data) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const w = data[0].length;
-        const h = data.length;
-        setBfpCrosshair({ x: Math.floor(x * (w / rect.width)), y: Math.floor(y * (h / rect.height)) });
-    };
+        const handleKeyDown = (e: React.KeyboardEvent, key: keyof typeof inputValues) => {
+            if (e.key === 'Enter') {
+                commitInput(key);
+                (e.target as HTMLInputElement).blur();
+            }
+        };
+
+        // Click Handlers (Crosshair)
+        const handlePsfClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+            if (!simResult?.img) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const w = simResult.img[0].length;
+            const h = simResult.img.length;
+            setPsfCrosshair({ x: Math.floor(x * (w / rect.width)), y: Math.floor(y * (h / rect.height)) });
+        };
+
+        const handleBfpClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+            const data = bfpMode === "intensity" ? simResult?.bfp : simResult?.bfp_phase;
+            if (!data) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const w = data[0].length;
+            const h = data.length;
+            setBfpCrosshair({ x: Math.floor(x * (w / rect.width)), y: Math.floor(y * (h / rect.height)) });
+        };
 
 
 
-    return (
-        <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-80px)] w-full overflow-hidden font-sans justify-center relative">
-            {/* Sidebar Controls */}
-            {/* Sidebar Controls */}
-            {/* Sidebar Controls */}
-            {/* Sidebar Controls */}
-            <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar h-full pt-[58px] pb-4">
-                {state === "ERROR" && (
-                    <div className="p-4 bg-red-900/20 border border-red-500 text-red-500 text-xs font-mono">
-                        <strong>ERROR:</strong> {pyodideError || "Simulator failed."}
-                    </div>
-                )}
-
-                <AccordionSection title="Objective lens parameters">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">NA</label>
-                            <input
-                                type="text"
-                                value={inputValues.NA}
-                                onChange={e => handleInputChange('NA', e.target.value)}
-                                onKeyDown={e => handleKeyDown(e, 'NA')}
-                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
-                            />
+        return (
+            <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-80px)] w-full overflow-hidden font-sans justify-center relative">
+                {/* Sidebar Controls */}
+                {/* Sidebar Controls */}
+                {/* Sidebar Controls */}
+                {/* Sidebar Controls */}
+                <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar h-full pt-[58px] pb-4">
+                    {state === "ERROR" && (
+                        <div className="p-4 bg-red-900/20 border border-red-500 text-red-500 text-xs font-mono">
+                            <strong>ERROR:</strong> {pyodideError || "Simulator failed."}
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Mag (X)</label>
-                            <input
-                                type="text"
-                                value={inputValues.M_obj}
-                                onChange={e => handleInputChange('M_obj', e.target.value)}
-                                onKeyDown={e => handleKeyDown(e, 'M_obj')}
-                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
-                            />
-                        </div>
-                        <div className="space-y-1 col-span-2">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Immersion medium refractive index (N_imm)</label>
-                            <input
-                                type="text"
-                                value={inputValues.n_imm}
-                                onChange={e => handleInputChange('n_imm', e.target.value)}
-                                onKeyDown={e => handleKeyDown(e, 'n_imm')}
-                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
-                            />
-                        </div>
+                    )}
 
-                        <div className="space-y-2 col-span-2 pt-2 border-t border-white/10">
-                            <div className="flex justify-between">
-                                <label className="text-xs text-gray-500 uppercase tracking-wider">Correction Collar</label>
-                                <span className="text-xs font-mono text-brand-cyan">{params.correction_sa.toFixed(1)} rad</span>
+                    <AccordionSection title="Objective lens parameters">
+                        <div className="space-y-4">
+                            {/* Selector */}
+                            <div className="space-y-1">
+                                <label className="text-xs text-gray-500 uppercase tracking-wider">Select Objective</label>
+                                <div className="relative">
+                                    <select
+                                        className="w-full bg-black/20 border border-white/20 text-brand-cyan text-xs p-2 appearance-none focus:outline-none focus:border-brand-cyan transition-colors"
+                                        value={selectedObjectiveId}
+                                        onChange={(e) => setSelectedObjectiveId(e.target.value)}
+                                    >
+                                        {OBJECTIVES.map(obj => (
+                                            <option key={obj.id} value={obj.id} className="bg-black text-white">
+                                                {obj.manufacturer} {obj.name} ({obj.magnification}x / {obj.NA})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute top-0 right-0 h-full flex items-center pr-2 pointer-events-none text-white/50">
+                                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" /></svg>
+                                    </div>
+                                </div>
                             </div>
-                            <input
-                                type="range"
-                                min="-15" max="15" step="0.1"
-                                value={params.correction_sa}
-                                onChange={e => setParams(p => ({ ...p, correction_sa: parseFloat(e.target.value) }))}
-                                className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
-                            />
-                        </div>
-                    </div>
-                </AccordionSection>
 
-                <AccordionSection title="Sample parameters">
-                    <div className="space-y-4">
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Sample medium refractive index (n_sample)</label>
-                            <input
-                                type="text"
-                                value={inputValues.n_sample}
-                                onChange={e => handleInputChange('n_sample', e.target.value)}
-                                onKeyDown={e => handleKeyDown(e, 'n_sample')}
-                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
-                            />
-                        </div>
+                            {/* Image Display */}
+                            <div className="relative w-full aspect-video bg-white/5 border border-white/10 rounded overflow-hidden flex items-center justify-center p-2">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={selectedObjective.imagePath}
+                                    alt={selectedObjective.name}
+                                    className="max-h-full max-w-full object-contain drop-shadow-2xl"
+                                />
+                            </div>
 
-                        <div className="space-y-2 pt-2 border-t border-white/10">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Molecule depth (nm)</label>
-                            <input
-                                type="text"
-                                value={inputValues.depth}
-                                onChange={e => handleInputChange('depth', e.target.value)}
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter') {
-                                        const val = parseFloat(inputValues.depth);
-                                        if (!isNaN(val)) {
-                                            setParams(p => ({ ...p, depth: val * 1e-9 }));
-                                            (e.target as HTMLInputElement).blur();
+                            {/* Read-only Parameters */}
+                            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/10">
+                                <div>
+                                    <label className="block text-[10px] text-gray-500 uppercase">NA</label>
+                                    <div className="text-sm font-mono text-white">{selectedObjective.NA.toFixed(2)}</div>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] text-gray-500 uppercase">Mag</label>
+                                    <div className="text-sm font-mono text-white">{selectedObjective.magnification}x</div>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] text-gray-500 uppercase">N Imm</label>
+                                    <div className="text-sm font-mono text-white">{selectedObjective.n_imm.toFixed(3)}</div>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] text-gray-500 uppercase">F Tube</label>
+                                    <div className="text-sm font-mono text-white">{selectedObjective.f_tube_mm} mm</div>
+                                </div>
+                            </div>
+
+                            {/* Correction Collar */}
+                            <div className="space-y-2 pt-2 border-t border-white/10">
+                                <div className="flex justify-between">
+                                    <label className="text-xs text-gray-500 uppercase tracking-wider">Correction Collar</label>
+                                    <span className="text-xs font-mono text-brand-cyan">{params.correction_sa.toFixed(1)} rad</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="-15" max="15" step="0.1"
+                                    value={params.correction_sa}
+                                    onChange={e => setParams(p => ({ ...p, correction_sa: parseFloat(e.target.value) }))}
+                                    className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
+                                />
+                            </div>
+                        </div>
+                    </AccordionSection>
+
+                    <AccordionSection title="Sample parameters">
+                        <div className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-xs text-gray-500 uppercase tracking-wider">Sample medium refractive index (n_sample)</label>
+                                <input
+                                    type="text"
+                                    value={inputValues.n_sample}
+                                    onChange={e => handleInputChange('n_sample', e.target.value)}
+                                    onKeyDown={e => handleKeyDown(e, 'n_sample')}
+                                    className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                                />
+                            </div>
+
+                            <div className="space-y-2 pt-2 border-t border-white/10">
+                                <label className="text-xs text-gray-500 uppercase tracking-wider">Molecule depth (nm)</label>
+                                <input
+                                    type="text"
+                                    value={inputValues.depth}
+                                    onChange={e => handleInputChange('depth', e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            const val = parseFloat(inputValues.depth);
+                                            if (!isNaN(val)) {
+                                                setParams(p => ({ ...p, depth: val * 1e-9 }));
+                                                (e.target as HTMLInputElement).blur();
+                                            }
                                         }
-                                    }
-                                }}
-                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
-                            />
-                            <div className="grid grid-cols-3 gap-2 pt-2">
-                                {[0, 500, 1000, 3000, 5000].map((d_nm) => (
-                                    <button
-                                        key={d_nm}
-                                        onClick={() => {
-                                            setParams(p => ({ ...p, depth: d_nm * 1e-9, z_defocus: 0 }));
-                                            setInputValues(prev => ({ ...prev, depth: d_nm.toString() }));
-                                        }}
-                                        className={`text-[10px] py-1 border border-white/10 transition-all uppercase tracking-wide
+                                    }}
+                                    className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                                />
+                                <div className="grid grid-cols-3 gap-2 pt-2">
+                                    {[0, 500, 1000, 3000, 5000].map((d_nm) => (
+                                        <button
+                                            key={d_nm}
+                                            onClick={() => {
+                                                setParams(p => ({ ...p, depth: d_nm * 1e-9, z_defocus: 0 }));
+                                                setInputValues(prev => ({ ...prev, depth: d_nm.toString() }));
+                                            }}
+                                            className={`text-[10px] py-1 border border-white/10 transition-all uppercase tracking-wide
                                             ${Math.abs(params.depth * 1e9 - d_nm) < 1
+                                                    ? "bg-brand-cyan text-black font-bold"
+                                                    : "hover:bg-white/5 text-gray-400"}`}
+                                        >
+                                            {d_nm === 0 ? "Surface" : `${d_nm} nm`}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 pt-2 border-t border-white/10">
+                                <label className="text-xs text-gray-500 uppercase tracking-wider">Wavelength: {(params.lambda_vac * 1e9).toFixed(0)} nm</label>
+                                <input
+                                    type="range"
+                                    min="400" max="700" step="10"
+                                    value={params.lambda_vac * 1e9}
+                                    onChange={e => setParams(p => ({ ...p, lambda_vac: parseFloat(e.target.value) * 1e-9 }))}
+                                    className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
+                                />
+                                <div className="h-1 w-full opacity-80" style={{ background: SPECTRUM_GRADIENT }}></div>
+                            </div>
+                        </div>
+                    </AccordionSection>
+
+                    <AccordionSection title={`Camera & Aberrations ${calculating ? '(Running...)' : ''}`}>
+                        <div className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-xs text-gray-500 uppercase tracking-wider">Pixel pitch (µm)</label>
+                                <input
+                                    type="text"
+                                    value={inputValues.cam_pixel_um}
+                                    onChange={e => handleInputChange('cam_pixel_um', e.target.value)}
+                                    onKeyDown={e => handleKeyDown(e, 'cam_pixel_um')}
+                                    className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                                />
+                            </div>
+                            <div className="space-y-2 pt-2 border-t border-white/10">
+                                <div className="flex justify-between">
+                                    <label className="text-xs text-gray-500 uppercase tracking-wider">Defocus</label>
+                                    <span className="text-xs font-mono text-brand-cyan">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
+                                </div>
+                                {(() => {
+                                    const limitNm = (4 * params.n_imm * params.lambda_vac / (params.NA ** 2)) * 1e9;
+                                    return (
+                                        <input
+                                            type="range"
+                                            min={-limitNm} max={limitNm} step={limitNm / 50}
+                                            value={params.z_defocus * 1e9}
+                                            onChange={e => setParams(p => ({ ...p, z_defocus: parseFloat(e.target.value) * 1e-9 }))}
+                                            className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
+                                        />
+                                    );
+                                })()}
+                            </div>
+                            <div className="space-y-2">
+                                <button
+                                    onClick={() => setParams(p => ({ ...p, z_defocus: 0 }))}
+                                    className="w-full py-1 text-[10px] border border-white/20 hover:bg-white/10 uppercase tracking-wider"
+                                >
+                                    Reset Defocus
+                                </button>
+                            </div>
+                            <div className="space-y-2 pt-2 border-t border-white/10">
+                                <label className="text-xs text-gray-500 uppercase tracking-wider">Astigmatism</label>
+                                <div className="flex border border-white/20">
+                                    {["None", "Weak", "Strong"].map((opt) => (
+                                        <button
+                                            key={opt}
+                                            onClick={() => setParams(p => ({ ...p, astigmatism: opt as any }))}
+                                            className={`flex-1 text-[10px] py-1 uppercase tracking-wide transition-all ${params.astigmatism === opt
                                                 ? "bg-brand-cyan text-black font-bold"
-                                                : "hover:bg-white/5 text-gray-400"}`}
-                                    >
-                                        {d_nm === 0 ? "Surface" : `${d_nm} nm`}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="space-y-2 pt-2 border-t border-white/10">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Wavelength: {(params.lambda_vac * 1e9).toFixed(0)} nm</label>
-                            <input
-                                type="range"
-                                min="400" max="700" step="10"
-                                value={params.lambda_vac * 1e9}
-                                onChange={e => setParams(p => ({ ...p, lambda_vac: parseFloat(e.target.value) * 1e-9 }))}
-                                className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
-                            />
-                            <div className="h-1 w-full opacity-80" style={{ background: SPECTRUM_GRADIENT }}></div>
-                        </div>
-                    </div>
-                </AccordionSection>
-
-                <AccordionSection title={`Camera & Aberrations ${calculating ? '(Running...)' : ''}`}>
-                    <div className="space-y-4">
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Pixel pitch (µm)</label>
-                            <input
-                                type="text"
-                                value={inputValues.cam_pixel_um}
-                                onChange={e => handleInputChange('cam_pixel_um', e.target.value)}
-                                onKeyDown={e => handleKeyDown(e, 'cam_pixel_um')}
-                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
-                            />
-                        </div>
-                        <div className="space-y-2 pt-2 border-t border-white/10">
-                            <div className="flex justify-between">
-                                <label className="text-xs text-gray-500 uppercase tracking-wider">Defocus</label>
-                                <span className="text-xs font-mono text-brand-cyan">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
-                            </div>
-                            {(() => {
-                                const limitNm = (4 * params.n_imm * params.lambda_vac / (params.NA ** 2)) * 1e9;
-                                return (
-                                    <input
-                                        type="range"
-                                        min={-limitNm} max={limitNm} step={limitNm / 50}
-                                        value={params.z_defocus * 1e9}
-                                        onChange={e => setParams(p => ({ ...p, z_defocus: parseFloat(e.target.value) * 1e-9 }))}
-                                        className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
-                                    />
-                                );
-                            })()}
-                        </div>
-                        <div className="space-y-2">
-                            <button
-                                onClick={() => setParams(p => ({ ...p, z_defocus: 0 }))}
-                                className="w-full py-1 text-[10px] border border-white/20 hover:bg-white/10 uppercase tracking-wider"
-                            >
-                                Reset Defocus
-                            </button>
-                        </div>
-                        <div className="space-y-2 pt-2 border-t border-white/10">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Astigmatism</label>
-                            <div className="flex border border-white/20">
-                                {["None", "Weak", "Strong"].map((opt) => (
-                                    <button
-                                        key={opt}
-                                        onClick={() => setParams(p => ({ ...p, astigmatism: opt as any }))}
-                                        className={`flex-1 text-[10px] py-1 uppercase tracking-wide transition-all ${params.astigmatism === opt
-                                            ? "bg-brand-cyan text-black font-bold"
-                                            : "bg-transparent text-gray-500 hover:text-white"
-                                            }`}
-                                    >
-                                        {opt}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </AccordionSection>
-            </div>
-
-            {/* Main Content Area: Side-by-Side Views */}
-            <div className="flex-1 w-full flex flex-col pt-[58px] pb-4 overflow-hidden overflow-y-auto custom-scrollbar min-[1700px]:overflow-hidden h-full">
-                <div className="w-full max-w-[1600px] mx-auto h-auto min-[1700px]:h-full flex flex-col min-[1700px]:flex-row gap-4 px-4 pb-4 pt-0 min-w-0">
-
-                    {/* LEFT: PSF View */}
-                    <div className="w-full aspect-square min-[1700px]:aspect-auto min-[1700px]:h-full min-[1700px]:flex-1 min-[1700px]:min-w-[400px] flex items-start justify-center overflow-hidden p-2">
-                        <AnalyzedView
-                            title={<span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-auto">Primary View</span>}
-                            dataGrid={simResult?.img}
-                            color={wavelengthToColor(params.lambda_vac)}
-                            crosshair={psfCrosshair}
-                            onCanvasClick={handlePsfClick}
-                            params={params}
-                            fitProfiles={true} // Intensity profiles fitted
-                            overlays={
-                                /* Parameter Overlay (Bottom Left) */
-                                <div className="absolute bottom-2 left-2 p-3 bg-black/60 backdrop-blur border border-white/10 text-[11px] font-mono text-brand-cyan pointer-events-none z-20 space-y-1 shadow-xl">
-                                    <div className="font-bold border-b border-brand-cyan/20 mb-1.5 pb-0.5 text-white text-xs">PARAMETERS</div>
-                                    <div className="flex gap-4 justify-between"><span>NA:</span> <span className="text-white">{params.NA}</span></div>
-                                    <div className="flex gap-4 justify-between"><span>Mag:</span> <span className="text-white">{params.M_obj}x</span></div>
-                                    <div className="flex gap-4 justify-between"><span>λ:</span> <span className="text-white">{(params.lambda_vac * 1e9).toFixed(0)} nm</span></div>
-                                    <div className="flex gap-4 justify-between"><span>Defocus:</span> <span className="text-white">{(params.z_defocus * 1e6).toFixed(2)} µm</span></div>
-                                    <div className="flex gap-4 justify-between"><span>FOV:</span> <span className="text-white">{params.display_fov_um} µm</span></div>
-                                </div>
-                            }
-                            bottomRightInfo={(analysis) => (
-                                <div className="space-y-2 p-2 w-full">
-                                    <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-white/10 pb-1">Gaussian Fit</h4>
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs w-full">
-                                        <div className="text-gray-500 text-[10px] uppercase">Parameter</div>
-                                        <div className="text-right text-gray-500 text-[10px] uppercase">nm</div>
-
-                                        <div className="text-brand-cyan font-mono">σ (X)</div>
-                                        <div className="text-right font-mono text-white">
-                                            {(analysis?.hStats?.sigma
-                                                ? (analysis.hStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                                : 0).toFixed(1)}
-                                        </div>
-
-                                        <div className="text-brand-magenta font-mono">σ (Y)</div>
-                                        <div className="text-right font-mono text-white">
-                                            {(analysis?.vStats?.sigma
-                                                ? (analysis.vStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                                : 0).toFixed(1)}
-                                        </div>
-
-                                        <div className="col-span-2 h-px bg-white/5 my-1" />
-
-                                        <div className="text-gray-500 font-mono">FWHM X</div>
-                                        <div className="text-right font-mono text-white">
-                                            {(analysis?.hStats?.fwhm
-                                                ? (analysis.hStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                                : 0).toFixed(1)}
-                                        </div>
-
-                                        <div className="text-gray-500 font-mono">FWHM Y</div>
-                                        <div className="text-right font-mono text-white">
-                                            {(analysis?.vStats?.fwhm
-                                                ? (analysis.vStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
-                                                : 0).toFixed(1)}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        />
-                    </div>
-
-                    {/* RIGHT: BFP View */}
-                    <div className="w-full aspect-square min-[1700px]:aspect-auto min-[1700px]:h-full min-[1700px]:flex-1 min-[1700px]:min-w-[400px] flex items-start justify-center overflow-hidden p-2">
-                        <AnalyzedView
-                            title={
-                                <div className="flex gap-2 pointer-events-auto items-center">
-                                    <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">BFP View</span>
-                                    {/* Toggle */}
-                                    <div className="flex bg-white/10 rounded overflow-hidden border border-white/10">
-                                        <button
-                                            onClick={() => setBfpMode("intensity")}
-                                            className={`px-2 py-0.5 text-[9px] uppercase font-bold transition-all ${bfpMode === "intensity" ? "bg-brand-cyan text-black" : "hover:bg-white/20 text-gray-400"}`}
+                                                : "bg-transparent text-gray-500 hover:text-white"
+                                                }`}
                                         >
-                                            Intensity
+                                            {opt}
                                         </button>
-                                        <button
-                                            onClick={() => setBfpMode("phase")}
-                                            className={`px-2 py-0.5 text-[9px] uppercase font-bold transition-all ${bfpMode === "phase" ? "bg-brand-magenta text-black" : "hover:bg-white/20 text-gray-400"}`}
-                                        >
-                                            Phase
-                                        </button>
-                                    </div>
+                                    ))}
                                 </div>
-                            }
-                            dataGrid={bfpMode === "intensity" ? simResult?.bfp : simResult?.bfp_phase}
-                            color={bfpMode === "intensity" ? wavelengthToColor(params.lambda_vac) : "#ffffff"}
-                            crosshair={bfpCrosshair}
-                            onCanvasClick={handleBfpClick}
-                            isPhase={bfpMode === "phase"}
-                            yAxisUnit={bfpMode === "phase" ? "Rad" : "Int"}
-                            fitProfiles={false}
-                            overlays={
-                                <>
-                                    {/* Phase Colormap */}
-                                    {bfpMode === "phase" && (
-                                        <div className="absolute top-2 right-2 flex flex-col bg-black/60 border border-white/10 p-2 z-20 shadow-lg backdrop-blur">
-                                            <div className="w-32 h-4 rounded-sm mb-1" style={{ background: "linear-gradient(to right, white, #4169E1, black, #DC143C, white)" }}></div>
-                                            <div className="flex justify-between text-[10px] font-mono text-gray-300 w-32 font-bold">
-                                                <span>-π</span>
-                                                <span>0</span>
-                                                <span>+π</span>
+                            </div>
+                        </div>
+                    </AccordionSection>
+                </div>
+
+                {/* Main Content Area: Side-by-Side Views */}
+                <div className="flex-1 w-full flex flex-col pt-[58px] pb-4 overflow-hidden overflow-y-auto custom-scrollbar min-[1700px]:overflow-hidden h-full">
+                    <div className="w-full max-w-[1600px] mx-auto h-auto min-[1700px]:h-full flex flex-col min-[1700px]:flex-row gap-4 px-4 pb-4 pt-0 min-w-0">
+
+                        {/* LEFT: PSF View */}
+                        <div className="w-full aspect-square min-[1700px]:aspect-auto min-[1700px]:h-full min-[1700px]:flex-1 min-[1700px]:min-w-[400px] flex items-start justify-center overflow-hidden p-2">
+                            <AnalyzedView
+                                title={<span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-auto">Primary View</span>}
+                                dataGrid={simResult?.img}
+                                color={wavelengthToColor(params.lambda_vac)}
+                                crosshair={psfCrosshair}
+                                onCanvasClick={handlePsfClick}
+                                params={params}
+                                fitProfiles={true} // Intensity profiles fitted
+                                overlays={
+                                    /* Parameter Overlay (Bottom Left) */
+                                    <div className="absolute bottom-2 left-2 p-3 bg-black/60 backdrop-blur border border-white/10 text-[11px] font-mono text-brand-cyan pointer-events-none z-20 space-y-1 shadow-xl">
+                                        <div className="font-bold border-b border-brand-cyan/20 mb-1.5 pb-0.5 text-white text-xs">PARAMETERS</div>
+                                        <div className="flex gap-4 justify-between"><span>NA:</span> <span className="text-white">{params.NA}</span></div>
+                                        <div className="flex gap-4 justify-between"><span>Mag:</span> <span className="text-white">{params.M_obj}x</span></div>
+                                        <div className="flex gap-4 justify-between"><span>λ:</span> <span className="text-white">{(params.lambda_vac * 1e9).toFixed(0)} nm</span></div>
+                                        <div className="flex gap-4 justify-between"><span>Defocus:</span> <span className="text-white">{(params.z_defocus * 1e6).toFixed(2)} µm</span></div>
+                                        <div className="flex gap-4 justify-between"><span>FOV:</span> <span className="text-white">{params.display_fov_um} µm</span></div>
+                                    </div>
+                                }
+                                bottomRightInfo={(analysis) => (
+                                    <div className="space-y-2 p-2 w-full">
+                                        <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-white/10 pb-1">Gaussian Fit</h4>
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs w-full">
+                                            <div className="text-gray-500 text-[10px] uppercase">Parameter</div>
+                                            <div className="text-right text-gray-500 text-[10px] uppercase">nm</div>
+
+                                            <div className="text-brand-cyan font-mono">σ (X)</div>
+                                            <div className="text-right font-mono text-white">
+                                                {(analysis?.hStats?.sigma
+                                                    ? (analysis.hStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                    : 0).toFixed(1)}
+                                            </div>
+
+                                            <div className="text-brand-magenta font-mono">σ (Y)</div>
+                                            <div className="text-right font-mono text-white">
+                                                {(analysis?.vStats?.sigma
+                                                    ? (analysis.vStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                    : 0).toFixed(1)}
+                                            </div>
+
+                                            <div className="col-span-2 h-px bg-white/5 my-1" />
+
+                                            <div className="text-gray-500 font-mono">FWHM X</div>
+                                            <div className="text-right font-mono text-white">
+                                                {(analysis?.hStats?.fwhm
+                                                    ? (analysis.hStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                    : 0).toFixed(1)}
+                                            </div>
+
+                                            <div className="text-gray-500 font-mono">FWHM Y</div>
+                                            <div className="text-right font-mono text-white">
+                                                {(analysis?.vStats?.fwhm
+                                                    ? (analysis.vStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                    : 0).toFixed(1)}
                                             </div>
                                         </div>
-                                    )}
+                                    </div>
+                                )}
+                            />
+                        </div>
 
-                                    {/* SAF / UAF Visualization for Intensity */}
-                                    {bfpMode === "intensity" && params.NA > params.n_sample && (
-                                        <>
-                                            {/* Critical Angle Ring */}
-                                            <div
-                                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40 border-dashed pointer-events-none z-10 box-border shadow-[0_0_10px_rgba(255,255,255,0.2)]"
-                                                style={{
-                                                    width: `${(params.n_sample / params.NA) * 100}%`,
-                                                    height: `${(params.n_sample / params.NA) * 100}%`
-                                                }}
-                                            />
-                                            {/* Labels: SAF is OUTSIDE, UAF is INSIDE */}
-                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/30 font-bold text-2xl pointer-events-none select-none">UAF</div>
-                                            <div
-                                                className="absolute left-1/2 -translate-x-1/2 -translate-y-full pb-1 text-white/30 font-bold text-lg pointer-events-none select-none"
-                                                style={{ top: `${50 - ((params.n_sample / params.NA) * 50)}%` }}
+                        {/* RIGHT: BFP View */}
+                        <div className="w-full aspect-square min-[1700px]:aspect-auto min-[1700px]:h-full min-[1700px]:flex-1 min-[1700px]:min-w-[400px] flex items-start justify-center overflow-hidden p-2">
+                            <AnalyzedView
+                                title={
+                                    <div className="flex gap-2 pointer-events-auto items-center">
+                                        <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">BFP View</span>
+                                        {/* Toggle */}
+                                        <div className="flex bg-white/10 rounded overflow-hidden border border-white/10">
+                                            <button
+                                                onClick={() => setBfpMode("intensity")}
+                                                className={`px-2 py-0.5 text-[9px] uppercase font-bold transition-all ${bfpMode === "intensity" ? "bg-brand-cyan text-black" : "hover:bg-white/20 text-gray-400"}`}
                                             >
-                                                SAF
-                                            </div>
-                                        </>
-                                    )}
-                                </>
-                            }
-                            bottomRightInfo={() => (
-                                <div className="w-full h-full flex flex-col relative overflow-hidden">
-                                    {bfpMode === "intensity" ? (
-                                        <div className="flex flex-col items-center justify-center h-full gap-1">
-                                            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">SAF Ratio</span>
-                                            <span className="text-xl font-mono text-brand-cyan">
-                                                {(simResult?.saf_ratio !== undefined ? simResult.saf_ratio * 100 : 0).toFixed(1)}%
-                                            </span>
+                                                Intensity
+                                            </button>
+                                            <button
+                                                onClick={() => setBfpMode("phase")}
+                                                className={`px-2 py-0.5 text-[9px] uppercase font-bold transition-all ${bfpMode === "phase" ? "bg-brand-magenta text-black" : "hover:bg-white/20 text-gray-400"}`}
+                                            >
+                                                Phase
+                                            </button>
                                         </div>
-                                    ) : (
-                                        simResult?.stats && (
-                                            <div className="w-full h-full relative p-2">
-                                                <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest block absolute top-2 left-2">Aberration Power (PV) [rad]</span>
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <BarChart data={[
-                                                        { name: 'Depth', val: simResult.stats.Depth, fill: '#06b6d4' },
-                                                        { name: 'Def', val: simResult.stats.Defocus, fill: '#22c55e' },
-                                                        { name: 'Astig', val: simResult.stats.Astig, fill: '#c026d3' },
-                                                        { name: 'Collar', val: simResult.stats.Collar, fill: '#eab308' },
-                                                    ]} margin={{ top: 30, bottom: 0 }}>
-                                                        <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#fff' }} interval={0} stroke="none" />
-                                                        <Tooltip contentStyle={{ backgroundColor: '#000', fontSize: '10px' }} cursor={{ fill: 'rgba(255,255,255,0.1)' }} />
-                                                        <Bar dataKey="val" radius={[2, 2, 0, 0]}>
-                                                            <LabelList dataKey="val" position="top" fill="#fff" fontSize={9} formatter={(val: any) => Number(val).toFixed(2)} />
-                                                        </Bar>
-                                                    </BarChart>
-                                                </ResponsiveContainer>
+                                    </div>
+                                }
+                                dataGrid={bfpMode === "intensity" ? simResult?.bfp : simResult?.bfp_phase}
+                                color={bfpMode === "intensity" ? wavelengthToColor(params.lambda_vac) : "#ffffff"}
+                                crosshair={bfpCrosshair}
+                                onCanvasClick={handleBfpClick}
+                                isPhase={bfpMode === "phase"}
+                                yAxisUnit={bfpMode === "phase" ? "Rad" : "Int"}
+                                fitProfiles={false}
+                                overlays={
+                                    <>
+                                        {/* Phase Colormap */}
+                                        {bfpMode === "phase" && (
+                                            <div className="absolute top-2 right-2 flex flex-col bg-black/60 border border-white/10 p-2 z-20 shadow-lg backdrop-blur">
+                                                <div className="w-32 h-4 rounded-sm mb-1" style={{ background: "linear-gradient(to right, white, #4169E1, black, #DC143C, white)" }}></div>
+                                                <div className="flex justify-between text-[10px] font-mono text-gray-300 w-32 font-bold">
+                                                    <span>-π</span>
+                                                    <span>0</span>
+                                                    <span>+π</span>
+                                                </div>
                                             </div>
-                                        )
-                                    )}
-                                </div>
-                            )}
-                        />
-                    </div>
+                                        )}
 
+                                        {/* SAF / UAF Visualization for Intensity */}
+                                        {bfpMode === "intensity" && params.NA > params.n_sample && (
+                                            <>
+                                                {/* Critical Angle Ring */}
+                                                <div
+                                                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40 border-dashed pointer-events-none z-10 box-border shadow-[0_0_10px_rgba(255,255,255,0.2)]"
+                                                    style={{
+                                                        width: `${(params.n_sample / params.NA) * 100}%`,
+                                                        height: `${(params.n_sample / params.NA) * 100}%`
+                                                    }}
+                                                />
+                                                {/* Labels: SAF is OUTSIDE, UAF is INSIDE */}
+                                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/30 font-bold text-2xl pointer-events-none select-none">UAF</div>
+                                                <div
+                                                    className="absolute left-1/2 -translate-x-1/2 -translate-y-full pb-1 text-white/30 font-bold text-lg pointer-events-none select-none"
+                                                    style={{ top: `${50 - ((params.n_sample / params.NA) * 50)}%` }}
+                                                >
+                                                    SAF
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
+                                }
+                                bottomRightInfo={() => (
+                                    <div className="w-full h-full flex flex-col relative overflow-hidden">
+                                        {bfpMode === "intensity" ? (
+                                            <div className="flex flex-col items-center justify-center h-full gap-1">
+                                                <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">SAF Ratio</span>
+                                                <span className="text-xl font-mono text-brand-cyan">
+                                                    {(simResult?.saf_ratio !== undefined ? simResult.saf_ratio * 100 : 0).toFixed(1)}%
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            simResult?.stats && (
+                                                <div className="w-full h-full relative p-2">
+                                                    <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest block absolute top-2 left-2">Aberration Power (PV) [rad]</span>
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart data={[
+                                                            { name: 'Depth', val: simResult.stats.Depth, fill: '#06b6d4' },
+                                                            { name: 'Def', val: simResult.stats.Defocus, fill: '#22c55e' },
+                                                            { name: 'Astig', val: simResult.stats.Astig, fill: '#c026d3' },
+                                                            { name: 'Collar', val: simResult.stats.Collar, fill: '#eab308' },
+                                                        ]} margin={{ top: 30, bottom: 0 }}>
+                                                            <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#fff' }} interval={0} stroke="none" />
+                                                            <Tooltip contentStyle={{ backgroundColor: '#000', fontSize: '10px' }} cursor={{ fill: 'rgba(255,255,255,0.1)' }} />
+                                                            <Bar dataKey="val" radius={[2, 2, 0, 0]}>
+                                                                <LabelList dataKey="val" position="top" fill="#fff" fontSize={9} formatter={(val: any) => Number(val).toFixed(2)} />
+                                                            </Bar>
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                )}
+                            />
+                        </div>
+
+                    </div>
                 </div>
             </div>
-        </div>
-    );
-}
+        );
+    }
 
