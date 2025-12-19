@@ -1,38 +1,34 @@
-import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse } from 'next/server';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
 
-export async function POST(request: Request): Promise<NextResponse> {
-    const body = (await request.json()) as HandleUploadBody;
-
+export async function POST(request: Request) {
     try {
-        const jsonResponse = await handleUpload({
-            body,
-            request,
-            onBeforeGenerateToken: async (pathname, clientPayload) => {
-                // You can check user authentication here
-                // const user = await auth(request);
-                // if (!user) throw new Error('Unauthorized');
+        const formData = await request.formData();
+        const file = formData.get('file') as File;
 
-                return {
-                    allowedContentTypes: ['application/pdf', 'video/mp4', 'image/jpeg', 'image/png', 'image/gif'],
-                    addRandomSuffix: true, // Generate unique filenames to avoid conflict
-                    tokenPayload: JSON.stringify({
-                        // optional, sent to your server on upload completion
-                        // userId: user.id,
-                    }),
-                };
-            },
-            onUploadCompleted: async ({ blob, tokenPayload }) => {
-                // Optional, run after upload
-                console.log('blob uploaded', blob.url);
-            },
-        });
+        if (!file) {
+            return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+        }
 
-        return NextResponse.json(jsonResponse);
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+
+        // Ensure directory exists
+        const uploadDir = join(process.cwd(), 'public', 'product-images');
+        await mkdir(uploadDir, { recursive: true });
+
+        // Sanitize filename or use unique name to prevent overwrites/issues
+        const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const filepath = join(uploadDir, filename);
+
+        await writeFile(filepath, buffer);
+
+        // Return the public URL
+        const url = `/product-images/${filename}`;
+        return NextResponse.json({ url });
     } catch (error) {
-        return NextResponse.json(
-            { error: (error as Error).message },
-            { status: 400 }, // The webhook will retry 5 times if you return 400
-        );
+        console.error('Upload error:', error);
+        return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
     }
 }
