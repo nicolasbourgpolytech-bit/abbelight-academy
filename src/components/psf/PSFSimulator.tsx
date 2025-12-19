@@ -56,7 +56,7 @@ function getTwilightColor(val: number): [number, number, number] {
 const AccordionSection: React.FC<{ title: string; children: React.ReactNode; defaultOpen?: boolean }> = ({ title, children, defaultOpen = true }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
     return (
-        <div className="glass-card !p-0 overflow-hidden">
+        <div className="glass-card !p-0 overflow-hidden shrink-0">
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 transition-colors"
@@ -387,9 +387,10 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
                                 <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
                                 <XAxis type="number" hide domain={isPhase ? [-Math.PI, Math.PI] : [0, 'auto']} />
                                 <Tooltip
-                                    contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
+                                    contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px', color: '#fff' }}
                                     formatter={(val: number) => [val.toFixed(2), "Intensity"]}
                                     labelFormatter={(label) => `Y-Pos: ${label}`}
+                                    itemStyle={{ color: '#fff' }}
                                 />
                                 {/* For Phase, use Line? Or Area? Bar works. */}
                                 <Bar dataKey="val" isAnimationActive={false}>
@@ -414,9 +415,10 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
                                 <XAxis dataKey="x" hide />
                                 <YAxis hide domain={isPhase ? [-Math.PI, Math.PI] : [0, 'auto']} />
                                 <Tooltip
-                                    contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
+                                    contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px', color: '#fff' }}
                                     formatter={(val: number) => [val.toFixed(2), "Intensity"]}
                                     labelFormatter={(label) => `X-Pos: ${label}`}
+                                    itemStyle={{ color: '#fff' }}
                                 />
                                 <Bar dataKey="val" isAnimationActive={false}>
                                     {analysis?.hData.map((entry, index) => (
@@ -537,7 +539,8 @@ export default function PSFSimulator() {
         <div className="flex flex-col lg:flex-row gap-6 h-full font-sans justify-center">
             {/* Sidebar Controls */}
             {/* Sidebar Controls */}
-            <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar lg:max-h-[calc(100vh-58px)] pt-[58px] sticky top-0">
+            {/* Sidebar Controls */}
+            <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar max-h-[calc(100vh-58px)] pt-[58px] sticky top-0">
                 {state === "ERROR" && (
                     <div className="p-4 bg-red-900/20 border border-red-500 text-red-500 text-xs font-mono">
                         <strong>ERROR:</strong> {pyodideError || "Simulator failed."}
@@ -767,6 +770,13 @@ export default function PSFSimulator() {
                                         <div className="text-right font-mono text-white">
                                             {(analysis?.hStats?.fwhm
                                                 ? (analysis.hStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                : 0).toFixed(1)}
+                                        </div>
+
+                                        <div className="text-gray-500 font-mono">FWHM Y</div>
+                                        <div className="text-right font-mono text-white">
+                                            {(analysis?.vStats?.fwhm
+                                                ? (analysis.vStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
                                                 : 0).toFixed(1)}
                                         </div>
                                     </div>
