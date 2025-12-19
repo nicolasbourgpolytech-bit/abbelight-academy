@@ -588,7 +588,7 @@ export default function PSFSimulator() {
                         </div>
 
                         {/* Image Display */}
-                        <div className="relative w-full aspect-video bg-white/5 border border-white/10 rounded overflow-hidden flex items-center justify-center p-2">
+                        <div className="relative w-full h-64 bg-white/5 border border-white/10 rounded overflow-hidden flex items-center justify-center p-1">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={selectedObjective.imagePath}
