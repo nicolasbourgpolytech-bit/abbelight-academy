@@ -317,7 +317,7 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
 
     return (
         // Wrapper that fills the parent
-        <div ref={wrapperRef} className="w-full h-full flex items-center justify-center overflow-hidden">
+        <div ref={wrapperRef} className="w-full h-full flex items-start justify-center overflow-hidden">
             <div className="grid gap-4 mx-auto"
                 style={{
                     width: gridSize ? `${gridSize}px` : '100%',
@@ -711,8 +711,8 @@ export default function PSFSimulator() {
             </div>
 
             {/* Main Content Area: Side-by-Side Views */}
-            <div className="flex-1 w-full flex flex-col pt-[58px] overflow-hidden">
-                <div className="w-full max-w-[1600px] mx-auto h-auto xl:h-full flex flex-col xl:flex-row gap-4 p-4 min-w-0 overflow-y-auto xl:overflow-visible">
+            <div className="flex-1 w-full flex flex-col pt-[58px] overflow-hidden overflow-y-auto xl:overflow-hidden">
+                <div className="w-full max-w-[1600px] mx-auto h-auto xl:h-full flex flex-col xl:flex-row gap-4 p-4 min-w-0">
 
                     {/* LEFT: PSF View */}
                     <div className="flex-1 min-w-[400px] flex items-start justify-center overflow-hidden p-2">
