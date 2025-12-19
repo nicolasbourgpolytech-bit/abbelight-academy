@@ -80,34 +80,33 @@ const AccordionSection: React.FC<{ title: string; children: React.ReactNode; def
 };
 
 // --- Constants ---
+const DEFAULT_OBJECTIVE = OBJECTIVES[0];
+
 const DEFAULT_PARAMS: SimulationParams = {
-    const DEFAULT_OBJECTIVE = OBJECTIVES[0];
+    NA: DEFAULT_OBJECTIVE.NA,
+    lambda_vac: 600e-9,
+    n_imm: DEFAULT_OBJECTIVE.n_imm,
+    n_sample: 1.33,
+    M_obj: DEFAULT_OBJECTIVE.magnification,
+    f_tube: DEFAULT_OBJECTIVE.f_tube_mm / 1000, // Convert mm to meters
+    z_defocus: 0,
+    astigmatism: "None",
+    cam_pixel_um: 6.5,
+    oversampling: 3,
+    display_fov_um: 300,
+    depth: 0,
+    correction_sa: 0,
+};
 
-    const DEFAULT_PARAMS: SimulationParams = {
-        NA: DEFAULT_OBJECTIVE.NA,
-        lambda_vac: 600e-9,
-        n_imm: DEFAULT_OBJECTIVE.n_imm,
-        n_sample: 1.33,
-        M_obj: DEFAULT_OBJECTIVE.magnification,
-        f_tube: DEFAULT_OBJECTIVE.f_tube_mm / 1000, // Convert mm to meters
-        z_defocus: 0,
-        astigmatism: "None",
-        cam_pixel_um: 6.5,
-        oversampling: 3,
-        display_fov_um: 300,
-        depth: 0,
-        correction_sa: 0,
-    };
-
-    // --- Helpers ---
-    function wavelengthToColor(wavelengthM: number): string {
-        const nm = wavelengthM * 1e9;
-if (nm < 450) return "#8B5CF6"; // Violet
-if (nm < 495) return "#06b6d4"; // Blue/Cyan
-if (nm < 570) return "#22c55e"; // Green
-if (nm < 590) return "#eab308"; // Yellow
-if (nm < 620) return "#f97316"; // Orange
-return "#ef4444"; // Red
+// --- Helpers ---
+function wavelengthToColor(wavelengthM: number): string {
+    const nm = wavelengthM * 1e9;
+    if (nm < 450) return "#8B5CF6"; // Violet
+    if (nm < 495) return "#06b6d4"; // Blue/Cyan
+    if (nm < 570) return "#22c55e"; // Green
+    if (nm < 590) return "#eab308"; // Yellow
+    if (nm < 620) return "#f97316"; // Orange
+    return "#ef4444"; // Red
 }
 
 function drawMatrix(
