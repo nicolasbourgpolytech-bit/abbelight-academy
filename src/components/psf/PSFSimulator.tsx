@@ -296,96 +296,122 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
         onCanvasClick(e);
     };
 
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    const [gridSize, setGridSize] = useState<number | null>(null);
+
+    // Resize Observer to force Square Aspect Ratio
+    useEffect(() => {
+        if (!wrapperRef.current) return;
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const { width, height } = entry.contentRect;
+                // Calculate max square size that fits
+                // We want to fill as much as possible, but keep 1:1
+                const size = Math.min(width, height);
+                setGridSize(size);
+            }
+        });
+        resizeObserver.observe(wrapperRef.current);
+        return () => resizeObserver.disconnect();
+    }, []);
+
     return (
-        <div className="grid gap-4 w-auto h-auto max-w-full max-h-full aspect-square mx-auto"
-            style={{
-                gridTemplateColumns: 'minmax(0, 1fr) 200px',
-                gridTemplateRows: 'minmax(0, 1fr) 200px',
-            }}
-        >
-            {/* 1. TOP LEFT: IMAGE */}
-            <div className="relative w-full h-full bg-black/20 border border-white/10 group overflow-hidden aspect-square flex items-center justify-center" ref={containerRef}>
-                <div className="absolute top-0 left-0 right-0 p-2 z-10 flex justify-between items-start pointer-events-none">
-                    {title}
+        // Wrapper that fills the parent
+        <div ref={wrapperRef} className="w-full h-full flex items-center justify-center overflow-hidden">
+            <div className="grid gap-4 mx-auto"
+                style={{
+                    width: gridSize ? `${gridSize}px` : '100%',
+                    height: gridSize ? `${gridSize}px` : '100%',
+                    gridTemplateColumns: 'minmax(0, 1fr) 200px',
+                    gridTemplateRows: 'minmax(0, 1fr) 200px',
+                    // Fallback if JS hasn't run yet
+                    aspectRatio: '1 / 1'
+                }}
+            >
+                {/* 1. TOP LEFT: IMAGE */}
+                <div className="relative w-full h-full bg-black/20 border border-white/10 group overflow-hidden aspect-square flex items-center justify-center" ref={containerRef}>
+                    <div className="absolute top-0 left-0 right-0 p-2 z-10 flex justify-between items-start pointer-events-none">
+                        {title}
+                    </div>
+
+                    <canvas
+                        ref={canvasRef}
+                        onClick={onCanvasClick}
+                        className="w-full h-full aspect-square object-contain image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
+                        style={{ imageRendering: 'pixelated' }}
+                    />
+
+                    {/* Overlays */}
+                    {overlays}
+
+                    {/* Crosshair */}
+                    {analysis && (
+                        <>
+                            <div className="absolute w-full border-t border-white/30 border-dashed pointer-events-none"
+                                style={{ top: `${((analysis.cy + 0.5) / analysis.h) * 100}%`, left: 0 }} />
+                            <div className="absolute h-full border-l border-white/30 border-dashed pointer-events-none"
+                                style={{ left: `${((analysis.cx + 0.5) / analysis.w) * 100}%`, top: 0 }} />
+                        </>
+                    )}
                 </div>
 
-                <canvas
-                    ref={canvasRef}
-                    onClick={onCanvasClick}
-                    className="w-full h-full aspect-square object-contain image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
-                    style={{ imageRendering: 'pixelated' }}
-                />
-
-                {/* Overlays */}
-                {overlays}
-
-                {/* Crosshair */}
-                {analysis && (
-                    <>
-                        <div className="absolute w-full border-t border-white/30 border-dashed pointer-events-none"
-                            style={{ top: `${((analysis.cy + 0.5) / analysis.h) * 100}%`, left: 0 }} />
-                        <div className="absolute h-full border-l border-white/30 border-dashed pointer-events-none"
-                            style={{ left: `${((analysis.cx + 0.5) / analysis.w) * 100}%`, top: 0 }} />
-                    </>
-                )}
-            </div>
-
-            {/* 2. TOP RIGHT: Y-PROFILE */}
-            <div className="glass-card !p-0 relative flex flex-col w-full h-full min-h-0 border-l border-white/10">
-                <span className="absolute top-2 left-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest z-10">
-                    {yAxisUnit} (Y)
-                </span>
-                <div className="flex-1 w-full min-h-0 pt-4">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart layout="vertical" data={analysis?.vData || []} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                            <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
-                            <XAxis type="number" hide domain={isPhase ? [-Math.PI, Math.PI] : [0, 'auto']} />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
-                                formatter={(val: number) => val.toFixed(2)}
-                                labelFormatter={() => ''}
-                            />
-                            {/* For Phase, use Line? Or Area? Bar works. */}
-                            <Bar dataKey="val" isAnimationActive={false}>
-                                {analysis?.vData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={color} fillOpacity={isPhase ? 1 : (analysis.vMax ? entry.val / analysis.vMax : 0.5)} />
-                                ))}
-                            </Bar>
-                            {fitProfiles && <Line dataKey="fit" stroke="#fff" strokeDasharray="3 3" dot={false} isAnimationActive={false} />}
-                        </ComposedChart>
-                    </ResponsiveContainer>
+                {/* 2. TOP RIGHT: Y-PROFILE */}
+                <div className="glass-card !p-0 relative flex flex-col w-full h-full min-h-0 border-l border-white/10">
+                    <span className="absolute top-2 left-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest z-10">
+                        {yAxisUnit} (Y)
+                    </span>
+                    <div className="flex-1 w-full min-h-0 pt-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <ComposedChart layout="vertical" data={analysis?.vData || []} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                                <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
+                                <XAxis type="number" hide domain={isPhase ? [-Math.PI, Math.PI] : [0, 'auto']} />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
+                                    formatter={(val: number) => val.toFixed(2)}
+                                    labelFormatter={() => ''}
+                                />
+                                {/* For Phase, use Line? Or Area? Bar works. */}
+                                <Bar dataKey="val" isAnimationActive={false}>
+                                    {analysis?.vData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={color} fillOpacity={isPhase ? 1 : (analysis.vMax ? entry.val / analysis.vMax : 0.5)} />
+                                    ))}
+                                </Bar>
+                                {fitProfiles && <Line dataKey="fit" stroke="#fff" strokeDasharray="3 3" dot={false} isAnimationActive={false} />}
+                            </ComposedChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
-            </div>
 
-            {/* 3. BOTTOM LEFT: X-PROFILE */}
-            <div className="glass-card !p-0 relative flex flex-col w-full h-full min-h-0 border-t border-white/10">
-                <span className="absolute top-2 left-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest z-10">
-                    {yAxisUnit} (X)
-                </span>
-                <div className="flex-1 w-full min-h-0 pt-4">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={analysis?.hData || []} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                            <XAxis dataKey="x" hide />
-                            <YAxis hide domain={isPhase ? [-Math.PI, Math.PI] : [0, 'auto']} />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
-                                formatter={(val: number) => val.toFixed(2)}
-                                labelFormatter={() => ''}
-                            />
-                            <Bar dataKey="val" isAnimationActive={false}>
-                                {analysis?.hData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={color} fillOpacity={isPhase ? 1 : (analysis.hMax ? entry.val / analysis.hMax : 0.5)} />
-                                ))}
-                            </Bar>
-                            {fitProfiles && <Line dataKey="fit" stroke="#ef4444" dot={false} strokeWidth={2} isAnimationActive={false} />}
-                        </ComposedChart>
-                    </ResponsiveContainer>
+                {/* 3. BOTTOM LEFT: X-PROFILE */}
+                <div className="glass-card !p-0 relative flex flex-col w-full h-full min-h-0 border-t border-white/10">
+                    <span className="absolute top-2 left-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest z-10">
+                        {yAxisUnit} (X)
+                    </span>
+                    <div className="flex-1 w-full min-h-0 pt-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <ComposedChart data={analysis?.hData || []} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                                <XAxis dataKey="x" hide />
+                                <YAxis hide domain={isPhase ? [-Math.PI, Math.PI] : [0, 'auto']} />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
+                                    formatter={(val: number) => val.toFixed(2)}
+                                    labelFormatter={() => ''}
+                                />
+                                <Bar dataKey="val" isAnimationActive={false}>
+                                    {analysis?.hData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={color} fillOpacity={isPhase ? 1 : (analysis.hMax ? entry.val / analysis.hMax : 0.5)} />
+                                    ))}
+                                </Bar>
+                                {fitProfiles && <Line dataKey="fit" stroke="#ef4444" dot={false} strokeWidth={2} isAnimationActive={false} />}
+                            </ComposedChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
-            </div>
 
-            {/* 4. BOTTOM RIGHT: INFO */}
-            <div className="glass-card !p-2 flex flex-col justify-center w-full h-full overflow-hidden">
-                {bottomRightInfo && bottomRightInfo(analysis)}
+                {/* 4. BOTTOM RIGHT: INFO */}
+                <div className="glass-card !p-2 flex flex-col justify-center w-full h-full overflow-hidden">
+                    {bottomRightInfo && bottomRightInfo(analysis)}
+                </div>
             </div>
         </div>
     );
