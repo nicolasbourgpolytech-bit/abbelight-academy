@@ -720,7 +720,7 @@ export default function PSFSimulator() {
             </div>
 
             {/* Main Content Area: Side-by-Side Views */}
-            <div className="flex-1 w-full flex flex-col pt-[58px] pb-4 overflow-hidden overflow-y-auto min-[1700px]:overflow-hidden h-full">
+            <div className="flex-1 w-full flex flex-col pt-[58px] pb-4 overflow-hidden overflow-y-auto custom-scrollbar min-[1700px]:overflow-hidden h-full">
                 <div className="w-full max-w-[1600px] mx-auto h-auto min-[1700px]:h-full flex flex-col min-[1700px]:flex-row gap-4 px-4 pb-4 pt-0 min-w-0">
 
                     {/* LEFT: PSF View */}
