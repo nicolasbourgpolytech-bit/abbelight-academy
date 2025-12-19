@@ -712,7 +712,7 @@ export default function PSFSimulator() {
 
             {/* Main Content Area: Side-by-Side Views */}
             <div className="flex-1 w-full flex flex-col pt-[58px] overflow-hidden overflow-y-auto xl:overflow-hidden">
-                <div className="w-full max-w-[1600px] mx-auto h-auto xl:h-full flex flex-col xl:flex-row gap-4 p-4 min-w-0">
+                <div className="w-full max-w-[1600px] mx-auto h-auto xl:h-full flex flex-col xl:flex-row gap-4 px-4 pb-4 pt-0 min-w-0">
 
                     {/* LEFT: PSF View */}
                     <div className="w-full aspect-square xl:aspect-auto xl:h-full xl:flex-1 xl:min-w-[400px] flex items-start justify-center overflow-hidden p-2">
