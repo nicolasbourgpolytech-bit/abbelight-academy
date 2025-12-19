@@ -843,7 +843,12 @@ export default function PSFSimulator() {
                                             />
                                             {/* Labels: SAF is OUTSIDE, UAF is INSIDE */}
                                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/30 font-bold text-2xl pointer-events-none select-none">UAF</div>
-                                            <div className="absolute top-8 left-1/2 -translate-x-1/2 text-white/30 font-bold text-2xl pointer-events-none select-none">SAF</div>
+                                            <div
+                                                className="absolute left-1/2 -translate-x-1/2 -translate-y-full pb-1 text-white/30 font-bold text-lg pointer-events-none select-none"
+                                                style={{ top: `${50 - ((params.n_sample / params.NA) * 50)}%` }}
+                                            >
+                                                SAF
+                                            </div>
                                         </>
                                     )}
                                 </>
