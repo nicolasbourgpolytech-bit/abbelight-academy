@@ -12,12 +12,7 @@ interface SimulationParams {
     n_imm: number;
     n_sample: number;
     M_obj: number;
-    lambda_vac: number; // meters
-    n_imm: number;
-    n_sample: number;
-    M_obj: number;
     f_tube: number; // meters
-    z_defocus: number; // meters
     z_defocus: number; // meters
     astigmatism: "None" | "Weak" | "Strong";
     cam_pixel_um: number;
