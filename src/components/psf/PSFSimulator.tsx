@@ -858,7 +858,7 @@ export default function PSFSimulator() {
                                                         <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#fff' }} interval={0} stroke="none" />
                                                         <Tooltip contentStyle={{ backgroundColor: '#000', fontSize: '10px' }} cursor={{ fill: 'rgba(255,255,255,0.1)' }} />
                                                         <Bar dataKey="val" radius={[2, 2, 0, 0]}>
-                                                            <LabelList dataKey="val" position="top" fill="#fff" fontSize={9} formatter={(val: number) => val.toFixed(2)} />
+                                                            <LabelList dataKey="val" position="top" fill="#fff" fontSize={9} formatter={(val: any) => Number(val).toFixed(2)} />
                                                         </Bar>
                                                     </BarChart>
                                                 </ResponsiveContainer>
