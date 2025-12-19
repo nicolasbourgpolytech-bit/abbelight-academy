@@ -222,7 +222,7 @@ interface AnalyzedViewProps {
     onCanvasClick: (e: React.MouseEvent<HTMLCanvasElement>) => void;
     isPhase?: boolean;
     overlays?: React.ReactNode;
-    bottomRightInfo?: React.ReactNode;
+    bottomRightInfo?: (analysis: any) => React.ReactNode;
     yAxisUnit?: string; // "Intensity" or "Rad"
     params?: SimulationParams; // For Pixel/NM conversion in profiles
     fitProfiles?: boolean; // Whether to attempt Gaussian fit
@@ -385,7 +385,7 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
 
             {/* 4. BOTTOM RIGHT: INFO */}
             <div className="glass-card !p-2 flex flex-col justify-center w-full h-full overflow-hidden">
-                {bottomRightInfo}
+                {bottomRightInfo && bottomRightInfo(analysis)}
             </div>
         </div>
     );
@@ -709,34 +709,38 @@ export default function PSFSimulator() {
                                     <div className="flex gap-2 justify-between"><span>FOV:</span> <span className="text-white">{params.display_fov_um} µm</span></div>
                                 </div>
                             }
-                            bottomRightInfo={
-                                /* Gaussian Stats */
+                            bottomRightInfo={(analysis) => (
                                 <div className="space-y-1">
                                     <h4 className="text-[9px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/10 pb-0.5">Gaussian Fit</h4>
                                     <div className="grid grid-cols-2 gap-x-2 text-[10px]">
-                                        <span className="text-brand-cyan font-mono">σ(X)</span>
-                                        <span className="text-right text-white font-mono">
-                                            {/* Using hardcoded reference logic from previous file? 1.5 factor? */}
-                                            {/* Let's try to pass stats via AnalyzedView or reuse logic? 
-                                                AnalyzedView doesn't expose internal stats easily via props. 
-                                                Refactoring to allow stats callback or context? 
-                                                Actually, for this specific request, I can approximate or just move stats inside AnalyzedView specific for PSF?
-                                                I'll keep it general.
-                                            */}
-                                            --
-                                        </span>
-                                        {/* NOTE: To show stats correctly, I need access to them. 
-                                             I will modify AnalyzedView to accept a render prop for bottomRightInfo 
-                                             OR I will just leave it empty for now?
-                                             The generic nature hides stats. 
-                                             Let's QUICKLY patch AnalyzedView to expose stats or handle specific PSF logic.
-                                         */}
+                                        <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
+                                        <div className="text-right text-gray-600 text-[10px] uppercase">nm</div>
+
+                                        <div className="text-brand-cyan font-mono">σ (X)</div>
+                                        <div className="text-right font-mono text-white">
+                                            {(analysis?.hStats?.sigma
+                                                ? (analysis.hStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                : 0).toFixed(1)}
+                                        </div>
+
+                                        <div className="text-brand-magenta font-mono">σ (Y)</div>
+                                        <div className="text-right font-mono text-white">
+                                            {(analysis?.vStats?.sigma
+                                                ? (analysis.vStats.sigma * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                : 0).toFixed(1)}
+                                        </div>
+
+                                        <div className="col-span-2 h-px bg-white/5 my-1" />
+
+                                        <div className="text-gray-500 font-mono">FWHM X</div>
+                                        <div className="text-right font-mono text-white">
+                                            {(analysis?.hStats?.fwhm
+                                                ? (analysis.hStats.fwhm * (params.cam_pixel_um / params.M_obj) * 1.5 * 1000)
+                                                : 0).toFixed(1)}
+                                        </div>
                                     </div>
-                                    <div className="text-[10px] text-gray-500 italic">Inspect console for fit</div>
                                 </div>
-                                // Better: I'll hardcode the stats logic inside AnalyzedView if I can't pass it out easily.
-                                // Or better yet, pass a callback `onStatsCalculated`?
-                            }
+                            )}
                         />
                     </div>
 
@@ -792,7 +796,7 @@ export default function PSFSimulator() {
                                     )}
                                 </>
                             }
-                            bottomRightInfo={
+                            bottomRightInfo={() => (
                                 <div className="w-full h-full flex flex-col relative overflow-hidden">
                                     {bfpMode === "intensity" ? (
                                         <div className="flex flex-col items-center justify-center h-full">
@@ -819,7 +823,7 @@ export default function PSFSimulator() {
                                         )
                                     )}
                                 </div>
-                            }
+                            )}
                         />
                     </div>
 
