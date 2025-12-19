@@ -144,7 +144,18 @@ export default function ProductsAdminPage() {
                                     </div>
                                     <div className="flex-1">
                                         <h3 className="font-bold text-white mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
-                                        <p className="text-xs text-gray-400 mb-1">{product.category}</p>
+                                        {product.category === "3rd party instrument" ? (
+                                            <div className="mb-2">
+                                                <p className="text-xs text-primary font-semibold">{product.subcategory}</p>
+                                                {product.subcategory === "Objective lens" && (
+                                                    <p className="text-xs text-gray-400 mt-1">
+                                                        <span className="text-gray-500">Ref:</span> {product.reference} | <span className="text-gray-500">Mag:</span> {product.magnification}x | <span className="text-gray-500">NA:</span> {product.na} | <span className="text-gray-500">Imm:</span> {product.immersion}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-gray-400 mb-1">{product.category}</p>
+                                        )}
                                         <p className="text-xs text-gray-500 mb-2 truncate">{product.link}</p>
                                         <div className="flex gap-2">
                                             <button
