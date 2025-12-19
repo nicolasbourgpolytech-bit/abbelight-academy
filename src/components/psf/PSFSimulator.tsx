@@ -425,7 +425,7 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
                                         <Cell key={`cell-${index}`} fill={color} fillOpacity={isPhase ? 1 : (analysis.hMax ? entry.val / analysis.hMax : 0.5)} />
                                     ))}
                                 </Bar>
-                                {fitProfiles && <Line dataKey="fit" stroke="#ef4444" dot={false} strokeWidth={2} isAnimationActive={false} />}
+                                {fitProfiles && <Line dataKey="fit" stroke="#fff" strokeDasharray="3 3" dot={false} isAnimationActive={false} />}
                             </ComposedChart>
                         </ResponsiveContainer>
                     </div>
@@ -843,6 +843,7 @@ export default function PSFSimulator() {
                                             />
                                             {/* Labels: SAF is OUTSIDE, UAF is INSIDE */}
                                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/30 font-bold text-2xl pointer-events-none select-none">UAF</div>
+                                            <div className="absolute top-8 left-1/2 -translate-x-1/2 text-white/30 font-bold text-2xl pointer-events-none select-none">SAF</div>
                                         </>
                                     )}
                                 </>
@@ -850,9 +851,9 @@ export default function PSFSimulator() {
                             bottomRightInfo={() => (
                                 <div className="w-full h-full flex flex-col relative overflow-hidden">
                                     {bfpMode === "intensity" ? (
-                                        <div className="flex flex-col items-center justify-center h-full gap-2">
-                                            <span className="text-sm text-brand-cyan uppercase tracking-widest font-bold">SAF Ratio</span>
-                                            <span className="text-2xl font-mono text-white font-light">
+                                        <div className="flex flex-col items-center justify-center h-full gap-1">
+                                            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">SAF Ratio</span>
+                                            <span className="text-xl font-mono text-brand-cyan">
                                                 {(simResult?.saf_ratio !== undefined ? simResult.saf_ratio * 100 : 0).toFixed(1)}%
                                             </span>
                                         </div>
