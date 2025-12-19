@@ -735,21 +735,21 @@ export default function PSFSimulator() {
                             fitProfiles={true} // Intensity profiles fitted
                             overlays={
                                 /* Parameter Overlay (Bottom Left) */
-                                <div className="absolute bottom-2 left-2 p-2 bg-black/60 backdrop-blur border border-white/10 text-[9px] font-mono text-brand-cyan pointer-events-none z-20 space-y-0.5 shadow-xl">
-                                    <div className="font-bold border-b border-brand-cyan/20 mb-1 pb-0.5 text-white">PARAMETERS</div>
-                                    <div className="flex gap-2 justify-between"><span>NA:</span> <span className="text-white">{params.NA}</span></div>
-                                    <div className="flex gap-2 justify-between"><span>Mag:</span> <span className="text-white">{params.M_obj}x</span></div>
-                                    <div className="flex gap-2 justify-between"><span>λ:</span> <span className="text-white">{(params.lambda_vac * 1e9).toFixed(0)} nm</span></div>
-                                    <div className="flex gap-2 justify-between"><span>Defocus:</span> <span className="text-white">{(params.z_defocus * 1e6).toFixed(2)} µm</span></div>
-                                    <div className="flex gap-2 justify-between"><span>FOV:</span> <span className="text-white">{params.display_fov_um} µm</span></div>
+                                <div className="absolute bottom-2 left-2 p-3 bg-black/60 backdrop-blur border border-white/10 text-[11px] font-mono text-brand-cyan pointer-events-none z-20 space-y-1 shadow-xl">
+                                    <div className="font-bold border-b border-brand-cyan/20 mb-1.5 pb-0.5 text-white text-xs">PARAMETERS</div>
+                                    <div className="flex gap-4 justify-between"><span>NA:</span> <span className="text-white">{params.NA}</span></div>
+                                    <div className="flex gap-4 justify-between"><span>Mag:</span> <span className="text-white">{params.M_obj}x</span></div>
+                                    <div className="flex gap-4 justify-between"><span>λ:</span> <span className="text-white">{(params.lambda_vac * 1e9).toFixed(0)} nm</span></div>
+                                    <div className="flex gap-4 justify-between"><span>Defocus:</span> <span className="text-white">{(params.z_defocus * 1e6).toFixed(2)} µm</span></div>
+                                    <div className="flex gap-4 justify-between"><span>FOV:</span> <span className="text-white">{params.display_fov_um} µm</span></div>
                                 </div>
                             }
                             bottomRightInfo={(analysis) => (
-                                <div className="space-y-1">
-                                    <h4 className="text-[9px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/10 pb-0.5">Gaussian Fit</h4>
-                                    <div className="grid grid-cols-2 gap-x-2 text-[10px]">
-                                        <div className="text-gray-600 text-[10px] uppercase">Parameter</div>
-                                        <div className="text-right text-gray-600 text-[10px] uppercase">nm</div>
+                                <div className="space-y-2 p-2 w-full">
+                                    <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-white/10 pb-1">Gaussian Fit</h4>
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs w-full">
+                                        <div className="text-gray-500 text-[10px] uppercase">Parameter</div>
+                                        <div className="text-right text-gray-500 text-[10px] uppercase">nm</div>
 
                                         <div className="text-brand-cyan font-mono">σ (X)</div>
                                         <div className="text-right font-mono text-white">
@@ -820,9 +820,9 @@ export default function PSFSimulator() {
                                 <>
                                     {/* Phase Colormap */}
                                     {bfpMode === "phase" && (
-                                        <div className="absolute top-2 right-2 flex flex-col bg-black/60 border border-white/10 p-1 z-20 shadow-lg backdrop-blur">
-                                            <div className="w-24 h-3 rounded-sm mb-1" style={{ background: "linear-gradient(to right, white, #4169E1, black, #DC143C, white)" }}></div>
-                                            <div className="flex justify-between text-[8px] font-mono text-gray-400 w-24">
+                                        <div className="absolute top-2 right-2 flex flex-col bg-black/60 border border-white/10 p-2 z-20 shadow-lg backdrop-blur">
+                                            <div className="w-32 h-4 rounded-sm mb-1" style={{ background: "linear-gradient(to right, white, #4169E1, black, #DC143C, white)" }}></div>
+                                            <div className="flex justify-between text-[10px] font-mono text-gray-300 w-32 font-bold">
                                                 <span>-π</span>
                                                 <span>0</span>
                                                 <span>+π</span>
@@ -850,9 +850,9 @@ export default function PSFSimulator() {
                             bottomRightInfo={() => (
                                 <div className="w-full h-full flex flex-col relative overflow-hidden">
                                     {bfpMode === "intensity" ? (
-                                        <div className="flex flex-col items-center justify-center h-full">
-                                            <span className="text-xs text-brand-cyan uppercase tracking-widest font-bold">SAF Ratio</span>
-                                            <span className="text-3xl font-mono text-white font-light">
+                                        <div className="flex flex-col items-center justify-center h-full gap-2">
+                                            <span className="text-sm text-brand-cyan uppercase tracking-widest font-bold">SAF Ratio</span>
+                                            <span className="text-2xl font-mono text-white font-light">
                                                 {(simResult?.saf_ratio !== undefined ? simResult.saf_ratio * 100 : 0).toFixed(1)}%
                                             </span>
                                         </div>
