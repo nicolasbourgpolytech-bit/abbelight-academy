@@ -244,20 +244,23 @@ export default function ProductsAdminPage() {
                                                 min="4"
                                                 max="100"
                                                 value={editingProduct?.magnification || ""}
-                                                onChange={(e) => setEditingProduct({ ...editingProduct, magnification: parseInt(e.target.value) })}
+                                                onChange={(e) => setEditingProduct({ ...editingProduct, magnification: e.target.value ? parseInt(e.target.value) : "" })}
                                                 className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
                                             />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-500 uppercase mb-2">NA (0.2-1.7)</label>
                                             <input
-                                                type="number"
-                                                step="0.01"
-                                                min="0.2"
-                                                max="1.7"
+                                                type="text"
                                                 value={editingProduct?.na || ""}
-                                                onChange={(e) => setEditingProduct({ ...editingProduct, na: parseFloat(e.target.value) })}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/,/g, '.');
+                                                    if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                                        setEditingProduct({ ...editingProduct, na: val })
+                                                    }
+                                                }}
                                                 className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                placeholder="e.g. 1.45"
                                             />
                                         </div>
                                         <div>
@@ -277,11 +280,16 @@ export default function ProductsAdminPage() {
                                         <div>
                                             <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tube Lens Focal Length (mm)</label>
                                             <input
-                                                type="number"
-                                                step="0.1"
+                                                type="text"
                                                 value={editingProduct?.tube_lens_focal_length || ""}
-                                                onChange={(e) => setEditingProduct({ ...editingProduct, tube_lens_focal_length: parseFloat(e.target.value) })}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/,/g, '.');
+                                                    if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                                        setEditingProduct({ ...editingProduct, tube_lens_focal_length: val })
+                                                    }
+                                                }}
                                                 className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                                placeholder="e.g. 200"
                                             />
                                         </div>
                                     </div>
