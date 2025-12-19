@@ -388,8 +388,8 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
                                 <XAxis type="number" hide domain={isPhase ? [-Math.PI, Math.PI] : [0, 'auto']} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
-                                    formatter={(val: number) => val.toFixed(2)}
-                                    labelFormatter={(label) => `Y: ${label}`}
+                                    formatter={(val: number) => [val.toFixed(2), "Intensity"]}
+                                    labelFormatter={(label) => `Y-Pos: ${label}`}
                                 />
                                 {/* For Phase, use Line? Or Area? Bar works. */}
                                 <Bar dataKey="val" isAnimationActive={false}>
@@ -415,8 +415,8 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
                                 <YAxis hide domain={isPhase ? [-Math.PI, Math.PI] : [0, 'auto']} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
-                                    formatter={(val: number) => val.toFixed(2)}
-                                    labelFormatter={(label) => `X: ${label}`}
+                                    formatter={(val: number) => [val.toFixed(2), "Intensity"]}
+                                    labelFormatter={(label) => `X-Pos: ${label}`}
                                 />
                                 <Bar dataKey="val" isAnimationActive={false}>
                                     {analysis?.hData.map((entry, index) => (
@@ -536,7 +536,8 @@ export default function PSFSimulator() {
     return (
         <div className="flex flex-col lg:flex-row gap-6 h-full font-sans justify-center">
             {/* Sidebar Controls */}
-            <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar pt-[58px] h-full sticky top-0">
+            {/* Sidebar Controls */}
+            <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar lg:max-h-[calc(100vh-58px)] pt-[58px] sticky top-0">
                 {state === "ERROR" && (
                     <div className="p-4 bg-red-900/20 border border-red-500 text-red-500 text-xs font-mono">
                         <strong>ERROR:</strong> {pyodideError || "Simulator failed."}
@@ -846,15 +847,15 @@ export default function PSFSimulator() {
                                         </div>
                                     ) : (
                                         simResult?.stats && (
-                                            <div className="w-full h-full relative">
-                                                <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest block absolute top-0 left-0">Aberration Power (PV)</span>
-                                                <ResponsiveContainer width="100%" height="80%">
+                                            <div className="w-full h-full relative p-2">
+                                                <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest block absolute top-2 left-2">Aberration Power (PV) [rad]</span>
+                                                <ResponsiveContainer width="100%" height="100%">
                                                     <BarChart data={[
                                                         { name: 'Depth', val: simResult.stats.Depth, fill: '#06b6d4' },
                                                         { name: 'Def', val: simResult.stats.Defocus, fill: '#22c55e' },
                                                         { name: 'Astig', val: simResult.stats.Astig, fill: '#c026d3' },
                                                         { name: 'Collar', val: simResult.stats.Collar, fill: '#eab308' },
-                                                    ]} margin={{ top: 15, bottom: 0 }}>
+                                                    ]} margin={{ top: 30, bottom: 0 }}>
                                                         <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#fff' }} interval={0} stroke="none" />
                                                         <Tooltip contentStyle={{ backgroundColor: '#000', fontSize: '10px' }} cursor={{ fill: 'rgba(255,255,255,0.1)' }} />
                                                         <Bar dataKey="val" radius={[2, 2, 0, 0]}>
