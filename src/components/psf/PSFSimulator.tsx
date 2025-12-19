@@ -2,7 +2,70 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { usePyodide } from './usePyodide';
-import { ComposedChart, Bar, BarChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
+import { ComposedChart, Bar, BarChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, LabelList } from 'recharts';
+
+// ... (skipping to ComposedChart updates)
+
+                        <ResponsiveContainer width="100%" height="100%">
+                            <ComposedChart layout="vertical" data={analysis?.vData || []} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                                <YAxis dataKey="y" type="number" hide reversed domain={[0, 'dataMax']} />
+                                <XAxis type="number" hide domain={isPhase ? [-Math.PI, Math.PI] : [0, 'auto']} />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
+                                    formatter={(val: number) => val.toFixed(2)}
+                                    labelFormatter={(label) => `Y: ${label}`}
+                                />
+                                {/* For Phase, use Line? Or Area? Bar works. */}
+                                <Bar dataKey="val" isAnimationActive={false}>
+                                    {analysis?.vData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={color} fillOpacity={isPhase ? 1 : (analysis.vMax ? entry.val / analysis.vMax : 0.5)} />
+                                    ))}
+                                </Bar>
+                                {fitProfiles && <Line dataKey="fit" stroke="#fff" strokeDasharray="3 3" dot={false} isAnimationActive={false} />}
+                            </ComposedChart>
+                        </ResponsiveContainer>
+
+// ... (skipping to X-Profile ComposedChart)
+
+                        <ResponsiveContainer width="100%" height="100%">
+                            <ComposedChart data={analysis?.hData || []} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                                <XAxis dataKey="x" hide />
+                                <YAxis hide domain={isPhase ? [-Math.PI, Math.PI] : [0, 'auto']} />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px' }}
+                                    formatter={(val: number) => val.toFixed(2)}
+                                    labelFormatter={(label) => `X: ${label}`}
+                                />
+                                <Bar dataKey="val" isAnimationActive={false}>
+                                    {analysis?.hData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={color} fillOpacity={isPhase ? 1 : (analysis.hMax ? entry.val / analysis.hMax : 0.5)} />
+                                    ))}
+                                </Bar>
+                                {fitProfiles && <Line dataKey="fit" stroke="#ef4444" dot={false} strokeWidth={2} isAnimationActive={false} />}
+                            </ComposedChart>
+                        </ResponsiveContainer>
+
+// ... (skipping to BarChart in BFP Info)
+
+                                        simResult?.stats && (
+                                            <div className="w-full h-full relative">
+                                                <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest block absolute top-0 left-0">Aberration Power (PV)</span>
+                                                <ResponsiveContainer width="100%" height="80%">
+                                                    <BarChart data={[
+                                                        { name: 'Depth', val: simResult.stats.Depth, fill: '#06b6d4' },
+                                                        { name: 'Def', val: simResult.stats.Defocus, fill: '#22c55e' },
+                                                        { name: 'Astig', val: simResult.stats.Astig, fill: '#c026d3' },
+                                                        { name: 'Collar', val: simResult.stats.Collar, fill: '#eab308' },
+                                                    ]} margin={{ top: 15, bottom: 0 }}>
+                                                        <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#fff' }} interval={0} stroke="none" />
+                                                        <Tooltip contentStyle={{ backgroundColor: '#000', fontSize: '10px' }} cursor={{ fill: 'rgba(255,255,255,0.1)' }} />
+                                                        <Bar dataKey="val" radius={[2, 2, 0, 0]}>
+                                                             <LabelList dataKey="val" position="top" fill="#fff" fontSize={9} formatter={(val: number) => val.toFixed(2)} />
+                                                        </Bar>
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        )
 
 // --- Types ---
 interface SimulationParams {
@@ -52,22 +115,223 @@ function getTwilightColor(val: number): [number, number, number] {
     return [Math.floor(r), Math.floor(g), Math.floor(b)];
 }
 
-// --- Constants ---
-const DEFAULT_PARAMS: SimulationParams = {
-    NA: 1.49,
-    lambda_vac: 600e-9,
-    n_imm: 1.518,
-    n_sample: 1.33,
-    M_obj: 100,
-    f_tube: 0.180,
-    z_defocus: 0,
-    astigmatism: "None",
-    cam_pixel_um: 6.5,
-    oversampling: 3,
-    display_fov_um: 300,
-    depth: 0,
-    correction_sa: 0,
+// --- Accordion Component ---
+const AccordionSection: React.FC<{ title: string; children: React.ReactNode; defaultOpen?: boolean }> = ({ title, children, defaultOpen = true }) => {
+    const [isOpen, setIsOpen] = useState(defaultOpen);
+    return (
+        <div className="glass-card !p-0 overflow-hidden">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 transition-colors"
+            >
+                <span className="text-sm font-bold text-white uppercase tracking-widest">{title}</span>
+                <span className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L5 5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                </span>
+            </button>
+            {isOpen && <div className="p-4 border-t border-white/10">{children}</div>}
+        </div>
+    );
 };
+
+// ... (Constants) ...
+
+// ... (Helpers) ...
+
+// ... (AnalyzedView Component) ...
+            {/* 4. BOTTOM RIGHT: INFO */}
+                <div className="glass-card !p-2 flex flex-col justify-center w-full h-full overflow-hidden">
+                    {bottomRightInfo && bottomRightInfo(analysis)}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ... (PSFSimulator Component) ...
+
+    return (
+        <div className="flex flex-col lg:flex-row gap-6 h-full font-sans justify-center">
+            {/* Sidebar Controls */}
+            <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar pt-[58px] h-full sticky top-0">
+                {state === "ERROR" && (
+                    <div className="p-4 bg-red-900/20 border border-red-500 text-red-500 text-xs font-mono">
+                        <strong>ERROR:</strong> {pyodideError || "Simulator failed."}
+                    </div>
+                )}
+
+                <AccordionSection title="Objective lens parameters">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">NA</label>
+                            <input
+                                type="text"
+                                value={inputValues.NA}
+                                onChange={e => handleInputChange('NA', e.target.value)}
+                                onKeyDown={e => handleKeyDown(e, 'NA')}
+                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Mag (X)</label>
+                            <input
+                                type="text"
+                                value={inputValues.M_obj}
+                                onChange={e => handleInputChange('M_obj', e.target.value)}
+                                onKeyDown={e => handleKeyDown(e, 'M_obj')}
+                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                            />
+                        </div>
+                        <div className="space-y-1 col-span-2">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Immersion medium refractive index (N_imm)</label>
+                            <input
+                                type="text"
+                                value={inputValues.n_imm}
+                                onChange={e => handleInputChange('n_imm', e.target.value)}
+                                onKeyDown={e => handleKeyDown(e, 'n_imm')}
+                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                            />
+                        </div>
+
+                        <div className="space-y-2 col-span-2 pt-2 border-t border-white/10">
+                            <div className="flex justify-between">
+                                <label className="text-xs text-gray-500 uppercase tracking-wider">Correction Collar</label>
+                                <span className="text-xs font-mono text-brand-cyan">{params.correction_sa.toFixed(1)} rad</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="-15" max="15" step="0.1"
+                                value={params.correction_sa}
+                                onChange={e => setParams(p => ({ ...p, correction_sa: parseFloat(e.target.value) }))}
+                                className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
+                            />
+                        </div>
+                    </div>
+                </AccordionSection>
+
+                <AccordionSection title="Sample parameters">
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Sample medium refractive index (n_sample)</label>
+                            <input
+                                type="text"
+                                value={inputValues.n_sample}
+                                onChange={e => handleInputChange('n_sample', e.target.value)}
+                                onKeyDown={e => handleKeyDown(e, 'n_sample')}
+                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                            />
+                        </div>
+
+                        <div className="space-y-2 pt-2 border-t border-white/10">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Molecule depth (nm)</label>
+                            <input
+                                type="text"
+                                value={inputValues.depth}
+                                onChange={e => handleInputChange('depth', e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                        const val = parseFloat(inputValues.depth);
+                                        if (!isNaN(val)) {
+                                            setParams(p => ({ ...p, depth: val * 1e-9 }));
+                                            (e.target as HTMLInputElement).blur();
+                                        }
+                                    }
+                                }}
+                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                            />
+                            <div className="grid grid-cols-3 gap-2 pt-2">
+                                {[0, 500, 1000, 3000, 5000].map((d_nm) => (
+                                    <button
+                                        key={d_nm}
+                                        onClick={() => {
+                                            setParams(p => ({ ...p, depth: d_nm * 1e-9, z_defocus: 0 }));
+                                            setInputValues(prev => ({ ...prev, depth: d_nm.toString() }));
+                                        }}
+                                        className={`text-[10px] py-1 border border-white/10 transition-all uppercase tracking-wide
+                                            ${Math.abs(params.depth * 1e9 - d_nm) < 1
+                                                ? "bg-brand-cyan text-black font-bold"
+                                                : "hover:bg-white/5 text-gray-400"}`}
+                                    >
+                                        {d_nm === 0 ? "Surface" : `${d_nm} nm`}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-2 pt-2 border-t border-white/10">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Wavelength: {(params.lambda_vac * 1e9).toFixed(0)} nm</label>
+                            <input
+                                type="range"
+                                min="400" max="700" step="10"
+                                value={params.lambda_vac * 1e9}
+                                onChange={e => setParams(p => ({ ...p, lambda_vac: parseFloat(e.target.value) * 1e-9 }))}
+                                className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
+                            />
+                            <div className="h-1 w-full opacity-80" style={{ background: SPECTRUM_GRADIENT }}></div>
+                        </div>
+                    </div>
+                </AccordionSection>
+
+                <AccordionSection title={`Camera & Aberrations ${calculating ? '(Running...)' : ''}`}>
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Pixel pitch (µm)</label>
+                            <input
+                                type="text"
+                                value={inputValues.cam_pixel_um}
+                                onChange={e => handleInputChange('cam_pixel_um', e.target.value)}
+                                onKeyDown={e => handleKeyDown(e, 'cam_pixel_um')}
+                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
+                            />
+                        </div>
+                        <div className="space-y-2 pt-2 border-t border-white/10">
+                            <div className="flex justify-between">
+                                <label className="text-xs text-gray-500 uppercase tracking-wider">Defocus</label>
+                                <span className="text-xs font-mono text-brand-cyan">{(params.z_defocus * 1e6).toFixed(2)} µm</span>
+                            </div>
+                            {(() => {
+                                const limitNm = (4 * params.n_imm * params.lambda_vac / (params.NA ** 2)) * 1e9;
+                                return (
+                                    <input
+                                        type="range"
+                                        min={-limitNm} max={limitNm} step={limitNm / 50}
+                                        value={params.z_defocus * 1e9}
+                                        onChange={e => setParams(p => ({ ...p, z_defocus: parseFloat(e.target.value) * 1e-9 }))}
+                                        className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
+                                    />
+                                );
+                            })()}
+                        </div>
+                        <div className="space-y-2">
+                            <button
+                                onClick={() => setParams(p => ({ ...p, z_defocus: 0 }))}
+                                className="w-full py-1 text-[10px] border border-white/20 hover:bg-white/10 uppercase tracking-wider"
+                            >
+                                Reset Defocus
+                            </button>
+                        </div>
+                        <div className="space-y-2 pt-2 border-t border-white/10">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Astigmatism</label>
+                            <div className="flex border border-white/20">
+                                {["None", "Weak", "Strong"].map((opt) => (
+                                    <button
+                                        key={opt}
+                                        onClick={() => setParams(p => ({ ...p, astigmatism: opt as any }))}
+                                        className={`flex-1 text-[10px] py-1 uppercase tracking-wide transition-all ${params.astigmatism === opt
+                                            ? "bg-brand-cyan text-black font-bold"
+                                            : "bg-transparent text-gray-500 hover:text-white"
+                                            }`}
+                                    >
+                                        {opt}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </AccordionSection>
+            </div>
 
 // --- Helpers ---
 function wavelengthToColor(wavelengthM: number): string {
