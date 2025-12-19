@@ -388,17 +388,17 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
                                 <XAxis type="number" hide domain={isPhase ? [-Math.PI, Math.PI] : [0, 'auto']} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px', color: '#fff' }}
-                                    formatter={(val: number) => [val.toFixed(2), "Intensity"]}
+                                    formatter={(val: number, name: string) => [val.toFixed(2), name]}
                                     labelFormatter={(label) => `Y-Pos: ${label}`}
                                     itemStyle={{ color: '#fff' }}
                                 />
                                 {/* For Phase, use Line? Or Area? Bar works. */}
-                                <Bar dataKey="val" isAnimationActive={false}>
+                                <Bar dataKey="val" name="Intensity" isAnimationActive={false}>
                                     {analysis?.vData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={color} fillOpacity={isPhase ? 1 : (analysis.vMax ? entry.val / analysis.vMax : 0.5)} />
                                     ))}
                                 </Bar>
-                                {fitProfiles && <Line dataKey="fit" stroke="#fff" strokeDasharray="3 3" dot={false} isAnimationActive={false} />}
+                                {fitProfiles && <Line dataKey="fit" name="Gaussian Fit" stroke="#fff" strokeDasharray="3 3" dot={false} isAnimationActive={false} />}
                             </ComposedChart>
                         </ResponsiveContainer>
                     </div>
@@ -416,16 +416,16 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
                                 <YAxis hide domain={isPhase ? [-Math.PI, Math.PI] : [0, 'auto']} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#000', border: '1px solid #333', fontSize: '10px', color: '#fff' }}
-                                    formatter={(val: number) => [val.toFixed(2), "Intensity"]}
+                                    formatter={(val: number, name: string) => [val.toFixed(2), name]}
                                     labelFormatter={(label) => `X-Pos: ${label}`}
                                     itemStyle={{ color: '#fff' }}
                                 />
-                                <Bar dataKey="val" isAnimationActive={false}>
+                                <Bar dataKey="val" name="Intensity" isAnimationActive={false}>
                                     {analysis?.hData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={color} fillOpacity={isPhase ? 1 : (analysis.hMax ? entry.val / analysis.hMax : 0.5)} />
                                     ))}
                                 </Bar>
-                                {fitProfiles && <Line dataKey="fit" stroke="#fff" strokeDasharray="3 3" dot={false} isAnimationActive={false} />}
+                                {fitProfiles && <Line dataKey="fit" name="Gaussian Fit" stroke="#fff" strokeDasharray="3 3" dot={false} isAnimationActive={false} />}
                             </ComposedChart>
                         </ResponsiveContainer>
                     </div>
