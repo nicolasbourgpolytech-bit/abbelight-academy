@@ -536,11 +536,12 @@ export default function PSFSimulator() {
 
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 h-full font-sans justify-center">
+        <div className="flex flex-col lg:flex-row gap-6 h-screen w-full overflow-hidden font-sans justify-center bg-black fixed inset-0 z-0">
             {/* Sidebar Controls */}
             {/* Sidebar Controls */}
             {/* Sidebar Controls */}
-            <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar max-h-[calc(100vh-58px)] pt-[58px] sticky top-0">
+            {/* Sidebar Controls */}
+            <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar h-full pt-[58px] pb-4">
                 {state === "ERROR" && (
                     <div className="p-4 bg-red-900/20 border border-red-500 text-red-500 text-xs font-mono">
                         <strong>ERROR:</strong> {pyodideError || "Simulator failed."}
@@ -719,7 +720,7 @@ export default function PSFSimulator() {
             </div>
 
             {/* Main Content Area: Side-by-Side Views */}
-            <div className="flex-1 w-full flex flex-col pt-[58px] overflow-hidden overflow-y-auto min-[1700px]:overflow-hidden">
+            <div className="flex-1 w-full flex flex-col pt-[58px] pb-4 overflow-hidden overflow-y-auto min-[1700px]:overflow-hidden h-full">
                 <div className="w-full max-w-[1600px] mx-auto h-auto min-[1700px]:h-full flex flex-col min-[1700px]:flex-row gap-4 px-4 pb-4 pt-0 min-w-0">
 
                     {/* LEFT: PSF View */}
