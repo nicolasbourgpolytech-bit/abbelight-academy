@@ -460,7 +460,8 @@ export default function PSFSimulator() {
             NA: selectedObjective.NA,
             M_obj: selectedObjective.magnification,
             n_imm: selectedObjective.n_imm,
-            f_tube: selectedObjective.f_tube_mm / 1000
+            f_tube: selectedObjective.f_tube_mm / 1000,
+            correction_sa: selectedObjective.hasCorrectionCollar ? prev.correction_sa : 0
         }));
     }, [selectedObjective]);
 
@@ -621,15 +622,23 @@ export default function PSFSimulator() {
                         <div className="space-y-2 pt-2 border-t border-white/10">
                             <div className="flex justify-between">
                                 <label className="text-xs text-gray-500 uppercase tracking-wider">Correction Collar</label>
-                                <span className="text-xs font-mono text-brand-cyan">{params.correction_sa.toFixed(1)} rad</span>
+                                {selectedObjective.hasCorrectionCollar && (
+                                    <span className="text-xs font-mono text-brand-cyan">{params.correction_sa.toFixed(1)} rad</span>
+                                )}
                             </div>
-                            <input
-                                type="range"
-                                min="-15" max="15" step="0.1"
-                                value={params.correction_sa}
-                                onChange={e => setParams(p => ({ ...p, correction_sa: parseFloat(e.target.value) }))}
-                                className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
-                            />
+                            {selectedObjective.hasCorrectionCollar ? (
+                                <input
+                                    type="range"
+                                    min="-15" max="15" step="0.1"
+                                    value={params.correction_sa}
+                                    onChange={e => setParams(p => ({ ...p, correction_sa: parseFloat(e.target.value) }))}
+                                    className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
+                                />
+                            ) : (
+                                <div className="text-[10px] text-gray-500 italic py-1">
+                                    No collar ring with this lens
+                                </div>
+                            )}
                         </div>
                     </div>
                 </AccordionSection>

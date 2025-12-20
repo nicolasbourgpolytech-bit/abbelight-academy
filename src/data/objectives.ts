@@ -8,6 +8,7 @@ export interface ObjectiveLens {
     n_imm: number;
     f_tube_mm: number; // Tube lens focal length in mm
     imagePath: string;
+    hasCorrectionCollar: boolean;
 }
 
 export const OBJECTIVES: ObjectiveLens[] = [
@@ -20,7 +21,8 @@ export const OBJECTIVES: ObjectiveLens[] = [
         immersion: "Oil",
         n_imm: 1.518,
         f_tube_mm: 180,
-        imagePath: "/product-images/uplapo100xohr_evident.png"
+        imagePath: "/product-images/uplapo100xohr_evident.png",
+        hasCorrectionCollar: true
     },
     {
         id: "evident_uplxapo10x",
@@ -31,6 +33,7 @@ export const OBJECTIVES: ObjectiveLens[] = [
         immersion: "Air",
         n_imm: 1.0,
         f_tube_mm: 180,
-        imagePath: "/product-images/uplxapo10x_evident.png"
+        imagePath: "/product-images/uplxapo10x_evident.png",
+        hasCorrectionCollar: false
     }
 ];
