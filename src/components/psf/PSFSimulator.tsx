@@ -659,7 +659,7 @@ export default function PSFSimulator() {
                                 >
                                     {objectivesList.map(obj => (
                                         <option key={obj.id} value={obj.id} className="bg-black text-white">
-                                            {obj.manufacturer} {obj.name} ({obj.magnification}x / {obj.NA})
+                                            {obj.name}
                                         </option>
                                     ))}
                                 </select>
