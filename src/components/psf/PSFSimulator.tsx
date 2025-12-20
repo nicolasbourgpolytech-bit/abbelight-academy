@@ -75,7 +75,20 @@ const AccordionSection: React.FC<{ title: string; children: React.ReactNode; def
 };
 
 // --- Constants ---
-const DEFAULT_OBJECTIVE = OBJECTIVES[0];
+const STATIC_OBJECTIVES = OBJECTIVES;
+
+// Mapping helper for immersion refractive index
+function getRefractiveIndex(type: string): number {
+    const t = type.toLowerCase();
+    if (t.includes("oil")) return 1.518;
+    if (t.includes("water")) return 1.33;
+    if (t.includes("silicone")) return 1.406;
+    if (t.includes("glycerol")) return 1.45;
+    if (t.includes("air")) return 1.0;
+    return 1.518; // Default to Oil if unknown
+}
+
+const DEFAULT_OBJECTIVE = STATIC_OBJECTIVES[0];
 
 const DEFAULT_PARAMS: SimulationParams = {
     NA: DEFAULT_OBJECTIVE.NA,
@@ -446,12 +459,61 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
 
 export default function PSFSimulator() {
     const { state, runSimulation, error: pyodideError } = usePyodide();
+
+    // Loaded objectives state
+    const [objectivesList, setObjectivesList] = useState<ObjectiveLens[]>(STATIC_OBJECTIVES);
+    const [isLoadingObjectives, setIsLoadingObjectives] = useState(true);
+
     const [params, setParams] = useState<SimulationParams>(DEFAULT_PARAMS);
+    // Initialize with ID but wait for effect to confirm it exists in list
     const [selectedObjectiveId, setSelectedObjectiveId] = useState<string>(DEFAULT_OBJECTIVE.id);
 
+    // Fetch objectives from API
+    useEffect(() => {
+        const fetchObjectives = async () => {
+            try {
+                const res = await fetch('/api/products');
+                if (!res.ok) throw new Error('Failed to fetch');
+                const products = await res.json();
+
+                // Filter and map products to objectives
+                const dbObjectives: ObjectiveLens[] = products
+                    .filter((p: any) => p.subcategory === 'Objectives' || (p.magnification && p.na))
+                    .map((p: any) => ({
+                        id: p.id,
+                        name: p.name,
+                        manufacturer: "Evident", // Start with default, or parse from description/name if needed
+                        NA: parseFloat(p.na),
+                        magnification: parseFloat(p.magnification),
+                        immersion: p.immersion || "Oil",
+                        n_imm: getRefractiveIndex(p.immersion || "Oil"),
+                        f_tube_mm: parseFloat(p.tube_lens_focal_length) || 180,
+                        imagePath: p.image_url || "/product-images/uplapo100xohr_evident.png",
+                        hasCorrectionCollar: p.correction_collar === true || p.correction_collar === "true"
+                    }));
+
+                if (dbObjectives.length > 0) {
+                    setObjectivesList(dbObjectives);
+                    // If current selected ID is not in new list, switch to first one
+                    const currentExists = dbObjectives.find(o => o.id === selectedObjectiveId);
+                    if (!currentExists) {
+                        setSelectedObjectiveId(dbObjectives[0].id);
+                    }
+                }
+            } catch (err) {
+                console.error("Error loading objectives:", err);
+                // Keep static list on error
+            } finally {
+                setIsLoadingObjectives(false);
+            }
+        };
+
+        fetchObjectives();
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
     const selectedObjective = useMemo(() =>
-        OBJECTIVES.find(o => o.id === selectedObjectiveId) || DEFAULT_OBJECTIVE,
-        [selectedObjectiveId]);
+        objectivesList.find(o => o.id === selectedObjectiveId) || objectivesList[0] || DEFAULT_OBJECTIVE,
+        [selectedObjectiveId, objectivesList]);
 
     // Update params when objective changes
     useEffect(() => {
@@ -569,14 +631,17 @@ export default function PSFSimulator() {
                     <div className="space-y-4">
                         {/* Selector */}
                         <div className="space-y-1">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Select Objective</label>
+                            <div className="flex justify-between items-center">
+                                <label className="text-xs text-gray-500 uppercase tracking-wider">Select Objective</label>
+                                {isLoadingObjectives && <span className="text-[10px] text-brand-cyan animate-pulse">Loading...</span>}
+                            </div>
                             <div className="relative">
                                 <select
                                     className="w-full bg-black/20 border border-white/20 text-brand-cyan text-xs p-2 appearance-none focus:outline-none focus:border-brand-cyan transition-colors"
                                     value={selectedObjectiveId}
                                     onChange={(e) => setSelectedObjectiveId(e.target.value)}
                                 >
-                                    {OBJECTIVES.map(obj => (
+                                    {objectivesList.map(obj => (
                                         <option key={obj.id} value={obj.id} className="bg-black text-white">
                                             {obj.manufacturer} {obj.name} ({obj.magnification}x / {obj.NA})
                                         </option>
