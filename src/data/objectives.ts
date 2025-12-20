@@ -2,6 +2,7 @@ export interface ObjectiveLens {
     id: string;
     name: string;
     manufacturer: string;
+    brand?: string; // New field
     NA: number;
     magnification: number;
     immersion: "Oil" | "Water" | "Air" | "Silicone" | "Glycerol";
@@ -16,6 +17,7 @@ export const OBJECTIVES: ObjectiveLens[] = [
         id: "evident_uplapo100xohr",
         name: "UPLAPO100XOHR",
         manufacturer: "Evident",
+        brand: "Evident",
         NA: 1.50,
         magnification: 100,
         immersion: "Oil",
@@ -28,6 +30,7 @@ export const OBJECTIVES: ObjectiveLens[] = [
         id: "evident_uplxapo10x",
         name: "UPLXAPO10X",
         manufacturer: "Evident",
+        brand: "Evident",
         NA: 0.40,
         magnification: 10,
         immersion: "Air",

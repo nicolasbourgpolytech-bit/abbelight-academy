@@ -122,7 +122,8 @@ export default function ProductsAdminPage() {
                                         magnification: null,
                                         na: null,
                                         immersion: "",
-                                        tube_lens_focal_length: null
+                                        tube_lens_focal_length: null,
+                                        brand: ""
                                     });
                                     setIsEditingProduct(true);
                                 }}
@@ -244,6 +245,16 @@ export default function ProductsAdminPage() {
                                             onChange={(e) => setEditingProduct({ ...editingProduct, reference: e.target.value })}
                                             className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
                                             placeholder="e.g. OBJ-1234"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Brand</label>
+                                        <input
+                                            type="text"
+                                            value={editingProduct?.brand || ""}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, brand: e.target.value })}
+                                            className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
+                                            placeholder="e.g. Olympus, Nikon"
                                         />
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

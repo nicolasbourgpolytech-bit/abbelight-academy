@@ -476,13 +476,13 @@ export default function PSFSimulator() {
                 if (!res.ok) throw new Error('Failed to fetch');
                 const products = await res.json();
 
-                // Filter and map products to objectives
                 const dbObjectives: ObjectiveLens[] = products
                     .filter((p: any) => p.subcategory === 'Objectives' || (p.magnification && p.na))
                     .map((p: any) => ({
                         id: String(p.id),
                         name: p.name,
-                        manufacturer: "Evident", // Start with default, or parse from description/name if needed
+                        manufacturer: p.brand || "Evident", // Map brand to manufacturer
+                        brand: p.brand || "Evident",
                         NA: parseFloat(p.na),
                         magnification: parseFloat(p.magnification),
                         immersion: p.immersion || "Oil",
@@ -492,6 +492,8 @@ export default function PSFSimulator() {
                         hasCorrectionCollar: p.correction_collar === true || p.correction_collar === "true"
                     }))
                     .sort((a: any, b: any) => {
+                        // Sort by Brand first, then Mag, then NA
+                        if (a.brand !== b.brand) return a.brand.localeCompare(b.brand);
                         if (a.magnification !== b.magnification) return a.magnification - b.magnification;
                         return a.NA - b.NA;
                     });
@@ -628,7 +630,16 @@ export default function PSFSimulator() {
         setBfpCrosshair({ x: Math.floor(x * (w / rect.width)), y: Math.floor(y * (h / rect.height)) });
     };
 
-
+    // Grouping for Select
+    const groupedObjectives = useMemo(() => {
+        const groups: Record<string, ObjectiveLens[]> = {};
+        objectivesList.forEach(obj => {
+            const brand = obj.brand || "Other";
+            if (!groups[brand]) groups[brand] = [];
+            groups[brand].push(obj);
+        });
+        return groups;
+    }, [objectivesList]);
 
     return (
         <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-80px)] w-full overflow-hidden font-sans justify-center relative">
@@ -661,10 +672,14 @@ export default function PSFSimulator() {
                                         localStorage.setItem("psf_last_objective_id", newVal);
                                     }}
                                 >
-                                    {objectivesList.map(obj => (
-                                        <option key={obj.id} value={obj.id} className="bg-black text-white">
-                                            {obj.name}
-                                        </option>
+                                    {Object.entries(groupedObjectives).map(([brand, lenses]) => (
+                                        <optgroup label={brand} key={brand} className="text-gray-500 font-bold bg-black">
+                                            {lenses.map(obj => (
+                                                <option key={obj.id} value={obj.id} className="text-white bg-black/80 pl-4">
+                                                    {obj.name}
+                                                </option>
+                                            ))}
+                                        </optgroup>
                                     ))}
                                 </select>
                                 <div className="absolute top-0 right-0 h-full flex items-center pr-2 pointer-events-none text-white/50">
