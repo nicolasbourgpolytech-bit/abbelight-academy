@@ -97,6 +97,24 @@ export default function ProductsAdminPage() {
         );
     }
 
+    const groupedProducts = products.reduce((acc: any, product: any) => {
+        const key = product.category === '3rd party instrument'
+            ? `3rd Party - ${product.subcategory || 'Other'}`
+            : product.category || 'Uncategorized';
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(product);
+        return acc;
+    }, {});
+
+    const groupNames = Object.keys(groupedProducts).sort();
+    const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!selectedGroup && groupNames.length > 0) {
+            setSelectedGroup(groupNames[0]);
+        }
+    }, [groupNames, selectedGroup]);
+
     return (
         <div className="flex-1 overflow-y-auto pb-20">
             <div className="mb-6">
@@ -104,11 +122,32 @@ export default function ProductsAdminPage() {
                 <p className="text-gray-400">Manage product catalog and images.</p>
             </div>
 
-            <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+            <div className="max-w-[1600px] mx-auto animate-fade-in">
                 {!isEditingProduct ? (
-                    <>
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-bold text-white">Products List</h2>
+                    <div className="flex flex-col lg:flex-row gap-8">
+                        {/* Sidebar Navigation */}
+                        <div className="w-full lg:w-64 flex-shrink-0 space-y-2">
+                            <div className="bg-gray-900/40 border border-white/10 rounded-xl p-4">
+                                <h3 className="text-xs font-bold text-gray-500 uppercase mb-4 px-2">Categories</h3>
+                                <div className="space-y-1">
+                                    {groupNames.map(name => (
+                                        <button
+                                            key={name}
+                                            onClick={() => setSelectedGroup(name)}
+                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedGroup === name
+                                                    ? 'bg-primary text-black'
+                                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                                }`}
+                                        >
+                                            {name}
+                                        </button>
+                                    ))}
+                                    {groupNames.length === 0 && (
+                                        <p className="text-xs text-gray-600 px-2">No categories found.</p>
+                                    )}
+                                </div>
+                            </div>
+
                             <button
                                 onClick={() => {
                                     setEditingProduct({
@@ -127,26 +166,20 @@ export default function ProductsAdminPage() {
                                     });
                                     setIsEditingProduct(true);
                                 }}
-                                className="bg-primary text-black px-4 py-2 rounded-lg font-bold text-sm hover:bg-white transition-colors flex items-center gap-2"
+                                className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 rounded-xl font-bold text-sm hover:bg-white/10 transition-colors flex items-center justify-center gap-2 mt-4"
                             >
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                                 New Product
                             </button>
                         </div>
-                        <div className="space-y-12">
-                            {Object.entries(
-                                products.reduce((acc: any, product: any) => {
-                                    const key = product.category === '3rd party instrument'
-                                        ? `3rd Party - ${product.subcategory || 'Other'}`
-                                        : product.category || 'Uncategorized';
-                                    if (!acc[key]) acc[key] = [];
-                                    acc[key].push(product);
-                                    return acc;
-                                }, {})
-                            ).sort((a: any, b: any) => a[0].localeCompare(b[0])).map(([groupName, groupProducts]: [string, any]) => (
-                                <div key={groupName} className="bg-gray-900/40 border border-white/10 rounded-xl overflow-hidden">
-                                    <div className="bg-white/5 px-6 py-4 border-b border-white/10">
-                                        <h3 className="text-xl font-bold text-white">{groupName}</h3>
+
+                        {/* Main Content Area */}
+                        <div className="flex-1 min-w-0">
+                            {selectedGroup && groupedProducts[selectedGroup] ? (
+                                <div className="bg-gray-900/40 border border-white/10 rounded-xl overflow-hidden">
+                                    <div className="bg-white/5 px-6 py-4 border-b border-white/10 flex justify-between items-center">
+                                        <h3 className="text-xl font-bold text-white">{selectedGroup}</h3>
+                                        <span className="text-xs text-gray-400">{groupedProducts[selectedGroup].length} products</span>
                                     </div>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left text-sm text-gray-400">
@@ -154,7 +187,7 @@ export default function ProductsAdminPage() {
                                                 <tr>
                                                     <th className="px-6 py-3 w-24">Image</th>
                                                     <th className="px-6 py-3">Name</th>
-                                                    {groupName.includes('Objective lens') ? (
+                                                    {selectedGroup.includes('Objective lens') ? (
                                                         <>
                                                             <th className="px-6 py-3">Brand</th>
                                                             <th className="px-6 py-3">Reference</th>
@@ -173,7 +206,7 @@ export default function ProductsAdminPage() {
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-white/5">
-                                                {groupProducts.map((product: any) => (
+                                                {groupedProducts[selectedGroup].map((product: any) => (
                                                     <tr key={product.id} className="hover:bg-white/5 transition-colors">
                                                         <td className="px-6 py-4">
                                                             <div className="w-16 h-16 bg-black/50 rounded-lg flex items-center justify-center overflow-hidden border border-white/5">
@@ -186,11 +219,11 @@ export default function ProductsAdminPage() {
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <div className="font-bold text-white">{product.name}</div>
-                                                            {groupName.includes('Objective lens') && product.correction_collar && (
+                                                            {selectedGroup.includes('Objective lens') && product.correction_collar && (
                                                                 <span className="text-[10px] uppercase bg-primary/20 text-primary px-1.5 py-0.5 rounded mt-1 inline-block">w/ Collar</span>
                                                             )}
                                                         </td>
-                                                        {groupName.includes('Objective lens') ? (
+                                                        {selectedGroup.includes('Objective lens') ? (
                                                             <>
                                                                 <td className="px-6 py-4">{product.brand || '-'}</td>
                                                                 <td className="px-6 py-4 font-mono text-xs">{product.reference || '-'}</td>
@@ -203,7 +236,7 @@ export default function ProductsAdminPage() {
                                                             <>
                                                                 <td className="px-6 py-4 max-w-xs truncate">{product.description || '-'}</td>
                                                                 <td className="px-6 py-4 max-w-xs truncate text-primary hover:underline">
-                                                                    {product.link && <a href={product.link} target="_blank" rel="noopener noreferrer">Link</a>}
+                                                                    {product?.link && <a href={product.link} target="_blank" rel="noopener noreferrer">Link</a>}
                                                                 </td>
                                                             </>
                                                         )}
@@ -234,10 +267,13 @@ export default function ProductsAdminPage() {
                                         </table>
                                     </div>
                                 </div>
-                            ))}
-                            {products.length === 0 && <p className="text-gray-500 text-center py-10">No products found.</p>}
+                            ) : (
+                                <div className="text-center py-20 bg-gray-900/40 border border-white/10 rounded-xl">
+                                    <p className="text-gray-500">Select a category to view products.</p>
+                                </div>
+                            )}
                         </div>
-                    </>
+                    </div>
                 ) : (
                     <form onSubmit={handleSaveProduct} className="space-y-6">
                         <div className="flex items-center justify-between">
