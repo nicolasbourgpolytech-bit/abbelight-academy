@@ -80,10 +80,10 @@ const STATIC_OBJECTIVES = OBJECTIVES;
 // Mapping helper for immersion refractive index
 function getRefractiveIndex(type: string): number {
     const t = type.toLowerCase();
+    if (t.includes("silicone") || t.includes("silicon")) return 1.406;
+    if (t.includes("glycerol")) return 1.45;
     if (t.includes("oil")) return 1.518;
     if (t.includes("water")) return 1.33;
-    if (t.includes("silicone")) return 1.406;
-    if (t.includes("glycerol")) return 1.45;
     if (t.includes("air")) return 1.0;
     return 1.518; // Default to Oil if unknown
 }
