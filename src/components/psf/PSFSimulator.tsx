@@ -494,11 +494,23 @@ export default function PSFSimulator() {
 
                 if (dbObjectives.length > 0) {
                     setObjectivesList(dbObjectives);
-                    // If current selected ID is not in new list, switch to first one
-                    const currentExists = dbObjectives.find(o => o.id === selectedObjectiveId);
-                    if (!currentExists) {
-                        setSelectedObjectiveId(dbObjectives[0].id);
+
+                    // Strategy: LocalStorage -> Preferred Default -> First Available
+                    const preferredId = "evident_uplapo100xohr";
+                    const savedId = localStorage.getItem("psf_last_objective_id");
+
+                    let targetId = savedId && dbObjectives.find(o => o.id === savedId) ? savedId : null;
+
+                    if (!targetId && dbObjectives.find(o => o.id === preferredId)) {
+                        targetId = preferredId;
                     }
+
+                    if (!targetId) {
+                        targetId = dbObjectives[0].id;
+                    }
+
+                    // Only update if different from current to avoid loops (though current is likely default)
+                    setSelectedObjectiveId(targetId);
                 }
             } catch (err) {
                 console.error("Error loading objectives:", err);
@@ -639,7 +651,11 @@ export default function PSFSimulator() {
                                 <select
                                     className="w-full bg-black/20 border border-white/20 text-brand-cyan text-xs p-2 appearance-none focus:outline-none focus:border-brand-cyan transition-colors"
                                     value={selectedObjectiveId}
-                                    onChange={(e) => setSelectedObjectiveId(e.target.value)}
+                                    onChange={(e) => {
+                                        const newVal = e.target.value;
+                                        setSelectedObjectiveId(newVal);
+                                        localStorage.setItem("psf_last_objective_id", newVal);
+                                    }}
                                 >
                                     {objectivesList.map(obj => (
                                         <option key={obj.id} value={obj.id} className="bg-black text-white">
