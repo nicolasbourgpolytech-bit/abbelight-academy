@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { usePyodide } from './usePyodide';
 import { OBJECTIVES, ObjectiveLens } from '@/data/objectives';
+import { ObjectiveSelect } from './ObjectiveSelect';
 import { ComposedChart, Bar, BarChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, LabelList } from 'recharts';
 
 // --- Types ---
@@ -663,28 +664,14 @@ export default function PSFSimulator() {
                                 {isLoadingObjectives && <span className="text-[10px] text-brand-cyan animate-pulse">Loading...</span>}
                             </div>
                             <div className="relative">
-                                <select
-                                    className="w-full bg-black/20 border border-white/20 text-brand-cyan text-xs p-2 appearance-none focus:outline-none focus:border-brand-cyan transition-colors"
-                                    value={selectedObjectiveId}
-                                    onChange={(e) => {
-                                        const newVal = e.target.value;
-                                        setSelectedObjectiveId(newVal);
-                                        localStorage.setItem("psf_last_objective_id", newVal);
+                                <ObjectiveSelect
+                                    objectives={objectivesList}
+                                    selectedId={selectedObjectiveId}
+                                    onChange={(newId) => {
+                                        setSelectedObjectiveId(newId);
+                                        localStorage.setItem("psf_last_objective_id", newId);
                                     }}
-                                >
-                                    {Object.entries(groupedObjectives).map(([brand, lenses]) => (
-                                        <optgroup label={brand} key={brand} className="text-gray-500 font-bold bg-black">
-                                            {lenses.map(obj => (
-                                                <option key={obj.id} value={obj.id} className="text-white bg-black/80 pl-4">
-                                                    {obj.name}
-                                                </option>
-                                            ))}
-                                        </optgroup>
-                                    ))}
-                                </select>
-                                <div className="absolute top-0 right-0 h-full flex items-center pr-2 pointer-events-none text-white/50">
-                                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" /></svg>
-                                </div>
+                                />
                             </div>
                         </div>
 
