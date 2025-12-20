@@ -61,6 +61,7 @@ export async function GET(request: Request) {
     await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS na FLOAT`;
     await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS immersion VARCHAR(255)`;
     await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS tube_lens_focal_length FLOAT`;
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS correction_collar BOOLEAN`;
 
     return NextResponse.json({ message: "Database updated successfully!" }, { status: 200 });
   } catch (error) {

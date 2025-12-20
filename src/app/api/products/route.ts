@@ -15,13 +15,13 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { name, link, image_url, description, subcategory, reference, magnification, na, immersion, tube_lens_focal_length } = body;
+        const { name, link, image_url, description, subcategory, reference, magnification, na, immersion, tube_lens_focal_length, correction_collar } = body;
         // Default category if undefined
         const category = body.category || null;
 
         const { rows } = await sql`
-      INSERT INTO products (name, category, subcategory, reference, magnification, na, immersion, tube_lens_focal_length, link, image_url, description)
-      VALUES (${name}, ${category}, ${subcategory}, ${reference}, ${magnification}, ${na}, ${immersion}, ${tube_lens_focal_length}, ${link}, ${image_url}, ${description})
+      INSERT INTO products (name, category, subcategory, reference, magnification, na, immersion, tube_lens_focal_length, correction_collar, link, image_url, description)
+      VALUES (${name}, ${category}, ${subcategory}, ${reference}, ${magnification}, ${na}, ${immersion}, ${tube_lens_focal_length}, ${correction_collar}, ${link}, ${image_url}, ${description})
       RETURNING *
     `;
         return NextResponse.json(rows[0]);
@@ -33,14 +33,14 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
     try {
         const body = await request.json();
-        const { id, name, link, image_url, description, subcategory, reference, magnification, na, immersion, tube_lens_focal_length } = body;
+        const { id, name, link, image_url, description, subcategory, reference, magnification, na, immersion, tube_lens_focal_length, correction_collar } = body;
         // Default category to null if undefined (though it should be preserved if not sent, technically, but for now we update all)
         // Better: ensure standard update behavior
         const category = body.category || null;
 
         const { rows } = await sql`
       UPDATE products
-      SET name = ${name}, category = ${category}, subcategory = ${subcategory}, reference = ${reference}, magnification = ${magnification}, na = ${na}, immersion = ${immersion}, tube_lens_focal_length = ${tube_lens_focal_length}, link = ${link}, image_url = ${image_url}, description = ${description}
+      SET name = ${name}, category = ${category}, subcategory = ${subcategory}, reference = ${reference}, magnification = ${magnification}, na = ${na}, immersion = ${immersion}, tube_lens_focal_length = ${tube_lens_focal_length}, correction_collar = ${correction_collar}, link = ${link}, image_url = ${image_url}, description = ${description}
       WHERE id = ${id}
       RETURNING *
     `;

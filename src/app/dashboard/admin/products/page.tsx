@@ -303,6 +303,18 @@ export default function ProductsAdminPage() {
                                             />
                                         </div>
                                     </div>
+                                    <div className="flex items-center space-x-3 pt-2">
+                                        <input
+                                            type="checkbox"
+                                            id="correction_collar"
+                                            checked={!!editingProduct?.correction_collar}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, correction_collar: e.target.checked })}
+                                            className="w-5 h-5 bg-black/50 border border-white/10 rounded focus:ring-primary text-primary"
+                                        />
+                                        <label htmlFor="correction_collar" className="text-sm font-bold text-gray-300 select-none cursor-pointer">
+                                            Correction Collar
+                                        </label>
+                                    </div>
                                 </div>
                             )}
 
