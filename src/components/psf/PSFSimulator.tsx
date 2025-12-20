@@ -569,9 +569,14 @@ export default function PSFSimulator() {
                 setCalculating(true);
                 setLastError(null);
                 try {
-                    const z_shift = -params.depth * Math.pow(params.n_imm / params.n_sample, 2);
+                    let eff_n_sample = params.n_sample;
+                    if (Math.abs(params.n_imm - params.n_sample) < 1e-6) {
+                        eff_n_sample += 0.001;
+                    }
+
+                    const z_shift = -params.depth * Math.pow(params.n_imm / eff_n_sample, 2);
                     const z_total = params.z_defocus + z_shift;
-                    const simArgs = { ...params, z_defocus: z_total };
+                    const simArgs = { ...params, n_sample: eff_n_sample, z_defocus: z_total };
                     const res = await runSimulation(simArgs, {});
                     setSimResult(res);
                 } catch (e: any) {
