@@ -480,7 +480,7 @@ export default function PSFSimulator() {
                 const dbObjectives: ObjectiveLens[] = products
                     .filter((p: any) => p.subcategory === 'Objectives' || (p.magnification && p.na))
                     .map((p: any) => ({
-                        id: p.id,
+                        id: String(p.id),
                         name: p.name,
                         manufacturer: "Evident", // Start with default, or parse from description/name if needed
                         NA: parseFloat(p.na),
