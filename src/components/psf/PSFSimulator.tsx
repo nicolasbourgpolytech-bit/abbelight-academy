@@ -490,7 +490,11 @@ export default function PSFSimulator() {
                         f_tube_mm: parseFloat(p.tube_lens_focal_length) || 180,
                         imagePath: p.image_url || "/product-images/uplapo100xohr_evident.png",
                         hasCorrectionCollar: p.correction_collar === true || p.correction_collar === "true"
-                    }));
+                    }))
+                    .sort((a: any, b: any) => {
+                        if (a.magnification !== b.magnification) return a.magnification - b.magnification;
+                        return a.NA - b.NA;
+                    });
 
                 if (dbObjectives.length > 0) {
                     setObjectivesList(dbObjectives);
