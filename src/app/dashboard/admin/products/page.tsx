@@ -133,52 +133,109 @@ export default function ProductsAdminPage() {
                                 New Product
                             </button>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {products.map((product: any) => (
-                                <div key={product.id} className="bg-gray-900/40 border border-white/10 rounded-xl p-4 flex gap-4 hover:border-primary/30 transition-colors group">
-                                    <div className="w-20 h-20 bg-black/50 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-white/5">
-                                        {product.image_url ? (
-                                            <img src={product.image_url} alt="" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <span className="text-gray-600 text-xs">No Img</span>
-                                        )}
+                        <div className="space-y-12">
+                            {Object.entries(
+                                products.reduce((acc: any, product: any) => {
+                                    const key = product.category === '3rd party instrument'
+                                        ? `3rd Party - ${product.subcategory || 'Other'}`
+                                        : product.category || 'Uncategorized';
+                                    if (!acc[key]) acc[key] = [];
+                                    acc[key].push(product);
+                                    return acc;
+                                }, {})
+                            ).sort((a: any, b: any) => a[0].localeCompare(b[0])).map(([groupName, groupProducts]: [string, any]) => (
+                                <div key={groupName} className="bg-gray-900/40 border border-white/10 rounded-xl overflow-hidden">
+                                    <div className="bg-white/5 px-6 py-4 border-b border-white/10">
+                                        <h3 className="text-xl font-bold text-white">{groupName}</h3>
                                     </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-bold text-white mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
-                                        {product.category === "3rd party instrument" ? (
-                                            <div className="mb-2">
-                                                <p className="text-xs text-primary font-semibold">{product.subcategory}</p>
-                                                {product.subcategory === "Objective lens" && (
-                                                    <p className="text-xs text-gray-400 mt-1">
-                                                        <span className="text-gray-500">Ref:</span> {product.reference} | <span className="text-gray-500">Mag:</span> {product.magnification}x | <span className="text-gray-500">NA:</span> {product.na} | <span className="text-gray-500">Imm:</span> {product.immersion}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-gray-400 mb-1">{product.category}</p>
-                                        )}
-                                        <p className="text-xs text-gray-500 mb-2 truncate">{product.link}</p>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => {
-                                                    setEditingProduct(product);
-                                                    setIsEditingProduct(true);
-                                                }}
-                                                className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition-colors"
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteProduct(product.id)}
-                                                className="text-xs px-2 py-1 bg-white/5 hover:bg-red-900/20 text-gray-300 hover:text-red-500 rounded transition-colors"
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left text-sm text-gray-400">
+                                            <thead className="bg-white/5 text-gray-200 uppercase font-bold text-xs">
+                                                <tr>
+                                                    <th className="px-6 py-3 w-24">Image</th>
+                                                    <th className="px-6 py-3">Name</th>
+                                                    {groupName.includes('Objective lens') ? (
+                                                        <>
+                                                            <th className="px-6 py-3">Brand</th>
+                                                            <th className="px-6 py-3">Reference</th>
+                                                            <th className="px-6 py-3">Mag</th>
+                                                            <th className="px-6 py-3">NA</th>
+                                                            <th className="px-6 py-3">Immersion</th>
+                                                            <th className="px-6 py-3">Tube Lens</th>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <th className="px-6 py-3">Description</th>
+                                                            <th className="px-6 py-3">Link</th>
+                                                        </>
+                                                    )}
+                                                    <th className="px-6 py-3 text-right">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-white/5">
+                                                {groupProducts.map((product: any) => (
+                                                    <tr key={product.id} className="hover:bg-white/5 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <div className="w-16 h-16 bg-black/50 rounded-lg flex items-center justify-center overflow-hidden border border-white/5">
+                                                                {product.image_url ? (
+                                                                    <img src={product.image_url} alt="" className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <span className="text-xs text-gray-600">No Img</span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="font-bold text-white">{product.name}</div>
+                                                            {groupName.includes('Objective lens') && product.correction_collar && (
+                                                                <span className="text-[10px] uppercase bg-primary/20 text-primary px-1.5 py-0.5 rounded mt-1 inline-block">w/ Collar</span>
+                                                            )}
+                                                        </td>
+                                                        {groupName.includes('Objective lens') ? (
+                                                            <>
+                                                                <td className="px-6 py-4">{product.brand || '-'}</td>
+                                                                <td className="px-6 py-4 font-mono text-xs">{product.reference || '-'}</td>
+                                                                <td className="px-6 py-4">{product.magnification ? `${product.magnification}x` : '-'}</td>
+                                                                <td className="px-6 py-4">{product.na || '-'}</td>
+                                                                <td className="px-6 py-4">{product.immersion || '-'}</td>
+                                                                <td className="px-6 py-4">{product.tube_lens_focal_length ? `${product.tube_lens_focal_length}mm` : '-'}</td>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <td className="px-6 py-4 max-w-xs truncate">{product.description || '-'}</td>
+                                                                <td className="px-6 py-4 max-w-xs truncate text-primary hover:underline">
+                                                                    {product.link && <a href={product.link} target="_blank" rel="noopener noreferrer">Link</a>}
+                                                                </td>
+                                                            </>
+                                                        )}
+                                                        <td className="px-6 py-4 text-right">
+                                                            <div className="flex justify-end gap-2">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setEditingProduct(product);
+                                                                        setIsEditingProduct(true);
+                                                                    }}
+                                                                    className="p-2 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition-colors"
+                                                                    title="Edit"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteProduct(product.id)}
+                                                                    className="p-2 bg-white/5 hover:bg-red-900/20 text-gray-300 hover:text-red-500 rounded transition-colors"
+                                                                    title="Delete"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             ))}
-                            {products.length === 0 && <p className="text-gray-500 text-center py-10 col-span-2">No products found.</p>}
+                            {products.length === 0 && <p className="text-gray-500 text-center py-10">No products found.</p>}
                         </div>
                     </>
                 ) : (
