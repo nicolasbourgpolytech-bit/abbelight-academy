@@ -321,7 +321,7 @@ interface AnalyzedViewProps {
     dataGrid: number[][] | undefined;
     color: string;
     crosshair: { x: number, y: number } | null;
-    onCanvasClick: (e: React.MouseEvent<HTMLCanvasElement>) => void;
+    onCanvasClick?: (e: React.MouseEvent<HTMLCanvasElement>) => void;
     isPhase?: boolean;
     overlays?: React.ReactNode;
     bottomRightInfo?: (analysis: any) => React.ReactNode;
@@ -386,19 +386,10 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
 
     const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
         if (!analysis || !canvasRef.current) return;
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const scaleX = analysis.w / rect.width;
-        const scaleY = analysis.h / rect.height;
-        // Logic handled in parent? No, we need to pass transformed coords back? 
-        // Actually parent handles crosshair state, but needs image coords.
-        // Let's pass the raw event to parent, handled there using refs?
-        // Reuse the logic from original component.
-        // Better: AnalyzedView should handle the coordination? 
-        // For simplicity, let's keep the coordinate logic in parent or duplicate it here?
-        // I will keep logic in parent for now, parent passes handler.
-        onCanvasClick(e);
+        // Logic handled in parent? Yes, parent needs raw event for calculation relative to rect
+        if (onCanvasClick) {
+            onCanvasClick(e);
+        }
     };
 
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -451,8 +442,8 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
 
                     <canvas
                         ref={canvasRef}
-                        onClick={onCanvasClick}
-                        className="w-full h-full aspect-square object-contain image-pixelated cursor-crosshair block shadow-2xl shadow-black/50"
+                        onClick={handleClick}
+                        className={`w-full h-full aspect-square object-contain image-pixelated block shadow-2xl shadow-black/50 ${onCanvasClick ? 'cursor-crosshair' : ''}`}
                         style={{ imageRendering: 'pixelated' }}
                     />
 
@@ -626,7 +617,6 @@ export default function PSFSimulator() {
 
     // View States
     const [psfCrosshair, setPsfCrosshair] = useState<{ x: number, y: number } | null>(null);
-    const [bfpCrosshair, setBfpCrosshair] = useState<{ x: number, y: number } | null>(null);
     const [bfpMode, setBfpMode] = useState<"intensity" | "phase">("intensity");
 
     // Inputs
@@ -701,17 +691,6 @@ export default function PSFSimulator() {
         const w = simResult.img[0].length;
         const h = simResult.img.length;
         setPsfCrosshair({ x: Math.floor(x * (w / rect.width)), y: Math.floor(y * (h / rect.height)) });
-    };
-
-    const handleBfpClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        const data = bfpMode === "intensity" ? simResult?.bfp : simResult?.bfp_phase;
-        if (!data) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const w = data[0].length;
-        const h = data.length;
-        setBfpCrosshair({ x: Math.floor(x * (w / rect.width)), y: Math.floor(y * (h / rect.height)) });
     };
 
     // --- BFP Physical Calculations ---
@@ -1136,8 +1115,7 @@ export default function PSFSimulator() {
                                 dataGrid={bfpDisplayData?.padded} // Use padded data
                                 color={bfpMode === "intensity" ? wavelengthToColor(params.lambda_vac) : "#ffffff"}
                                 isPhase={bfpMode === "phase"}
-                                crosshair={bfpCrosshair}
-                                onCanvasClick={handleBfpClick}
+                                crosshair={null}
                                 isLoading={calculating}
                                 loadingText="SIMULATING..."
                                 yAxisUnit={bfpMode === "phase" ? "Rad" : "Int."}
