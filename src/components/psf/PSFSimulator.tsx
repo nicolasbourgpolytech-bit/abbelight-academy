@@ -1032,7 +1032,7 @@ export default function PSFSimulator() {
                             <AnalyzedView
                                 title={
                                     <div className="flex justify-between w-full items-center">
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-2 pointer-events-auto">
                                             <button
                                                 className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 transition-colors ${bfpMode === "intensity" ? "bg-brand-cyan text-black" : "text-gray-400 hover:text-white"}`}
                                                 onClick={() => setBfpMode("intensity")}
