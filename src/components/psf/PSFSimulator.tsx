@@ -1098,12 +1098,12 @@ export default function PSFSimulator() {
                                             <div className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-md border border-white/10 p-2 pointer-events-none z-20">
                                                 <div className="flex flex-col gap-1">
                                                     <div className="flex justify-between items-end">
-                                                        <span className="text-[10px] text-gray-400 uppercase tracking-widest">Real BFP Size</span>
+                                                        <span className="text-[10px] text-gray-400 uppercase tracking-widest">Abbelight SAFe BFP Size</span>
                                                         <span className="text-sm font-bold text-white font-mono">{bfpCalculations.diameter.toFixed(2)} mm</span>
                                                     </div>
                                                     <div className="w-full h-px bg-white/10" />
                                                     <div className="text-[9px] text-gray-500 font-mono text-right">
-                                                        D = (2 * NA * F_4f1) / Mag
+                                                        D = (2 * NA * 300) / Mag
                                                     </div>
                                                 </div>
                                             </div>
