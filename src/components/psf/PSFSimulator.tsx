@@ -868,6 +868,54 @@ export default function PSFSimulator() {
 
                 <AccordionSection title="Sample parameters">
                     <div className="space-y-4">
+                        {/* Visual Sample Card */}
+                        <div className="flex flex-col bg-black/40 border border-white/20 shadow-xl backdrop-blur-md p-4 gap-3 rounded-lg mt-2 relative overflow-hidden group">
+                            {/* Header */}
+                            <div className="border-b border-white/10 pb-2 z-10">
+                                <div className="text-sm font-bold text-white shadow-black drop-shadow-md">Sample Configuration</div>
+                            </div>
+
+                            {/* Background decoration */}
+                            <div className="absolute top-1/2 left-1/2 w-full h-full bg-brand-cyan/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+
+                            {/* Image with Dynamic Hue */}
+                            <div className="relative w-full aspect-square bg-black rounded border border-white/10 overflow-hidden flex items-center justify-center z-10">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src="/assets/sample-schema.jpg"
+                                    alt="Sample Schema"
+                                    className="w-full h-full object-cover transition-all duration-500"
+                                    style={{
+                                        filter: (() => {
+                                            const nm = params.lambda_vac * 1e9;
+                                            let deg = 0;
+                                            // Base image is Red (~0deg/360deg)
+                                            // Violet (~270), Blue (~240), Cyan (~180), Green (~120), Yellow (~60), Orange (~30)
+                                            if (nm < 450) deg = 270;      // Violet
+                                            else if (nm < 495) deg = 190; // Blue/Cyan
+                                            else if (nm < 570) deg = 120; // Green
+                                            else if (nm < 590) deg = 60;  // Yellow
+                                            else if (nm < 620) deg = 30;  // Orange
+                                            else deg = 0;                 // Red
+                                            return `hue-rotate(${deg}deg)`;
+                                        })()
+                                    }}
+                                />
+                            </div>
+
+                            {/* Dynamic Specs */}
+                            <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-[10px] z-10">
+                                <div>
+                                    <span className="text-gray-500 uppercase block tracking-wider">n_sample</span>
+                                    <span className="text-white font-mono text-xs">{params.n_sample.toFixed(3)}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500 uppercase block tracking-wider">Depth</span>
+                                    <span className="text-white font-mono text-xs">{(params.depth * 1e9).toFixed(0)} nm</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="space-y-1">
                             <label className="text-xs text-gray-500 uppercase tracking-wider">Sample medium refractive index (n_sample)</label>
                             <input
