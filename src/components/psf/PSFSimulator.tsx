@@ -1177,14 +1177,28 @@ export default function PSFSimulator() {
                                                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] text-white/50 font-bold select-none pointer-events-none">
                                                         UAF
                                                     </div>
-                                                    <div
-                                                        className="absolute left-1/2 -translate-x-1/2 -translate-y-full pb-1 text-[10px] text-white/50 font-bold select-none pointer-events-none"
-                                                        style={{
-                                                            top: `${50 - (((bfpDisplayData.currentR / 25.4) * (params.n_sample / params.NA)) * 100)}%`
-                                                        }}
-                                                    >
-                                                        SAF
-                                                    </div>
+                                                    {(() => {
+                                                        // Calculate position between UAF ring (Inner) and BFP Diameter Ring (Outer)
+                                                        // Inner Radius % (relative to FOV)
+                                                        const r_uaf_pct = (bfpDisplayData.currentR / 25.4) * (params.n_sample / params.NA) * 100;
+                                                        // Outer Radius % (using the calculated diameter overlay)
+                                                        const r_bfp_pct = (bfpCalculations.diameter / 25.4) * 50; // diameter is full width, so radius is half, * 100%
+
+                                                        // Midpoint
+                                                        const r_mid_pct = (r_uaf_pct + r_bfp_pct) / 2;
+
+                                                        return (
+                                                            <div
+                                                                className="absolute left-1/2 -translate-x-1/2 text-[10px] text-white font-bold select-none pointer-events-none px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-[2px]"
+                                                                style={{
+                                                                    top: `calc(50% - ${r_mid_pct}%)`,
+                                                                    transform: 'translate(-50%, -50%)' // Center exactly on the midpoint radius
+                                                                }}
+                                                            >
+                                                                SAF
+                                                            </div>
+                                                        );
+                                                    })()}
                                                 </>
                                             )}
 
