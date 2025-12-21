@@ -903,66 +903,66 @@ export default function PSFSimulator() {
                                 />
                             </div>
 
-                            {/* Dynamic Specs */}
+                            {/* Dynamic Specs (Editable) */}
                             <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-[10px] z-10">
-                                <div>
+                                <div className="flex flex-col">
                                     <span className="text-gray-500 uppercase block tracking-wider">n_sample</span>
-                                    <span className="text-white font-mono text-xs">{params.n_sample.toFixed(3)}</span>
+                                    <input
+                                        type="text"
+                                        value={inputValues.n_sample}
+                                        onChange={e => handleInputChange('n_sample', e.target.value)}
+                                        onKeyDown={e => handleKeyDown(e, 'n_sample')}
+                                        onBlur={() => commitInput('n_sample')}
+                                        className="w-full bg-transparent p-0 text-sm text-brand-cyan font-mono border-none focus:ring-0 focus:outline-none placeholder-white/20"
+                                    />
                                 </div>
-                                <div>
-                                    <span className="text-gray-500 uppercase block tracking-wider">Depth</span>
-                                    <span className="text-white font-mono text-xs">{(params.depth * 1e9).toFixed(0)} nm</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-1">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Sample medium refractive index (n_sample)</label>
-                            <input
-                                type="text"
-                                value={inputValues.n_sample}
-                                onChange={e => handleInputChange('n_sample', e.target.value)}
-                                onKeyDown={e => handleKeyDown(e, 'n_sample')}
-                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
-                            />
-                        </div>
-
-                        <div className="space-y-2 pt-2 border-t border-white/10">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Molecule depth (nm)</label>
-                            <input
-                                type="text"
-                                value={inputValues.depth}
-                                onChange={e => handleInputChange('depth', e.target.value)}
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter') {
-                                        const val = parseFloat(inputValues.depth);
-                                        if (!isNaN(val)) {
-                                            setParams(p => ({ ...p, depth: val * 1e-9 }));
-                                            (e.target as HTMLInputElement).blur();
-                                        }
-                                    }
-                                }}
-                                className="w-full bg-transparent border-b border-white/20 px-0 py-1 text-sm text-brand-cyan font-mono focus:border-brand-cyan focus:outline-none transition-colors"
-                            />
-                            <div className="grid grid-cols-3 gap-2 pt-2">
-                                {[0, 500, 1000, 3000, 5000].map((d_nm) => (
-                                    <button
-                                        key={d_nm}
-                                        onClick={() => {
-                                            setParams(p => ({ ...p, depth: d_nm * 1e-9, z_defocus: 0 }));
-                                            setInputValues(prev => ({ ...prev, depth: d_nm.toString() }));
+                                <div className="flex flex-col">
+                                    <span className="text-gray-500 uppercase block tracking-wider">Depth (nm)</span>
+                                    <input
+                                        type="text"
+                                        value={inputValues.depth}
+                                        onChange={e => handleInputChange('depth', e.target.value)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                const val = parseFloat(inputValues.depth);
+                                                if (!isNaN(val)) {
+                                                    setParams(p => ({ ...p, depth: val * 1e-9 }));
+                                                    (e.target as HTMLInputElement).blur();
+                                                }
+                                            }
                                         }}
-                                        className={`text-[10px] py-1 border border-white/10 transition-all uppercase tracking-wide
-                                            ${Math.abs(params.depth * 1e9 - d_nm) < 1
-                                                ? "bg-brand-cyan text-black font-bold"
-                                                : "hover:bg-white/5 text-gray-400"}`}
-                                    >
-                                        {d_nm === 0 ? "Surface" : `${d_nm} nm`}
-                                    </button>
-                                ))}
+                                        onBlur={(e) => {
+                                            const val = parseFloat(inputValues.depth);
+                                            if (!isNaN(val)) {
+                                                setParams(p => ({ ...p, depth: val * 1e-9 }));
+                                            }
+                                        }}
+                                        className="w-full bg-transparent p-0 text-sm text-brand-cyan font-mono border-none focus:ring-0 focus:outline-none placeholder-white/20"
+                                    />
+                                </div>
+
+                                {/* Depth Presets - compact row */}
+                                <div className="col-span-2 pt-2 border-t border-white/5 flex gap-1 flex-wrap">
+                                    {[0, 500, 1000, 2000].map((d_nm) => (
+                                        <button
+                                            key={d_nm}
+                                            onClick={() => {
+                                                setParams(p => ({ ...p, depth: d_nm * 1e-9, z_defocus: 0 }));
+                                                setInputValues(prev => ({ ...prev, depth: d_nm.toString() }));
+                                            }}
+                                            className={`flex-1 text-[9px] py-1 border border-white/10 transition-all uppercase tracking-wide rounded-sm
+                                                ${Math.abs(params.depth * 1e9 - d_nm) < 1
+                                                    ? "bg-brand-cyan text-black font-bold"
+                                                    : "hover:bg-white/5 text-gray-400"}`}
+                                        >
+                                            {d_nm === 0 ? "Surf." : d_nm}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
+                        {/* Wavelength Slider */}
                         <div className="space-y-2 pt-2 border-t border-white/10">
                             <label className="text-xs text-gray-500 uppercase tracking-wider">Wavelength: {(params.lambda_vac * 1e9).toFixed(0)} nm</label>
                             <input
