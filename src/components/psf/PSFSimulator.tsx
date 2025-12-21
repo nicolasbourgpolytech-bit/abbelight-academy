@@ -251,6 +251,57 @@ function calculateSAFRatio(bfpData: number[][], NA: number, n_sample: number): n
     return sumTotal > 0 ? (sumSAF / sumTotal) : 0;
 }
 
+// Helper to pad BFP to 25.4mm FOV (1 inch)
+function padToFov(data: number[][], currentHalfExtentMm: number): { padded: number[][], ratio: number } {
+    if (!data || data.length === 0) return { padded: data, ratio: 1 };
+
+    // Target: 25.4 mm total width => Half width = 12.7 mm
+    const TARGET_FOV_MM = 25.4;
+    const targetHalf = TARGET_FOV_MM / 2;
+
+    // Current data covers [-currentHalfExtentMm, currentHalfExtentMm]
+    // Width = 2 * currentHalfExtentMm
+
+    // Calculate how many pixels we need for the full 25.4mm 
+    // based on the resolution of the current data.
+    // Current resolution: (2 * currentHalfExtentMm) / N_pixels
+
+    const h = data.length;
+    const w = data[0].length;
+
+    // Avoid infinity/weirdness if extent is 0 (shouldn't happen)
+    if (currentHalfExtentMm <= 0) return { padded: data, ratio: 1 };
+
+    // Ratio of physical sizes
+    // We want the current image to occupy (current_width / target_width) fraction of the new image
+    const physicalRatio = (currentHalfExtentMm * 2) / TARGET_FOV_MM;
+
+    // New size in pixels
+    // N_new = N_old / physicalRatio
+    // Example: If BFP is 12.7mm (half of 25.4), ratio is 0.5. N_new = N_old * 2. 
+    // Wait. N_new must be larger.
+    const newSize = Math.ceil(Math.max(w, h) / physicalRatio);
+
+    // Limit max size to avoid performance kill? 256 / 0.1 -> 2560 pixels. Detailed but okay.
+    // Pyodide sim uses 256 pixels usually.
+
+    const padded = new Array(newSize).fill(0).map(() => new Float64Array(newSize).fill(0));
+
+    // Center alignment
+    const startX = Math.floor((newSize - w) / 2);
+    const startY = Math.floor((newSize - h) / 2);
+
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            // @ts-ignore
+            padded[startY + y][startX + x] = data[y][x];
+        }
+    }
+
+    // @ts-ignore
+    return { padded, ratio: physicalRatio };
+}
+
 // --- Analyzed View Component ---
 interface AnalyzedViewProps {
     title: React.ReactNode;
@@ -649,6 +700,41 @@ export default function PSFSimulator() {
         setBfpCrosshair({ x: Math.floor(x * (w / rect.width)), y: Math.floor(y * (h / rect.height)) });
     };
 
+    // --- BFP Physical Calculations ---
+    const bfpCalculations = useMemo(() => {
+        // Formula: D = (2 * NA * f_4f1) / Mag
+        // assuming f_4f1 = 300mm (standard)
+        // Also: R_bfp = f_obj * NA. 
+        // D = 2 * R_bfp * Mag_Relay
+        // Mag_Relay = 300 / f_tube (e.g. 300/180)
+        // f_obj = f_tube / Mag
+
+        // Let's use the inputs directly:
+        const f_4f1 = 300; // mm
+        const D_bfp_mm = (2 * params.NA * f_4f1) / params.M_obj;
+
+        // Extent passed from Python is typically max radius in mm
+        // simResult.ext_bfp = [-R, R, -R, R]
+        // So currentHalfExtentMm is simResult.ext_bfp[1] (or just D_bfp_mm / 2 theoretically)
+        // Let's rely on calculation for display text, and Python extent for padding (to be consistent with image)
+
+        return {
+            diameter: D_bfp_mm,
+            formula: `(2 × ${params.NA.toFixed(2)} × ${f_4f1}) / ${params.M_obj} = ${D_bfp_mm.toFixed(2)} mm`
+        };
+    }, [params.NA, params.M_obj]);
+
+    const bfpDisplayData = useMemo(() => {
+        const rawData = bfpMode === "intensity" ? simResult?.bfp : simResult?.bfp_phase;
+        if (!rawData || !simResult?.ext_bfp) return null;
+
+        // ext_bfp is [-R, R, -R, R] in mm
+        const currentR = simResult.ext_bfp[1];
+
+        const { padded, ratio } = padToFov(rawData, currentR);
+        return { padded, ratio, currentR };
+    }, [simResult, bfpMode]);
+
     // Grouping for Select
     const groupedObjectives = useMemo(() => {
         const groups: Record<string, ObjectiveLens[]> = {};
@@ -941,109 +1027,127 @@ export default function PSFSimulator() {
 
                     {/* RIGHT: BFP View */}
                     <div className="w-full aspect-square min-[1700px]:aspect-auto min-[1700px]:h-full min-[1700px]:flex-1 min-[1700px]:min-w-[400px] flex items-start justify-center overflow-hidden p-2">
-                        <AnalyzedView
-                            title={
-                                <div className="flex gap-2 pointer-events-auto items-center">
-                                    <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">BFP View</span>
-                                    {/* Toggle */}
-                                    <div className="flex bg-white/10 rounded overflow-hidden border border-white/10">
-                                        <button
-                                            onClick={() => setBfpMode("intensity")}
-                                            className={`px-2 py-0.5 text-[9px] uppercase font-bold transition-all ${bfpMode === "intensity" ? "bg-brand-cyan text-black" : "hover:bg-white/20 text-gray-400"}`}
-                                        >
-                                            Intensity
-                                        </button>
-                                        <button
-                                            onClick={() => setBfpMode("phase")}
-                                            className={`px-2 py-0.5 text-[9px] uppercase font-bold transition-all ${bfpMode === "phase" ? "bg-brand-magenta text-black" : "hover:bg-white/20 text-gray-400"}`}
-                                        >
-                                            Phase
-                                        </button>
-                                    </div>
-                                </div>
-                            }
-                            dataGrid={bfpMode === "intensity" ? simResult?.bfp : simResult?.bfp_phase}
-                            color={bfpMode === "intensity" ? wavelengthToColor(params.lambda_vac) : "#ffffff"}
-                            crosshair={bfpCrosshair}
-                            onCanvasClick={handleBfpClick}
-                            isPhase={bfpMode === "phase"}
-                            yAxisUnit={bfpMode === "phase" ? "Rad" : "Int"}
-                            fitProfiles={false}
-                            overlays={
-                                <>
-                                    {/* Phase Colormap */}
-                                    {bfpMode === "phase" && (
-                                        <div className="absolute top-2 right-2 flex flex-col bg-black/60 border border-white/10 p-2 z-20 shadow-lg backdrop-blur">
-                                            <div className="w-32 h-4 rounded-sm mb-1" style={{ background: "linear-gradient(to right, white, #4169E1, black, #DC143C, white)" }}></div>
-                                            <div className="flex justify-between text-[10px] font-mono text-gray-300 w-32 font-bold">
-                                                <span>-π</span>
-                                                <span>0</span>
-                                                <span>+π</span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* SAF / UAF Visualization for Intensity */}
-                                    {bfpMode === "intensity" && params.NA > params.n_sample && (
-                                        <>
-                                            {/* Critical Angle Ring */}
-                                            <div
-                                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40 border-dashed pointer-events-none z-10 box-border shadow-[0_0_10px_rgba(255,255,255,0.2)]"
-                                                style={{
-                                                    width: `${(params.n_sample / params.NA) * 100}%`,
-                                                    height: `${(params.n_sample / params.NA) * 100}%`
-                                                }}
-                                            />
-                                            {/* Labels: SAF is OUTSIDE, UAF is INSIDE */}
-                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/30 font-bold text-2xl pointer-events-none select-none">UAF</div>
-                                            <div
-                                                className="absolute left-1/2 -translate-x-1/2 -translate-y-full pb-1 text-white/30 font-bold text-lg pointer-events-none select-none"
-                                                style={{ top: `${50 - ((params.n_sample / params.NA) * 50)}%` }}
+                        {/* BFP View with Info Overlay */}
+                        <div className="h-full min-h-0 flex flex-col w-full relative">
+                            <AnalyzedView
+                                title={
+                                    <div className="flex justify-between w-full items-center">
+                                        <div className="flex gap-2">
+                                            <button
+                                                className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 transition-colors ${bfpMode === "intensity" ? "bg-brand-cyan text-black" : "text-gray-400 hover:text-white"}`}
+                                                onClick={() => setBfpMode("intensity")}
                                             >
-                                                SAF
+                                                Intensity
+                                            </button>
+                                            <button
+                                                className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 transition-colors ${bfpMode === "phase" ? "bg-brand-magenta text-black" : "text-gray-400 hover:text-white"}`}
+                                                onClick={() => setBfpMode("phase")}
+                                            >
+                                                Phase
+                                            </button>
+                                        </div>
+                                        {/* FOV Indicator */}
+                                        <span className="text-[10px] font-mono text-gray-400">
+                                            FOV: 25.4 mm
+                                        </span>
+                                    </div>
+                                }
+                                dataGrid={bfpDisplayData?.padded} // Use padded data
+                                color={bfpMode === "intensity" ? wavelengthToColor(params.lambda_vac) : "#ffffff"}
+                                isPhase={bfpMode === "phase"}
+                                crosshair={bfpCrosshair}
+                                onCanvasClick={handleBfpClick}
+                                isLoading={calculating}
+                                loadingText="SIMULATING..."
+                                yAxisUnit={bfpMode === "phase" ? "Rad" : "Int."}
+                                fitProfiles={false}
+                                overlays={
+                                    bfpDisplayData && (
+                                        <>
+                                            {/* Phase Colormap */}
+                                            {bfpMode === "phase" && (
+                                                <div className="absolute top-2 right-2 flex flex-col bg-black/60 border border-white/10 p-2 z-20 shadow-lg backdrop-blur">
+                                                    <div className="w-32 h-4 rounded-sm mb-1" style={{ background: "linear-gradient(to right, white, #4169E1, black, #DC143C, white)" }}></div>
+                                                    <div className="flex justify-between text-[10px] font-mono text-gray-300 w-32 font-bold">
+                                                        <span>-π</span>
+                                                        <span>0</span>
+                                                        <span>+π</span>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* SAF / UAF Visualization for Intensity */}
+                                            {bfpMode === "intensity" && params.NA > params.n_sample && bfpDisplayData.currentR && (
+                                                <>
+                                                    <div
+                                                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40 border-dashed pointer-events-none z-10 box-border shadow-[0_0_10px_rgba(255,255,255,0.2)]"
+                                                        style={{
+                                                            width: `${((2 * bfpDisplayData.currentR) / 25.4) * (params.n_sample / params.NA) * 100}%`,
+                                                            height: `${((2 * bfpDisplayData.currentR) / 25.4) * (params.n_sample / params.NA) * 100}%`
+                                                        }}
+                                                    />
+                                                    {/* Labels */}
+                                                    {/* We can place labels relative to the ring, but for simplicity let's keep them approximate or just remove them if cluttering.
+                                                        The original code had fixed labels. Let's keep UAF/SAF text but small.
+                                                    */}
+                                                    <div className="absolute top-1 left-1 text-[8px] text-white/30 font-bold select-none">UAF (Center) / SAF (Outer)</div>
+                                                </>
+                                            )}
+
+                                            {/* BFP Size Info Box */}
+                                            <div className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-md border border-white/10 p-2 pointer-events-none z-20">
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="flex justify-between items-end">
+                                                        <span className="text-[10px] text-gray-400 uppercase tracking-widest">Real BFP Size</span>
+                                                        <span className="text-sm font-bold text-white font-mono">{bfpCalculations.diameter.toFixed(2)} mm</span>
+                                                    </div>
+                                                    <div className="w-full h-px bg-white/10" />
+                                                    <div className="text-[9px] text-gray-500 font-mono text-right">
+                                                        D = (2 * NA * F_4f1) / Mag
+                                                    </div>
+                                                </div>
                                             </div>
                                         </>
-                                    )}
-                                </>
-                            }
-                            bottomRightInfo={() => (
-                                <div className="w-full h-full flex flex-col relative overflow-hidden">
-                                    {bfpMode === "intensity" ? (
-                                        <div className="flex flex-col items-center justify-center h-full gap-1">
-                                            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">SAF Ratio</span>
-                                            <span className="text-xl font-mono text-brand-cyan">
-                                                {(simResult?.saf_ratio !== undefined ? simResult.saf_ratio * 100 : 0).toFixed(1)}%
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        simResult?.stats && (
-                                            <div className="w-full h-full relative p-2">
-                                                <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest block absolute top-2 left-2">Aberration Power (PV) [rad]</span>
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <BarChart data={[
-                                                        { name: 'Depth', val: simResult.stats.Depth, fill: '#06b6d4' },
-                                                        { name: 'Def', val: simResult.stats.Defocus, fill: '#22c55e' },
-                                                        { name: 'Astig', val: simResult.stats.Astig, fill: '#c026d3' },
-                                                        { name: 'Collar', val: simResult.stats.Collar, fill: '#eab308' },
-                                                    ]} margin={{ top: 30, bottom: 0 }}>
-                                                        <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#fff' }} interval={0} stroke="none" />
-                                                        <Tooltip contentStyle={{ backgroundColor: '#000', fontSize: '10px' }} cursor={{ fill: 'rgba(255,255,255,0.1)' }} />
-                                                        <Bar dataKey="val" radius={[2, 2, 0, 0]}>
-                                                            <LabelList dataKey="val" position="top" fill="#fff" fontSize={9} formatter={(val: any) => Number(val).toFixed(2)} />
-                                                        </Bar>
-                                                    </BarChart>
-                                                </ResponsiveContainer>
+                                    )
+                                }
+                                bottomRightInfo={() => (
+                                    <div className="w-full h-full flex flex-col relative overflow-hidden">
+                                        {bfpMode === "intensity" ? (
+                                            <div className="flex flex-col items-center justify-center h-full gap-1">
+                                                <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">SAF Ratio</span>
+                                                <span className="text-xl font-mono text-brand-cyan">
+                                                    {(simResult?.saf_ratio !== undefined ? simResult.saf_ratio * 100 : 0).toFixed(1)}%
+                                                </span>
                                             </div>
-                                        )
-                                    )}
-                                </div>
-                            )}
-                        />
+                                        ) : (
+                                            simResult?.stats && (
+                                                <div className="w-full h-full relative p-2">
+                                                    <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest block absolute top-2 left-2">Aberration Power (PV) [rad]</span>
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart data={[
+                                                            { name: 'Depth', val: simResult.stats.Depth, fill: '#06b6d4' },
+                                                            { name: 'Def', val: simResult.stats.Defocus, fill: '#22c55e' },
+                                                            { name: 'Astig', val: simResult.stats.Astig, fill: '#c026d3' },
+                                                            { name: 'Collar', val: simResult.stats.Collar, fill: '#eab308' },
+                                                        ]} margin={{ top: 30, bottom: 0 }}>
+                                                            <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#fff' }} interval={0} stroke="none" />
+                                                            <Tooltip contentStyle={{ backgroundColor: '#000', fontSize: '10px' }} cursor={{ fill: 'rgba(255,255,255,0.1)' }} />
+                                                            <Bar dataKey="val" radius={[2, 2, 0, 0]}>
+                                                                <LabelList dataKey="val" position="top" fill="#fff" fontSize={9} formatter={(val: any) => Number(val).toFixed(2)} />
+                                                            </Bar>
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                )}
+                            />
+                        </div>
                     </div>
-
                 </div>
             </div>
         </div>
     );
 }
-
+```
