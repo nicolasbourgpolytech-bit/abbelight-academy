@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 interface Fluorophore {
     id: string;
@@ -34,6 +35,19 @@ export const DyeSelect: React.FC<DyeSelectProps> = ({ selectedDye, onSelect }) =
                 if (res.ok) {
                     const data = await res.json();
                     setDyes(data);
+
+                    // Default Selection Logic
+                    if (!selectedDye) {
+                        const alexa647 = data.find((d: Fluorophore) => d.name.toLowerCase().includes("alexa fluor 647") || d.name.toLowerCase().includes("alexa 647"));
+                        if (alexa647) {
+                            onSelect(alexa647);
+                        } else {
+                            const farRed = data.find((d: Fluorophore) => d.category.toUpperCase() === "FAR-RED");
+                            if (farRed) {
+                                onSelect(farRed);
+                            }
+                        }
+                    }
                 }
             } catch (error) {
                 console.error("Failed to fetch dyes", error);
@@ -42,7 +56,7 @@ export const DyeSelect: React.FC<DyeSelectProps> = ({ selectedDye, onSelect }) =
             }
         };
         fetchDyes();
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Close on click outside
     useEffect(() => {
@@ -105,41 +119,43 @@ export const DyeSelect: React.FC<DyeSelectProps> = ({ selectedDye, onSelect }) =
                 </span>
             </button>
 
-            {/* Hover Card (Floating) */}
-            {hoveredDye && hoverPosition && (
-                <div
-                    className="fixed pointer-events-none z-[100] w-64 p-3 bg-black/90 border border-white/20 shadow-2xl backdrop-blur-md rounded flex flex-col gap-2"
-                    style={{
-                        top: hoverPosition.top,
-                        left: hoverPosition.left,
-                        transform: 'translateY(-50%)' // Center vertically relative to item
-                    }}
-                >
-                    <div className="flex justify-between items-start border-b border-white/10 pb-2">
-                        <div>
-                            <div className="text-sm font-bold text-brand-cyan">{hoveredDye.name}</div>
-                            <div className="text-[10px] text-gray-400 uppercase tracking-wider">{hoveredDye.type}</div>
+            {/* Hover Card (Floating via Portal) */}
+            {hoveredDye && hoverPosition && (typeof document !== 'undefined') &&
+                createPortal(
+                    <div
+                        className="fixed pointer-events-none z-[9999] w-64 p-3 bg-black/95 border border-white/20 shadow-2xl backdrop-blur-md rounded flex flex-col gap-2"
+                        style={{
+                            top: hoverPosition.top,
+                            left: hoverPosition.left,
+                            transform: 'translateY(-50%)' // Center vertically relative to item
+                        }}
+                    >
+                        <div className="flex justify-between items-start border-b border-white/10 pb-2">
+                            <div>
+                                <div className="text-sm font-bold text-brand-cyan">{hoveredDye.name}</div>
+                                <div className="text-[10px] text-gray-400 uppercase tracking-wider">{hoveredDye.type}</div>
+                            </div>
+                            {hoveredDye.color && <div className="w-4 h-4 rounded-full border border-white/20 shadow-[0_0_10px_currentColor]" style={{ color: hoveredDye.color, backgroundColor: hoveredDye.color }}></div>}
                         </div>
-                        {hoveredDye.color && <div className="w-4 h-4 rounded-full border border-white/20 shadow-[0_0_10px_currentColor]" style={{ color: hoveredDye.color, backgroundColor: hoveredDye.color }}></div>}
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-[10px]">
-                        <div>
-                            <span className="block text-gray-500">Category</span>
-                            <span className="text-white">{hoveredDye.category}</span>
+                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                            <div>
+                                <span className="block text-gray-500">Category</span>
+                                <span className="text-white">{hoveredDye.category}</span>
+                            </div>
+                            <div>
+                                <span className="block text-gray-500">Emission</span>
+                                <span className="text-white font-mono">{hoveredDye.emission_peak ? `${hoveredDye.emission_peak} nm` : 'N/A'}</span>
+                            </div>
+                            <div>
+                                <span className="block text-gray-500">Excitation</span>
+                                <span className="text-white font-mono">{hoveredDye.excitation_peak ? `${hoveredDye.excitation_peak} nm` : 'N/A'}</span>
+                            </div>
                         </div>
-                        <div>
-                            <span className="block text-gray-500">Emission</span>
-                            <span className="text-white font-mono">{hoveredDye.emission_peak ? `${hoveredDye.emission_peak} nm` : 'N/A'}</span>
-                        </div>
-                        <div>
-                            <span className="block text-gray-500">Excitation</span>
-                            <span className="text-white font-mono">{hoveredDye.excitation_peak ? `${hoveredDye.excitation_peak} nm` : 'N/A'}</span>
-                        </div>
-                    </div>
-                </div>
-            )}
-
+                    </div>,
+                    document.body
+                )
+            }
             {/* Dropdown Menu */}
             {isOpen && (
                 <div className="absolute top-full left-0 w-full mt-1 bg-black/90 border border-white/20 backdrop-blur-xl max-h-[300px] overflow-y-auto z-50 shadow-2xl">
