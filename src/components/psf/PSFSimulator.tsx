@@ -264,10 +264,13 @@ interface AnalyzedViewProps {
     yAxisUnit?: string; // "Intensity" or "Rad"
     params?: SimulationParams; // For Pixel/NM conversion in profiles
     fitProfiles?: boolean; // Whether to attempt Gaussian fit
+    isLoading?: boolean;
+    loadingText?: string;
 }
 
 const AnalyzedView: React.FC<AnalyzedViewProps> = ({
-    title, dataGrid, color, crosshair, onCanvasClick, isPhase = false, overlays, bottomRightInfo, yAxisUnit = "Intensity", params, fitProfiles = false
+    title, dataGrid, color, crosshair, onCanvasClick, isPhase = false, overlays, bottomRightInfo, yAxisUnit = "Intensity", params, fitProfiles = false,
+    isLoading = false, loadingText = "Loading..."
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -371,6 +374,16 @@ const AnalyzedView: React.FC<AnalyzedViewProps> = ({
                     <div className="absolute top-0 left-0 right-0 p-2 z-10 flex justify-between items-start pointer-events-none">
                         {title}
                     </div>
+
+                    {/* Loading Overlay */}
+                    {isLoading && (
+                        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
+                            <div className="w-8 h-8 border-2 border-brand-cyan border-t-transparent rounded-full animate-spin mb-4" />
+                            <span className="text-xs font-mono text-brand-cyan uppercase tracking-widest animate-pulse">
+                                {loadingText}
+                            </span>
+                        </div>
+                    )}
 
                     <canvas
                         ref={canvasRef}
@@ -871,6 +884,8 @@ export default function PSFSimulator() {
                             onCanvasClick={handlePsfClick}
                             params={params}
                             fitProfiles={true} // Intensity profiles fitted
+                            isLoading={state === "LOADING"}
+                            loadingText="Simulation Engine Initialisation"
                             overlays={
                                 /* Parameter Overlay (Bottom Left) */
                                 <div className="absolute bottom-2 left-2 p-3 bg-black/60 backdrop-blur border border-white/10 text-[11px] font-mono text-brand-cyan pointer-events-none z-20 space-y-1 shadow-xl">
