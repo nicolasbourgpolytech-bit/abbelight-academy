@@ -1135,6 +1135,34 @@ export default function PSFSimulator() {
                                                 </div>
                                             )}
 
+                                            {/* Abbelight SAFe BFP Size Overlay (New) */}
+                                            {(() => {
+                                                // FOV is 25.4mm
+                                                // bfpCalculations.diameter is in mm
+                                                const diameterPct = (bfpCalculations.diameter / 25.4) * 100;
+                                                return (
+                                                    <>
+                                                        <div
+                                                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/80 border-dotted pointer-events-none z-10 box-border shadow-[0_0_15px_rgba(255,255,255,0.3)]"
+                                                            style={{
+                                                                width: `${diameterPct}%`,
+                                                                height: `${diameterPct}%`
+                                                            }}
+                                                        />
+                                                        {/* Text Label for BFP Size */}
+                                                        <div
+                                                            className="absolute left-1/2 -translate-x-1/2 text-[10px] text-white font-bold select-none pointer-events-none text-center whitespace-nowrap z-20 shadow-black drop-shadow-md"
+                                                            style={{
+                                                                // Position just slightly above the top of the circle
+                                                                top: `calc(50% - ${diameterPct / 2}% - 20px)`
+                                                            }}
+                                                        >
+                                                            Abbelight SAFe BFP size
+                                                        </div>
+                                                    </>
+                                                );
+                                            })()}
+
                                             {/* SAF / UAF Visualization for Intensity */}
                                             {bfpMode === "intensity" && params.NA > params.n_sample && bfpDisplayData.currentR && (
                                                 <>
@@ -1213,7 +1241,7 @@ export default function PSFSimulator() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 
