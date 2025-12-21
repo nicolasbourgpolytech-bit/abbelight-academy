@@ -841,30 +841,32 @@ export default function PSFSimulator() {
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Correction Collar */}
-                        <div className="space-y-2 pt-2 border-t border-white/10">
-                            <div className="flex justify-between">
-                                <label className="text-xs text-gray-500 uppercase tracking-wider">Correction Collar</label>
-                                {selectedObjective.hasCorrectionCollar && (
-                                    <span className="text-xs font-mono text-brand-cyan">{params.correction_sa.toFixed(1)} rad</span>
+                            {/* Correction Collar */}
+                            <div className="space-y-2 pt-2 border-t border-white/10 z-10">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-gray-500 uppercase tracking-wider text-[10px]">Correction Collar</label>
+                                    {selectedObjective.hasCorrectionCollar && (
+                                        <span className="text-xs font-mono text-brand-cyan">{params.correction_sa.toFixed(1)} rad</span>
+                                    )}
+                                </div>
+                                {selectedObjective.hasCorrectionCollar ? (
+                                    <input
+                                        type="range"
+                                        min="-15" max="15" step="0.1"
+                                        value={params.correction_sa}
+                                        onChange={e => setParams(p => ({ ...p, correction_sa: parseFloat(e.target.value) }))}
+                                        className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
+                                    />
+                                ) : (
+                                    <div className="text-[10px] text-gray-500 italic">
+                                        No collar ring
+                                    </div>
                                 )}
                             </div>
-                            {selectedObjective.hasCorrectionCollar ? (
-                                <input
-                                    type="range"
-                                    min="-15" max="15" step="0.1"
-                                    value={params.correction_sa}
-                                    onChange={e => setParams(p => ({ ...p, correction_sa: parseFloat(e.target.value) }))}
-                                    className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
-                                />
-                            ) : (
-                                <div className="text-[10px] text-gray-500 italic py-1">
-                                    No collar ring with this lens
-                                </div>
-                            )}
                         </div>
+
+
                     </div>
                 </AccordionSection>
 
