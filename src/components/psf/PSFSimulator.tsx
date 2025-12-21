@@ -791,33 +791,53 @@ export default function PSFSimulator() {
                             </div>
                         </div>
 
-                        {/* Image Display */}
-                        <div className="relative w-full h-64 bg-white/5 border border-white/10 rounded overflow-hidden flex items-center justify-center p-1">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src={selectedObjective.imagePath}
-                                alt={selectedObjective.name}
-                                className="max-h-full max-w-full object-contain drop-shadow-2xl"
-                            />
-                        </div>
+                        {/* Selected Objective Card */}
+                        <div className="flex flex-col bg-black/40 border border-white/20 shadow-xl backdrop-blur-md p-4 gap-3 rounded-lg mt-2 relative overflow-hidden">
+                            {/* Header */}
+                            <div className="border-b border-white/10 pb-2 z-10">
+                                <div className="text-sm font-bold text-white shadow-black drop-shadow-md">{selectedObjective.name}</div>
+                                <div className="text-[10px] text-gray-400 uppercase tracking-widest">{selectedObjective.brand}</div>
+                            </div>
 
-                        {/* Read-only Parameters */}
-                        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/10">
-                            <div>
-                                <label className="block text-[10px] text-gray-500 uppercase">NA</label>
-                                <div className="text-sm font-mono text-white">{selectedObjective.NA.toFixed(2)}</div>
+                            {/* Background decoration */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-cyan/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+
+                            {/* Image */}
+                            <div className="relative w-full aspect-square bg-white/5 rounded border border-white/10 overflow-hidden flex items-center justify-center p-2 z-10">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={selectedObjective.imagePath}
+                                    alt={selectedObjective.name}
+                                    className="max-w-full max-h-full object-contain drop-shadow-lg"
+                                />
                             </div>
-                            <div>
-                                <label className="block text-[10px] text-gray-500 uppercase">Mag</label>
-                                <div className="text-sm font-mono text-white">{selectedObjective.magnification}x</div>
-                            </div>
-                            <div>
-                                <label className="block text-[10px] text-gray-500 uppercase">N Imm</label>
-                                <div className="text-sm font-mono text-white">{selectedObjective.n_imm.toFixed(3)}</div>
-                            </div>
-                            <div>
-                                <label className="block text-[10px] text-gray-500 uppercase">F Tube</label>
-                                <div className="text-sm font-mono text-white">{selectedObjective.f_tube_mm} mm</div>
+
+                            {/* Specs Grid */}
+                            <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-[10px] z-10">
+                                <div>
+                                    <span className="text-gray-500 uppercase block tracking-wider">NA</span>
+                                    <span className="text-white font-mono text-xs">{selectedObjective.NA.toFixed(2)}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500 uppercase block tracking-wider">Magnification</span>
+                                    <span className="text-white font-mono text-xs">{selectedObjective.magnification}x</span>
+                                </div>
+                                <div className="col-span-2">
+                                    <span className="text-gray-500 uppercase block tracking-wider">Immersion</span>
+                                    <span className="text-white font-mono text-xs">
+                                        {selectedObjective.immersion} <span className="text-gray-400">({selectedObjective.n_imm.toFixed(3)})</span>
+                                    </span>
+                                </div>
+                                <div className="col-span-2 pt-1 border-t border-white/5 mt-1">
+                                    <span className="text-gray-500 uppercase block tracking-wider mb-1">Optical Params</span>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <span className="text-gray-600 uppercase block text-[9px]">F Tube</span>
+                                            <span className="text-gray-300 font-mono">{selectedObjective.f_tube_mm} mm</span>
+                                        </div>
+                                        {/* We could add working distance here if we had it */}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
