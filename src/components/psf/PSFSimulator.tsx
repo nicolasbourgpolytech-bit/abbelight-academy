@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { usePyodide } from './usePyodide';
 import { OBJECTIVES, ObjectiveLens } from '@/data/objectives';
 import { ObjectiveSelect } from './ObjectiveSelect';
+import { DyeSelect } from './DyeSelect';
 import { ComposedChart, Bar, BarChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, LabelList } from 'recharts';
 
 // --- Types ---
@@ -544,6 +545,7 @@ export default function PSFSimulator() {
     const [params, setParams] = useState<SimulationParams>(DEFAULT_PARAMS);
     // Initialize with ID but wait for effect to confirm it exists in list
     const [selectedObjectiveId, setSelectedObjectiveId] = useState<string>(DEFAULT_OBJECTIVE.id);
+    const [selectedDye, setSelectedDye] = useState<any>(null);
 
     // Fetch objectives from API
     useEffect(() => {
@@ -868,6 +870,15 @@ export default function PSFSimulator() {
 
                 <AccordionSection title="Sample parameters">
                     <div className="space-y-4">
+                        <DyeSelect
+                            selectedDye={selectedDye}
+                            onSelect={(dye) => {
+                                setSelectedDye(dye);
+                                if (dye.emission_peak) {
+                                    setParams(p => ({ ...p, lambda_vac: dye.emission_peak! * 1e-9 }));
+                                }
+                            }}
+                        />
                         {/* Visual Sample Card */}
                         <div className="flex flex-col bg-black/40 border border-white/20 shadow-xl backdrop-blur-md p-4 gap-3 rounded-lg mt-2 relative overflow-hidden group">
                             {/* Header */}
@@ -962,18 +973,6 @@ export default function PSFSimulator() {
                             </div>
                         </div>
 
-                        {/* Wavelength Slider */}
-                        <div className="space-y-2 pt-2 border-t border-white/10">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Wavelength: {(params.lambda_vac * 1e9).toFixed(0)} nm</label>
-                            <input
-                                type="range"
-                                min="400" max="700" step="10"
-                                value={params.lambda_vac * 1e9}
-                                onChange={e => setParams(p => ({ ...p, lambda_vac: parseFloat(e.target.value) * 1e-9 }))}
-                                className="w-full accent-brand-cyan h-1 bg-white/10 appearance-none cursor-pointer"
-                            />
-                            <div className="h-1 w-full opacity-80" style={{ background: SPECTRUM_GRADIENT }}></div>
-                        </div>
                     </div>
                 </AccordionSection>
 
