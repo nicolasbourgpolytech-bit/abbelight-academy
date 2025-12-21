@@ -252,54 +252,66 @@ function calculateSAFRatio(bfpData: number[][], NA: number, n_sample: number): n
 }
 
 // Helper to pad BFP to 25.4mm FOV (1 inch)
+// Helper to pad OR crop BFP to 25.4mm FOV (1 inch)
 function padToFov(data: number[][], currentHalfExtentMm: number): { padded: number[][], ratio: number } {
     if (!data || data.length === 0) return { padded: data, ratio: 1 };
 
-    // Target: 25.4 mm total width => Half width = 12.7 mm
+    // Target: 25.4 mm total width
     const TARGET_FOV_MM = 25.4;
-    const targetHalf = TARGET_FOV_MM / 2;
-
-    // Current data covers [-currentHalfExtentMm, currentHalfExtentMm]
-    // Width = 2 * currentHalfExtentMm
-
-    // Calculate how many pixels we need for the full 25.4mm 
-    // based on the resolution of the current data.
-    // Current resolution: (2 * currentHalfExtentMm) / N_pixels
 
     const h = data.length;
     const w = data[0].length;
 
-    // Avoid infinity/weirdness if extent is 0 (shouldn't happen)
+    // Avoid weirdness
     if (currentHalfExtentMm <= 0) return { padded: data, ratio: 1 };
 
     // Ratio of physical sizes
-    // We want the current image to occupy (current_width / target_width) fraction of the new image
+    // physicalRatio = (Total BFP Width) / (Target FOV)
     const physicalRatio = (currentHalfExtentMm * 2) / TARGET_FOV_MM;
 
-    // New size in pixels
-    // N_new = N_old / physicalRatio
-    // Example: If BFP is 12.7mm (half of 25.4), ratio is 0.5. N_new = N_old * 2. 
-    // Wait. N_new must be larger.
-    const newSize = Math.ceil(Math.max(w, h) / physicalRatio);
+    // New size in pixels = (Original Pixels) / physicalRatio
+    // If BFP is SMALLER than FOV (ratio < 1), newSize will be LARGER (Padding)
+    // If BFP is LARGER than FOV (ratio > 1), newSize will be SMALLER (Cropping)
+    const newSize = Math.floor(Math.max(w, h) / physicalRatio);
 
-    // Limit max size to avoid performance kill? 256 / 0.1 -> 2560 pixels. Detailed but okay.
-    // Pyodide sim uses 256 pixels usually.
+    if (newSize <= 0) return { padded: data, ratio: 1 };
 
-    const padded = new Array(newSize).fill(0).map(() => new Float64Array(newSize).fill(0));
+    const result = new Array(newSize).fill(0).map(() => new Float64Array(newSize).fill(0));
 
-    // Center alignment
-    const startX = Math.floor((newSize - w) / 2);
-    const startY = Math.floor((newSize - h) / 2);
+    if (physicalRatio <= 1) {
+        // --- PADDING (BFP fits inside FOV) ---
+        // Center alignment
+        const startX = Math.floor((newSize - w) / 2);
+        const startY = Math.floor((newSize - h) / 2);
 
-    for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-            // @ts-ignore
-            padded[startY + y][startX + x] = data[y][x];
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                // Bounds check just in case
+                if (startY + y >= 0 && startY + y < newSize && startX + x >= 0 && startX + x < newSize) {
+                    // @ts-ignore
+                    result[startY + y][startX + x] = data[y][x];
+                }
+            }
+        }
+    } else {
+        // --- CROPPING (BFP larger than FOV) ---
+        // We need to take the CENTER `newSize` crop from `data`
+        const srcStartX = Math.floor((w - newSize) / 2);
+        const srcStartY = Math.floor((h - newSize) / 2);
+
+        for (let y = 0; y < newSize; y++) {
+            for (let x = 0; x < newSize; x++) {
+                // @ts-ignore
+                if (srcStartY + y >= 0 && srcStartY + y < h && srcStartX + x >= 0 && srcStartX + x < w) {
+                    // @ts-ignore
+                    result[y][x] = data[srcStartY + y][srcStartX + x];
+                }
+            }
         }
     }
 
     // @ts-ignore
-    return { padded, ratio: physicalRatio };
+    return { padded: result, ratio: physicalRatio };
 }
 
 // --- Analyzed View Component ---
