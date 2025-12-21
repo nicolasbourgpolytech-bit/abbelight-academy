@@ -1087,10 +1087,9 @@ export default function PSFSimulator() {
                                                         }}
                                                     />
                                                     {/* Labels */}
-                                                    {/* We can place labels relative to the ring, but for simplicity let's keep them approximate or just remove them if cluttering.
-                                                        The original code had fixed labels. Let's keep UAF/SAF text but small.
-                                                    */}
-                                                    <div className="absolute top-1 left-1 text-[8px] text-white/30 font-bold select-none">UAF (Center) / SAF (Outer)</div>
+                                                    <div className="absolute top-2 right-2 text-[8px] text-white/50 font-bold select-none text-right">
+                                                        UAF (Center)<br />SAF (Outer)
+                                                    </div>
                                                 </>
                                             )}
 
