@@ -1080,15 +1080,23 @@ export default function PSFSimulator() {
                                             {bfpMode === "intensity" && params.NA > params.n_sample && bfpDisplayData.currentR && (
                                                 <>
                                                     <div
-                                                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40 border-dashed pointer-events-none z-10 box-border shadow-[0_0_10px_rgba(255,255,255,0.2)]"
+                                                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/60 border-dashed pointer-events-none z-10 box-border shadow-[0_0_10px_rgba(255,255,255,0.2)]"
                                                         style={{
                                                             width: `${((2 * bfpDisplayData.currentR) / 25.4) * (params.n_sample / params.NA) * 100}%`,
                                                             height: `${((2 * bfpDisplayData.currentR) / 25.4) * (params.n_sample / params.NA) * 100}%`
                                                         }}
                                                     />
                                                     {/* Labels */}
-                                                    <div className="absolute top-2 right-2 text-[8px] text-white/50 font-bold select-none text-right">
-                                                        UAF (Center)<br />SAF (Outer)
+                                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] text-white/50 font-bold select-none pointer-events-none">
+                                                        UAF
+                                                    </div>
+                                                    <div
+                                                        className="absolute left-1/2 -translate-x-1/2 -translate-y-full pb-1 text-[10px] text-white/50 font-bold select-none pointer-events-none"
+                                                        style={{
+                                                            top: `${50 - (((bfpDisplayData.currentR / 25.4) * (params.n_sample / params.NA)) * 100)}%`
+                                                        }}
+                                                    >
+                                                        SAF
                                                     </div>
                                                 </>
                                             )}
